@@ -511,7 +511,7 @@ export default function App() {
                 </div>
               )}
               {terminal.has(run.status) && quality.data && <RunQualityPanel quality={quality.data} onEvidence={openEvidence} />}
-              {run.gaps.length > 0 && <section className="gap-card"><AlertTriangle size={18} /><div><strong>What remains unclear</strong>{run.gaps.map((gap) => <p key={gap}>{gap}</p>)}</div></section>}
+              {run.gaps.length > 0 && <section className="gap-card"><Info size={18} /><div><strong>What remains unclear</strong>{run.gaps.map((gap) => <p key={gap}>{gap}</p>)}</div></section>}
               {run.status === 'failed' && <section className="failure-card"><div><AlertTriangle size={18} /><strong>{run.error_code ?? 'Research failed'}</strong><p>{run.error_message}</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry as new run</button></section>}
               {run.status === 'cancelled' && <section className="failure-card calm"><div><strong>Research stopped</strong><p>Completed work was preserved. Retry starts a new run with the same source policy.</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry</button></section>}
               <div className="followup">

@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CheckCircle2, Clock3, CopyMinus, Files, GitCompareArrows, ShieldAlert } from 'lucide-react'
+import { Activity, Info, CheckCircle2, Clock3, CopyMinus, Files, GitCompareArrows, ShieldAlert } from 'lucide-react'
 import type { RunQuality } from '../../lib/api/types'
 
 function percent(value: number) {
@@ -114,7 +114,7 @@ export function RunQualityPanel({ quality, onEvidence }: { quality: RunQuality; 
 
       {(quality.gaps_count > 0 || quality.risky_source_events > 0 || missingFacets.length > 0 || conflictingFacets.length > 0) && (
         <div className="quality-caution">
-          <AlertTriangle size={15} />
+          <Info size={15} />
           <span>
             {quality.gaps_count > 0 ? `${quality.gaps_count} unresolved evidence gap${quality.gaps_count === 1 ? '' : 's'}. ` : ''}
             {missingFacets.length > 0 ? `${missingFacets.length} requested facet${missingFacets.length === 1 ? '' : 's'} still lack evidence. ` : ''}
