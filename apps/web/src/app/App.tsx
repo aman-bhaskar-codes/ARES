@@ -497,7 +497,7 @@ export default function App() {
             />
 
             {activeView === 'answer' && <>
-              {run.answer_blocks.map((block) => <Answer key={block.id} block={block} onEvidence={openEvidence} />)}
+              {run.answer_blocks.map((block) => <Answer key={block.id} block={block} runEvidence={runEvidence.data} onReviewSources={() => navigate(runUrl('sources'))} onEvidence={openEvidence} />)}
               {['completed', 'partial'].includes(run.status) && run.answer_blocks.length > 0 && (
                 <div className="export-bar" aria-label="Export research">
                   <span><Download size={15} /> Export finalized evidence</span>
