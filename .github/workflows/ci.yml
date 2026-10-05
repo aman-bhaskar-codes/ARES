@@ -30,11 +30,11 @@ jobs:
       DATABASE_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
       ARES_TEST_POSTGRES_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@v5
       - name: Verify backend lock
         run: uv lock --project backend --check
       - name: Install backend
@@ -64,8 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22.16.0'
       - name: Require committed frontend lock
@@ -86,7 +86,7 @@ jobs:
     timeout-minutes: 25
     needs: [backend, frontend-lock-gate]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
       - name: Build production images
         run: |
           docker build --target runtime --tag ares:ci .
