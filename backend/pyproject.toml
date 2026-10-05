@@ -1,0 +1,39 @@
+[project]
+name = "ares-research-backend"
+version = "0.11.0"
+description = "ARES research API and durable worker"
+requires-python = ">=3.12,<3.16"
+dependencies = [
+  "fastapi==0.142.2",
+  "pydantic==2.13.5",
+  "pydantic-settings==2.15.0",
+  "sqlalchemy==2.1.2",
+  "alembic==1.20.0",
+  "psycopg[binary]==3.3.6",
+  "httpx==0.28.1",
+  "uvicorn[standard]==0.54.0",
+  "google-genai==2.26.0",
+  "trafilatura==2.2.0",
+  "pypdf==6.19.0",
+  "python-multipart==0.0.32",
+  "cryptography==46.0.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "respx==0.23.1",
+  "ruff==0.16.10",
+  "mypy==2.4.0",
+]
+e2e = [
+  "playwright==1.63.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ares"]

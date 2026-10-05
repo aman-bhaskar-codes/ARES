@@ -1,0 +1,45 @@
+Milestone: M07 — Verified foundation and responsive execution
+Baseline: supplied M06 archive / schema 0006
+Candidate: ARES 0.7.0 / schema 0007
+
+Implemented user journeys:
+- checked evidence-backed answers with rejected-claim removal across display/export
+- persistent deadline/budget/date-window execution contract
+- bounded, recoverable SSE/replay and typed frontend trust boundary
+- durable checkpoints + fleet resource leases + worker reauthorization
+- explicit API/provider/connectivity diagnostics
+- reproducible local performance baseline
+
+Changed contracts/migration:
+- migration 0007_execution_contracts
+- RunSnapshot: date_window, deadline_at, budget_version, usage_ledger, last_seq
+- claim assessment metadata
+- schema-v2 events/replay
+- generated frontend API/runtime validators
+
+Local evidence:
+- 122 backend tests collected; 116 PASS; 6 PostgreSQL-only NOT RUN
+- uv lock check offline PASS
+- empty->0007 and 0006->0007 migration PASS
+- deterministic evaluation/security gate PASS
+- compile/secret scan/OpenAPI/type generation PASS
+- frontend core API/runtime TypeScript boundary PASS
+- pnpm lock manifest consistency PASS
+
+External promotion gates not claimable in this sandbox:
+- PostgreSQL/pgvector/FORCE-RLS under real runtime roles
+- clean frozen frontend install + Vitest + Vite build
+- production Docker/Compose runtime
+- live OIDC/provider credentials and strict connectivity doctor
+- remote GitHub Actions (connector has no repository installation here)
+
+Operator commands:
+  uv sync --project backend --extra dev --frozen
+  pnpm install --frozen-lockfile
+  make lock-check lint test verify-migrations eval-regression security-scan
+  export ARES_TEST_POSTGRES_URL="$DATABASE_URL" && make test-postgres
+  pnpm --filter @ares/web typecheck && pnpm --filter @ares/web test && pnpm --filter @ares/web build
+  make connectivity-doctor-strict
+
+Rollback: retain additive 0007 schema; application paths may be feature-reverted, but do not revert correctness/authz fixes.
+Next phase entry: promote only after target-environment gates are green; then begin M08 against these contracts.

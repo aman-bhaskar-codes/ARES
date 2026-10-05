@@ -1,0 +1,149 @@
+name: ares
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ares
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:?set POSTGRES_ADMIN_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+
+  searxng:
+    image: ghcr.io/searxng/searxng:2026.9.25-12f8b6515
+    restart: unless-stopped
+    volumes:
+      - ../local/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-cache:/var/cache/searxng
+    networks: [data, egress]
+
+  migrate:
+    image: ${ARES_IMAGE:?set ARES_IMAGE to an immutable image digest/tag}
+    restart: "no"
+    env_file: ${ARES_ENV_FILE:-../../.env.production}
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?set MIGRATION_DATABASE_URL}
+    command: ["alembic", "-c", "backend/alembic.ini", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [data]
+
+  provision-db-roles:
+    image: pgvector/pgvector:0.8.6-pg18-trixie
+    restart: "no"
+    environment:
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?set MIGRATION_DATABASE_URL}
+    volumes:
+      - ../postgres/bootstrap_roles.sql:/bootstrap_roles.sql:ro
+    command: ["sh", "-ec", "psql \"$$MIGRATION_DATABASE_URL\" -v ON_ERROR_STOP=1 -f /bootstrap_roles.sql"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [data]
+
+  api:
+    image: ${ARES_IMAGE:?set ARES_IMAGE to an immutable image digest/tag}
+    restart: unless-stopped
+    init: true
+    env_file: ${ARES_ENV_FILE:-../../.env.production}
+    volumes:
+      - blob-data:/app/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid,nodev
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: ["ALL"]
+    stop_grace_period: 45s
+    depends_on:
+      provision-db-roles:
+        condition: service_completed_successfully
+      searxng:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2).read()"]
+      interval: 20s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    networks: [data, egress]
+
+  worker:
+    image: ${ARES_IMAGE:?set ARES_IMAGE to an immutable image digest/tag}
+    restart: unless-stopped
+    init: true
+    env_file: ${ARES_ENV_FILE:-../../.env.production}
+    environment:
+      WORKER_PROFILE: research
+      WORKER_HEALTH_FILE: /app/data/research-worker-health
+    command: ["python", "-m", "ares.worker.main"]
+    volumes:
+      - blob-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,noexec,nosuid,nodev
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: ["ALL"]
+    stop_grace_period: 60s
+    depends_on:
+      provision-db-roles:
+        condition: service_completed_successfully
+      searxng:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /app/data/research-worker-health && grep -Eq '^(active|draining)$' /app/data/research-worker-health"]
+      interval: 20s
+      timeout: 2s
+      retries: 3
+    networks: [data, egress]
+
+  media-worker:
+    image: ${ARES_MEDIA_IMAGE:?set ARES_MEDIA_IMAGE to the runtime-media image digest/tag}
+    restart: unless-stopped
+    init: true
+    env_file: ${ARES_ENV_FILE:-../../.env.production}
+    environment:
+      WORKER_PROFILE: media
+      WORKER_HEALTH_FILE: /app/data/media-worker-health
+    command: ["python", "-m", "ares.worker.main"]
+    volumes:
+      - blob-data:/app/data
+      - model-cache:/app/.data/models:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g,noexec,nosuid,nodev
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: ["ALL"]
+    stop_grace_period: 90s
+    depends_on:
+      provision-db-roles:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /app/data/media-worker-health && grep -Eq '^(active|draining)$' /app/data/media-worker-health"]
+      interval: 20s
+      timeout: 2s
+      retries: 3
+    networks: [data]
+
+networks:
+  data:
+    internal: true
+  egress: {}
+
+volumes:
+  postgres-data:
+  searxng-cache:
+  blob-data:
+  model-cache:

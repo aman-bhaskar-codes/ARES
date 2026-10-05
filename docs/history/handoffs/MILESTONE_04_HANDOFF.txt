@@ -1,0 +1,17 @@
+ARES Milestone 04 — Full-stack research workspace and page-aware RAG
+Date: 2026-10-03
+
+Start here:
+1. Read README.md.
+2. Read docs/development/MILESTONE_04_FULLSTACK_RESEARCH.md.
+3. Run `uv sync --project backend --extra dev --frozen`.
+4. Run `pnpm install --frozen-lockfile`.
+5. Run `make infra && make migrate`.
+6. Export `ARES_TEST_POSTGRES_URL=$DATABASE_URL` and run `make test-postgres`.
+7. Run backend and frontend gates described in the M4 development guide.
+
+Important boundaries:
+- Jev is integrated for typed routing/evaluation but remains disabled in strict-free live mode because it is metered.
+- OCR execution is not implemented; scanned PDFs are detected and labeled `needs_ocr`.
+- pgvector uses exact search; HNSW/IVFFlat are intentionally deferred pending benchmarks.
+- Browser automation, multi-user auth/RLS and public deployment remain later milestones.

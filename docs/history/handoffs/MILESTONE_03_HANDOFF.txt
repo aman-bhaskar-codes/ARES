@@ -1,0 +1,15 @@
+ARES Milestone 3 handoff
+========================
+Implemented: Jev bounded decisions, multi-wave coverage recovery, OpenAlex academic retrieval,
+GitHub software retrieval, text/Markdown document RAG, optional Gemini Embedding 2 semantic
+retrieval, RRF fusion, support-state verification, evaluation harness.
+
+Validated here:
+- backend tests: 31 passed, 1 PostgreSQL-only test skipped
+- deterministic routing eval: 5/5 frozen cases
+- Python compileall: pass
+- OpenAPI generation: pass
+- SQLite Alembic upgrade: 0004 (head)
+
+Manual combined M2/M3 checks remain required on the maintainer machine for PostgreSQL, frontend,
+SearXNG, Gemini, Jev (if enabled), OpenAlex live traffic, and GitHub live traffic.

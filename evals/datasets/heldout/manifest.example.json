@@ -1,0 +1,23 @@
+{
+  "dataset_id": "replace-with-independent-dataset-id",
+  "version": 1,
+  "frozen_at": "2026-10-05T00:00:00Z",
+  "authoring": {
+    "independent_from_implementation": true,
+    "method": "Describe how cases were authored without using implementation regression fixtures.",
+    "reviewers": ["reviewer-label"]
+  },
+  "license_and_rights": "Describe rights for prompts, documents, images, audio and video used by this benchmark.",
+  "cases": [
+    {
+      "id": "example-not-a-real-heldout-case",
+      "query": "Replace this example with an independently authored task.",
+      "modality": "web",
+      "tags": ["conflict", "date_window"],
+      "required_facets": ["replace-me"],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "replace-me"
+    }
+  ]
+}

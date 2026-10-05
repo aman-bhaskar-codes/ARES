@@ -1,0 +1,47 @@
+# Optional M10 browser overlay. Run only after:
+#   python scripts/vendor_playwright_seccomp.py --check
+# and after enforcing the host/container egress policy documented in
+# docs/operations/BROWSER_SANDBOX.md.
+services:
+  worker:
+    environment:
+      BROWSER_ENABLED: "true"
+      BROWSER_SERVICE_URL: http://browser:8090
+      BROWSER_SERVICE_TOKEN: ${BROWSER_SERVICE_TOKEN:?set BROWSER_SERVICE_TOKEN to a random 32+ character secret}
+    networks: [data, egress, browser-control]
+    depends_on:
+      browser:
+        condition: service_healthy
+
+  browser:
+    build:
+      context: ../..
+      dockerfile: services/browser/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      ARES_BROWSER_SERVICE_TOKEN: ${BROWSER_SERVICE_TOKEN:?set BROWSER_SERVICE_TOKEN to a random 32+ character secret}
+    expose: ["8090"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,noexec,nosuid,nodev
+    shm_size: 512mb
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: "1.5"
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=../browser/seccomp_profile.json
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health/ready', timeout=2).read()"]
+      interval: 20s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    networks: [browser-control, browser-egress]
+
+networks:
+  browser-control:
+    internal: true
+  browser-egress: {}

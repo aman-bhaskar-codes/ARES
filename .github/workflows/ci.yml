@@ -1,0 +1,129 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg18-trixie
+        env:
+          POSTGRES_DB: ares_test
+          POSTGRES_USER: ares
+          POSTGRES_PASSWORD: ares
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ares -d ares_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
+      ARES_TEST_POSTGRES_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: Verify backend lock
+        run: uv lock --project backend --check
+      - name: Install backend
+        run: uv sync --project backend --extra dev --frozen
+      - name: Lint
+        run: uv run --project backend ruff check backend/src backend/tests evals scripts
+      - name: Secret-shaped material gate
+        run: python scripts/check_secrets.py
+      - name: Validate keyless integration configuration
+        run: PYTHONPATH=backend/src uv run --project backend python scripts/connectivity_doctor.py --env-file .env.example
+      - name: Upgrade PostgreSQL schema
+        run: uv run --project backend alembic -c backend/alembic.ini upgrade head
+      - name: Verify empty and prior-release-to-M11 migration paths
+        run: PYTHONPATH=backend/src uv run --project backend python scripts/verify_migrations.py
+      - name: Tests
+        run: uv run --project backend pytest backend/tests -q
+      - name: Offline regression evaluation
+        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite all --decision-provider deterministic --retrieval-mode lexical --report evals/reports/regression_ci.json
+      - name: Compile
+        run: PYTHONPATH=backend/src uv run --project backend python -m compileall -q backend/src backend/tests
+      - name: Export API contract
+        run: PYTHONPATH=backend/src uv run --project backend python scripts/export_openapi.py
+      - name: Contract is committed
+        run: git diff --exit-code -- backend/openapi.json
+
+  frontend-lock-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.16.0'
+      - name: Require committed frontend lock
+        run: test -s pnpm-lock.yaml
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Regenerate frontend API types
+        run: python3 scripts/generate_frontend_types.py
+      - name: Generated API types are committed
+        run: git diff --exit-code -- apps/web/src/lib/api/generated.ts
+      - run: pnpm --filter @ares/web typecheck
+      - run: pnpm --filter @ares/web test
+      - run: pnpm --filter @ares/web build
+
+
+  container-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [backend, frontend-lock-gate]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build production images
+        run: |
+          docker build --target runtime --tag ares:ci .
+          docker build --target runtime-media --tag ares-media:ci .
+      - name: Validate production Compose contract
+        shell: bash
+        run: |
+          cat > /tmp/ares-ci.env <<'EOF'
+          DEPLOYMENT_ENVIRONMENT=production
+          ARES_MODE=local_live
+          AUTH_MODE=oidc
+          STRICT_FREE_MODE=true
+          ALLOW_BILLABLE_PROVIDERS=false
+          PUBLIC_BASE_URL=https://ares.example.test
+          FRONTEND_ORIGIN=https://ares.example.test
+          SESSION_COOKIE_SECURE=true
+          DATABASE_URL=postgresql+psycopg://api:placeholder@postgres:5432/ares
+          WORKER_DATABASE_URL=postgresql+psycopg://worker:placeholder@postgres:5432/ares
+          OIDC_ISSUER=https://id.example.test
+          OIDC_CLIENT_ID=ci
+          GEMINI_API_KEY=ci-placeholder
+          GEMINI_RPM=1
+          GEMINI_TPM=1000
+          GEMINI_RPD=10
+          EOF
+          ARES_IMAGE=ares:ci \
+          ARES_MEDIA_IMAGE=ares-media:ci \
+          ARES_ENV_FILE=/tmp/ares-ci.env \
+          MIGRATION_DATABASE_URL=postgresql+psycopg://admin:placeholder@postgres:5432/ares \
+          POSTGRES_ADMIN_USER=admin \
+          POSTGRES_ADMIN_PASSWORD=placeholder \
+          docker compose -f infra/production/compose.yaml config --quiet
+      - name: Generate deterministic CycloneDX SBOM
+        run: python scripts/generate_sbom.py --output /tmp/ARES_M11.sbom.cdx.json
+      - name: Verify source-level M11 release proof
+        run: PYTHONPATH=backend/src python scripts/verify_m11_release.py
+      - name: Verify release archive construction
+        run: python scripts/release_archive.py --output /tmp/ARES_M11_release_candidate.zip --prefix ARES_M11_release_candidate
+      - name: Verify SBOM and release manifest are embedded
+        run: unzip -l /tmp/ARES_M11_release_candidate.zip | grep -E 'SBOM.cdx.json|RELEASE_MANIFEST.json'

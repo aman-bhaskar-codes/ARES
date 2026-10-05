@@ -1,0 +1,26 @@
+name: Research capability proposal
+description: Propose a scoped feature with evidence and verification criteria.
+title: "proposal: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Research problem
+      description: What user/research failure does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / current limitation
+      description: Link to relevant docs, an eval case, or a reproducible gap. Do not fabricate benchmark claims.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Define observable behavior and regression tests.
+    validations:
+      required: true

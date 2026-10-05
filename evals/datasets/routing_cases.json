@@ -1,0 +1,122 @@
+[
+  {
+    "query": "Explain how reciprocal rank fusion works",
+    "expected_task": "explanation"
+  },
+  {
+    "query": "What is retrieval augmented generation?",
+    "expected_task": "explanation"
+  },
+  {
+    "query": "Explain MVCC in PostgreSQL",
+    "expected_task": "explanation"
+  },
+  {
+    "query": "Why do language models use embeddings?",
+    "expected_task": "explanation"
+  },
+  {
+    "query": "Describe claim-level citation provenance",
+    "expected_task": "explanation"
+  },
+  {
+    "query": "Compare PostgreSQL and MongoDB transaction semantics",
+    "expected_task": "comparison"
+  },
+  {
+    "query": "Redis vs Memcached for cache eviction behavior",
+    "expected_task": "comparison"
+  },
+  {
+    "query": "What is the difference between HNSW and IVFFlat?",
+    "expected_task": "comparison"
+  },
+  {
+    "query": "Compare lexical retrieval with semantic retrieval",
+    "expected_task": "comparison"
+  },
+  {
+    "query": "Python versus Go for a high-concurrency API",
+    "expected_task": "comparison"
+  },
+  {
+    "query": "What happened in AI regulation this week?",
+    "expected_task": "current_events"
+  },
+  {
+    "query": "What are the current browser privacy proposals?",
+    "expected_task": "current_events"
+  },
+  {
+    "query": "Summarize today's major database security news",
+    "expected_task": "current_events"
+  },
+  {
+    "query": "What recent developments changed retrieval evaluation?",
+    "expected_task": "current_events"
+  },
+  {
+    "query": "What is current guidance on passkeys?",
+    "expected_task": "current_events"
+  },
+  {
+    "query": "Compare recent papers on agent memory evaluation",
+    "expected_task": "literature"
+  },
+  {
+    "query": "Find studies on retrieval augmented generation hallucinations",
+    "expected_task": "literature"
+  },
+  {
+    "query": "What does the literature say about long-context retrieval?",
+    "expected_task": "literature"
+  },
+  {
+    "query": "Find the arXiv work on lost-in-the-middle behavior",
+    "expected_task": "literature"
+  },
+  {
+    "query": "Look up research articles about RAG evaluation",
+    "expected_task": "literature"
+  },
+  {
+    "query": "What changed in the latest FastAPI release?",
+    "expected_task": "software"
+  },
+  {
+    "query": "Summarize the current pgvector GitHub release",
+    "expected_task": "software"
+  },
+  {
+    "query": "What API changes landed in the newest Pydantic version?",
+    "expected_task": "software"
+  },
+  {
+    "query": "How does the LangGraph framework handle persistence?",
+    "expected_task": "software"
+  },
+  {
+    "query": "Summarize package version changes in SQLAlchemy 2.1",
+    "expected_task": "software"
+  },
+  {
+    "query": "Summarize the limitations in this uploaded document",
+    "expected_task": "document"
+  },
+  {
+    "query": "What does this PDF say about latency?",
+    "expected_task": "document"
+  },
+  {
+    "query": "Extract the main findings from my document",
+    "expected_task": "document"
+  },
+  {
+    "query": "Compare the conclusions in the attached file",
+    "expected_task": "document"
+  },
+  {
+    "query": "What risks are identified in the uploaded file?",
+    "expected_task": "document"
+  }
+]

@@ -1,0 +1,42 @@
+Milestone: M11 — Visual research workspace and V2 release proof
+Candidate: ARES 0.11.0 / schema 0012
+Baseline: supplied M10 release candidate SHA-256 02321335a16c3fa6ea6713cad5ee6bb964d76d899d54eadc8c400e01ec9079f7; additive continuation
+
+Integrated source work:
+- stable conversation/run/evidence deep-link handling and SPA fallback
+- answer/sources/comparison/activity workspace views
+- safe Markdown/GFM answer rendering without raw HTML
+- evidence/source filtering, light/dark semantic tokens and reduced-motion compatibility
+- migration 0012 visualization datasets/artifacts with workspace ownership and API SELECT-only grant
+- read-only visualization API plus storage-aware capability readiness
+- deterministic worker-side post-run visualization generation and durable ready/failed events
+- evidence-linked comparison, numeric chart, publication timeline and bounded relationship graph
+- unit-compatible numeric data and server-authorized lineage-bearing CSV with formula-injection escaping
+- bounded 100-node/200-edge graph policy and tabular/evidence fallback
+- lazy-loaded graph/chart/PDF tooling
+
+Fresh verification:
+- full locally executable backend suite 193 passed; 7 PostgreSQL-only skips
+- focused M11 integration 14 passed
+- migration verifier empty/0011/0010/0009/0007/0006 -> 0012 PASS
+- compileall PASS
+- deterministic regression PASS (development fixtures only)
+- networked frontend typecheck PASS
+- frontend Vitest 18/18 PASS across 5 files
+- Vite production build PASS (2,954 modules; large-chunk warning retained honestly)
+
+Source RC complete; promotion gates still external:
+- exact M11 frontend manifests/lock graph passed pnpm 12.8.1 frozen install in networked validation; CI re-runs it cleanly
+- PostgreSQL/FORCE-RLS target-role 0012 tests
+- browser accessibility/responsive/deep-link E2E across core engines
+- mixed workload/restart/revocation/backup-restore/M06->M11 rehearsal
+- >=100-question independent held-out + human review + 3–5 external testers
+- live provider/OIDC/media/browser checks
+- SBOM/action-pin/reproducible archive source proof PASS; actual demo recordings remain an external publication artifact
+
+Rollback:
+VISUALIZATIONS_ENABLED=false
+Keep schema 0012; M10 answer/evidence/quality/export paths remain usable.
+
+Important integrity note:
+The current timeline is source-publication chronology, not inferred event chronology. Do not market it as semantic event extraction until a separately validated event-date contract exists.

@@ -1,0 +1,282 @@
+[
+  {
+    "query": "postgresql transaction isolation mvcc",
+    "relevant_ids": [
+      "pg"
+    ],
+    "documents": [
+      {
+        "id": "pg",
+        "title": "PostgreSQL MVCC",
+        "text": "PostgreSQL uses multiversion concurrency control MVCC and transaction isolation levels for concurrent transactions. PostgreSQL uses multiversion concurrency control MVCC and transaction isolation levels for concurrent transactions. PostgreSQL uses multiversion concurrency control MVCC and transaction isolation levels for concurrent transactions. PostgreSQL uses multiversion concurrency control MVCC and transaction isolation levels for concurrent transactions. PostgreSQL uses multiversion concurrency control MVCC and transaction isolation levels for concurrent transactions. PostgreSQL uses multiversion concurrency control MVCC and transaction isolation levels for concurrent transactions. "
+      },
+      {
+        "id": "rag",
+        "title": "RAG",
+        "text": "Retrieval augmented generation combines search with model generation. Retrieval augmented generation combines search with model generation. Retrieval augmented generation combines search with model generation. Retrieval augmented generation combines search with model generation. Retrieval augmented generation combines search with model generation. Retrieval augmented generation combines search with model generation. "
+      },
+      {
+        "id": "css",
+        "title": "CSS",
+        "text": "CSS container queries adapt layout based on container size. CSS container queries adapt layout based on container size. CSS container queries adapt layout based on container size. CSS container queries adapt layout based on container size. CSS container queries adapt layout based on container size. CSS container queries adapt layout based on container size. "
+      },
+      {
+        "id": "ocr",
+        "title": "OCR",
+        "text": "Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. "
+      }
+    ]
+  },
+  {
+    "query": "hnsw ivfflat memory build time",
+    "relevant_ids": [
+      "vec"
+    ],
+    "documents": [
+      {
+        "id": "vec",
+        "title": "Vector indexes",
+        "text": "HNSW uses more memory and slower build time than IVFFlat while offering strong speed recall tradeoffs. HNSW uses more memory and slower build time than IVFFlat while offering strong speed recall tradeoffs. HNSW uses more memory and slower build time than IVFFlat while offering strong speed recall tradeoffs. HNSW uses more memory and slower build time than IVFFlat while offering strong speed recall tradeoffs. HNSW uses more memory and slower build time than IVFFlat while offering strong speed recall tradeoffs. HNSW uses more memory and slower build time than IVFFlat while offering strong speed recall tradeoffs. "
+      },
+      {
+        "id": "sql",
+        "title": "SQL joins",
+        "text": "Hash joins combine relational tables using equality predicates. Hash joins combine relational tables using equality predicates. Hash joins combine relational tables using equality predicates. Hash joins combine relational tables using equality predicates. Hash joins combine relational tables using equality predicates. Hash joins combine relational tables using equality predicates. "
+      },
+      {
+        "id": "sec",
+        "title": "Security",
+        "text": "SSRF defenses validate public network destinations. SSRF defenses validate public network destinations. SSRF defenses validate public network destinations. SSRF defenses validate public network destinations. SSRF defenses validate public network destinations. SSRF defenses validate public network destinations. "
+      },
+      {
+        "id": "ui",
+        "title": "UI",
+        "text": "Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. "
+      }
+    ]
+  },
+  {
+    "query": "prompt injection retrieved web content",
+    "relevant_ids": [
+      "inj"
+    ],
+    "documents": [
+      {
+        "id": "inj",
+        "title": "Indirect prompt injection",
+        "text": "Indirect prompt injection places malicious instructions inside retrieved web pages or documents processed by a language model. Indirect prompt injection places malicious instructions inside retrieved web pages or documents processed by a language model. Indirect prompt injection places malicious instructions inside retrieved web pages or documents processed by a language model. Indirect prompt injection places malicious instructions inside retrieved web pages or documents processed by a language model. Indirect prompt injection places malicious instructions inside retrieved web pages or documents processed by a language model. Indirect prompt injection places malicious instructions inside retrieved web pages or documents processed by a language model. "
+      },
+      {
+        "id": "pdf",
+        "title": "PDF parsing",
+        "text": "PDF extraction maps page text to offsets. PDF extraction maps page text to offsets. PDF extraction maps page text to offsets. PDF extraction maps page text to offsets. PDF extraction maps page text to offsets. PDF extraction maps page text to offsets. "
+      },
+      {
+        "id": "cache",
+        "title": "Caching",
+        "text": "Caching reduces repeated database reads. Caching reduces repeated database reads. Caching reduces repeated database reads. Caching reduces repeated database reads. Caching reduces repeated database reads. Caching reduces repeated database reads. "
+      },
+      {
+        "id": "git",
+        "title": "Git",
+        "text": "Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. "
+      }
+    ]
+  },
+  {
+    "query": "citation evidence provenance offsets",
+    "relevant_ids": [
+      "prov"
+    ],
+    "documents": [
+      {
+        "id": "prov",
+        "title": "Evidence provenance",
+        "text": "Claim citations should resolve to stored evidence spans with document versions and exact character offsets. Claim citations should resolve to stored evidence spans with document versions and exact character offsets. Claim citations should resolve to stored evidence spans with document versions and exact character offsets. Claim citations should resolve to stored evidence spans with document versions and exact character offsets. Claim citations should resolve to stored evidence spans with document versions and exact character offsets. Claim citations should resolve to stored evidence spans with document versions and exact character offsets. "
+      },
+      {
+        "id": "emb",
+        "title": "Embeddings",
+        "text": "Embeddings map text to vector representations. Embeddings map text to vector representations. Embeddings map text to vector representations. Embeddings map text to vector representations. Embeddings map text to vector representations. Embeddings map text to vector representations. "
+      },
+      {
+        "id": "http",
+        "title": "HTTP",
+        "text": "HTTP redirects use location headers. HTTP redirects use location headers. HTTP redirects use location headers. HTTP redirects use location headers. HTTP redirects use location headers. HTTP redirects use location headers. "
+      },
+      {
+        "id": "queue",
+        "title": "Queues",
+        "text": "Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. "
+      }
+    ]
+  },
+  {
+    "query": "reciprocal rank fusion lexical semantic",
+    "relevant_ids": [
+      "rrf"
+    ],
+    "documents": [
+      {
+        "id": "rrf",
+        "title": "RRF",
+        "text": "Reciprocal rank fusion combines lexical and semantic ranking lists using reciprocal rank contributions. Reciprocal rank fusion combines lexical and semantic ranking lists using reciprocal rank contributions. Reciprocal rank fusion combines lexical and semantic ranking lists using reciprocal rank contributions. Reciprocal rank fusion combines lexical and semantic ranking lists using reciprocal rank contributions. Reciprocal rank fusion combines lexical and semantic ranking lists using reciprocal rank contributions. Reciprocal rank fusion combines lexical and semantic ranking lists using reciprocal rank contributions. "
+      },
+      {
+        "id": "bm",
+        "title": "BM25",
+        "text": "BM25 is a lexical ranking function based on term frequency and document length. BM25 is a lexical ranking function based on term frequency and document length. BM25 is a lexical ranking function based on term frequency and document length. BM25 is a lexical ranking function based on term frequency and document length. BM25 is a lexical ranking function based on term frequency and document length. BM25 is a lexical ranking function based on term frequency and document length. "
+      },
+      {
+        "id": "tls",
+        "title": "TLS",
+        "text": "TLS authenticates endpoints and encrypts network traffic. TLS authenticates endpoints and encrypts network traffic. TLS authenticates endpoints and encrypts network traffic. TLS authenticates endpoints and encrypts network traffic. TLS authenticates endpoints and encrypts network traffic. TLS authenticates endpoints and encrypts network traffic. "
+      },
+      {
+        "id": "api",
+        "title": "API",
+        "text": "REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. "
+      }
+    ]
+  },
+  {
+    "query": "scanned pdf needs ocr text layer",
+    "relevant_ids": [
+      "scan"
+    ],
+    "documents": [
+      {
+        "id": "scan",
+        "title": "Scanned PDF",
+        "text": "A scanned PDF without a usable text layer requires OCR before text can be indexed for research. A scanned PDF without a usable text layer requires OCR before text can be indexed for research. A scanned PDF without a usable text layer requires OCR before text can be indexed for research. A scanned PDF without a usable text layer requires OCR before text can be indexed for research. A scanned PDF without a usable text layer requires OCR before text can be indexed for research. A scanned PDF without a usable text layer requires OCR before text can be indexed for research. "
+      },
+      {
+        "id": "native",
+        "title": "Digital PDF",
+        "text": "A digital PDF may expose extractable text directly. A digital PDF may expose extractable text directly. A digital PDF may expose extractable text directly. A digital PDF may expose extractable text directly. A digital PDF may expose extractable text directly. A digital PDF may expose extractable text directly. "
+      },
+      {
+        "id": "vector",
+        "title": "Vector",
+        "text": "Vector search ranks nearest neighbors. Vector search ranks nearest neighbors. Vector search ranks nearest neighbors. Vector search ranks nearest neighbors. Vector search ranks nearest neighbors. Vector search ranks nearest neighbors. "
+      },
+      {
+        "id": "release",
+        "title": "Release",
+        "text": "Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. "
+      }
+    ]
+  },
+  {
+    "query": "ssrf dns rebinding pinned ip",
+    "relevant_ids": [
+      "ssrf"
+    ],
+    "documents": [
+      {
+        "id": "ssrf",
+        "title": "SSRF",
+        "text": "SSRF defenses validate resolved addresses and pin the outbound connection to the validated public IP to reduce DNS rebinding risk. SSRF defenses validate resolved addresses and pin the outbound connection to the validated public IP to reduce DNS rebinding risk. SSRF defenses validate resolved addresses and pin the outbound connection to the validated public IP to reduce DNS rebinding risk. SSRF defenses validate resolved addresses and pin the outbound connection to the validated public IP to reduce DNS rebinding risk. SSRF defenses validate resolved addresses and pin the outbound connection to the validated public IP to reduce DNS rebinding risk. SSRF defenses validate resolved addresses and pin the outbound connection to the validated public IP to reduce DNS rebinding risk. "
+      },
+      {
+        "id": "cors",
+        "title": "CORS",
+        "text": "CORS controls browser cross-origin access. CORS controls browser cross-origin access. CORS controls browser cross-origin access. CORS controls browser cross-origin access. CORS controls browser cross-origin access. CORS controls browser cross-origin access. "
+      },
+      {
+        "id": "auth",
+        "title": "Auth",
+        "text": "Authentication identifies a principal. Authentication identifies a principal. Authentication identifies a principal. Authentication identifies a principal. Authentication identifies a principal. Authentication identifies a principal. "
+      },
+      {
+        "id": "rag2",
+        "title": "RAG",
+        "text": "RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. "
+      }
+    ]
+  },
+  {
+    "query": "idempotency replay conflicting payload",
+    "relevant_ids": [
+      "idem"
+    ],
+    "documents": [
+      {
+        "id": "idem",
+        "title": "Idempotency",
+        "text": "An idempotency key may replay the same request, while reuse with a different payload should return a conflict. An idempotency key may replay the same request, while reuse with a different payload should return a conflict. An idempotency key may replay the same request, while reuse with a different payload should return a conflict. An idempotency key may replay the same request, while reuse with a different payload should return a conflict. An idempotency key may replay the same request, while reuse with a different payload should return a conflict. An idempotency key may replay the same request, while reuse with a different payload should return a conflict. "
+      },
+      {
+        "id": "lease",
+        "title": "Lease",
+        "text": "Worker leases fence stale workers. Worker leases fence stale workers. Worker leases fence stale workers. Worker leases fence stale workers. Worker leases fence stale workers. Worker leases fence stale workers. "
+      },
+      {
+        "id": "pdf2",
+        "title": "PDF",
+        "text": "PDF pages contain text and graphics. PDF pages contain text and graphics. PDF pages contain text and graphics. PDF pages contain text and graphics. PDF pages contain text and graphics. PDF pages contain text and graphics. "
+      },
+      {
+        "id": "css2",
+        "title": "CSS",
+        "text": "CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. "
+      }
+    ]
+  },
+  {
+    "query": "claim support conflicting evidence",
+    "relevant_ids": [
+      "claim"
+    ],
+    "documents": [
+      {
+        "id": "claim",
+        "title": "Claim verification",
+        "text": "Claim verification should distinguish supported, partially supported, conflicting, and insufficient evidence states. Claim verification should distinguish supported, partially supported, conflicting, and insufficient evidence states. Claim verification should distinguish supported, partially supported, conflicting, and insufficient evidence states. Claim verification should distinguish supported, partially supported, conflicting, and insufficient evidence states. Claim verification should distinguish supported, partially supported, conflicting, and insufficient evidence states. Claim verification should distinguish supported, partially supported, conflicting, and insufficient evidence states. "
+      },
+      {
+        "id": "search",
+        "title": "Search",
+        "text": "Metasearch aggregates result links. Metasearch aggregates result links. Metasearch aggregates result links. Metasearch aggregates result links. Metasearch aggregates result links. Metasearch aggregates result links. "
+      },
+      {
+        "id": "log",
+        "title": "Logging",
+        "text": "Structured logs use stable event names. Structured logs use stable event names. Structured logs use stable event names. Structured logs use stable event names. Structured logs use stable event names. Structured logs use stable event names. "
+      },
+      {
+        "id": "db",
+        "title": "Database",
+        "text": "Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. "
+      }
+    ]
+  },
+  {
+    "query": "rate limit rpm tpm rpd quota",
+    "relevant_ids": [
+      "quota"
+    ],
+    "documents": [
+      {
+        "id": "quota",
+        "title": "Provider quota",
+        "text": "Provider quota enforcement reserves requests per minute, tokens per minute, and rolling daily requests before a model call. Provider quota enforcement reserves requests per minute, tokens per minute, and rolling daily requests before a model call. Provider quota enforcement reserves requests per minute, tokens per minute, and rolling daily requests before a model call. Provider quota enforcement reserves requests per minute, tokens per minute, and rolling daily requests before a model call. Provider quota enforcement reserves requests per minute, tokens per minute, and rolling daily requests before a model call. Provider quota enforcement reserves requests per minute, tokens per minute, and rolling daily requests before a model call. "
+      },
+      {
+        "id": "ui2",
+        "title": "Interface",
+        "text": "A user interface contains interactive controls. A user interface contains interactive controls. A user interface contains interactive controls. A user interface contains interactive controls. A user interface contains interactive controls. A user interface contains interactive controls. "
+      },
+      {
+        "id": "paper",
+        "title": "Paper",
+        "text": "Academic papers include abstracts and citations. Academic papers include abstracts and citations. Academic papers include abstracts and citations. Academic papers include abstracts and citations. Academic papers include abstracts and citations. Academic papers include abstracts and citations. "
+      },
+      {
+        "id": "blob",
+        "title": "Blob",
+        "text": "Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. "
+      }
+    ]
+  }
+]

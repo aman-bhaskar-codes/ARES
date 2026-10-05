@@ -1,0 +1,16 @@
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "ARES Search"
+
+search:
+  safe_search: 1
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "ares-local-development-only-change-before-public-use"
+  limiter: false
+  image_proxy: false

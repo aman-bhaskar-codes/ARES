@@ -1,0 +1,89 @@
+[
+  {
+    "claim": "HNSW has slower build times and uses more memory than IVFFlat.",
+    "evidence": [
+      "HNSW has slower build times and uses more memory than IVFFlat."
+    ],
+    "expected_verdict": "supported"
+  },
+  {
+    "claim": "RRF combines lexical and semantic rankings.",
+    "evidence": [
+      "Reciprocal rank fusion combines rankings from lexical retrieval and semantic retrieval."
+    ],
+    "expected_verdict": "supported"
+  },
+  {
+    "claim": "The API uses idempotency keys for run creation.",
+    "evidence": [
+      "Run creation requires an idempotency key and replays the same request when the key and payload match."
+    ],
+    "expected_verdict": "supported"
+  },
+  {
+    "claim": "The PDF parser runs in a bounded subprocess.",
+    "evidence": [
+      "Untrusted PDF parsing runs in a separate bounded process with time and resource ceilings."
+    ],
+    "expected_verdict": "supported"
+  },
+  {
+    "claim": "The study reports better retrieval accuracy.",
+    "evidence": [
+      "The study reports retrieval accuracy and downstream task success, with higher scores on two benchmarks."
+    ],
+    "expected_verdict": "supported"
+  },
+  {
+    "claim": "The system improves latency and memory use.",
+    "evidence": [
+      "The system improves latency in the measured workload."
+    ],
+    "expected_verdict": "partially_supported"
+  },
+  {
+    "claim": "The evaluation covers every production workload.",
+    "evidence": [
+      "The evaluation uses three synthetic corpora and one development workload."
+    ],
+    "expected_verdict": "insufficient_evidence"
+  },
+  {
+    "claim": "The model reduced cost by 80 percent.",
+    "evidence": [
+      "The paper discusses retrieval recall and citation precision."
+    ],
+    "expected_verdict": "insufficient_evidence"
+  },
+  {
+    "claim": "The release removed Python support.",
+    "evidence": [
+      "The release notes describe new tracing APIs and bug fixes."
+    ],
+    "expected_verdict": "insufficient_evidence"
+  },
+  {
+    "claim": "The index increased retrieval latency.",
+    "evidence": [
+      "The index increased retrieval latency in the large corpus.",
+      "The index decreased retrieval latency in the large corpus."
+    ],
+    "expected_verdict": "conflicting"
+  },
+  {
+    "claim": "The feature is enabled by default.",
+    "evidence": [
+      "The feature is enabled by default for new projects.",
+      "The migration guide says the feature is disabled by default for existing projects."
+    ],
+    "expected_verdict": "conflicting"
+  },
+  {
+    "claim": "The policy blocks external network calls.",
+    "evidence": [
+      "The policy blocks external network calls from the worker.",
+      "A compatibility mode allows external network calls from the worker."
+    ],
+    "expected_verdict": "conflicting"
+  }
+]

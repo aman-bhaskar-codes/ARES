@@ -1,0 +1,4 @@
+fastapi==0.142.2
+pydantic==2.13.5
+uvicorn[standard]==0.54.0
+playwright==1.63.0
