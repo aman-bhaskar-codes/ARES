@@ -20,6 +20,6 @@ class RunBudget:
 
 
 BUDGETS = {
-    RunMode.QUICK: RunBudget(1, 4, 3, 6, 2, 12_000, 3_000, 60),
+    RunMode.QUICK: RunBudget(1, 4, 3, 6, 2, 12_000, 3_000, 120),
     RunMode.RESEARCH: RunBudget(3, 10, 8, 20, 3, 40_000, 8_000, 300),
 }
