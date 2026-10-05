@@ -12,7 +12,7 @@ dependencies = [
   "psycopg[binary]==3.3.6",
   "httpx==0.28.1",
   "uvicorn[standard]==0.54.0",
-  "google-genai==2.26.0",
+  "google-genai==2.27.0",
   "trafilatura==2.2.0",
   "pypdf==6.19.0",
   "python-multipart==0.0.32",
