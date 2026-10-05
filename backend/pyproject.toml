@@ -16,7 +16,7 @@ dependencies = [
   "trafilatura==2.2.0",
   "pypdf==6.19.0",
   "python-multipart==0.0.32",
-  "cryptography==46.0.4",
+  "cryptography==50.0.2",
 ]
 
 [project.optional-dependencies]
