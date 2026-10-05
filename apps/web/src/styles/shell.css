@@ -55,6 +55,7 @@
   padding: 0 28px;
   border-bottom: 1px solid var(--line);
   background: rgba(243, 246, 246, 0.87);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   position: sticky;
   top: 0;

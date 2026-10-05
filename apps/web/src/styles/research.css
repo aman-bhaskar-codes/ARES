@@ -1360,6 +1360,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   overflow-x: auto;
 }
