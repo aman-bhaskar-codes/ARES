@@ -322,37 +322,52 @@ export function EvidenceDrawer({ evidence, onClose }: { evidence: Evidence; onCl
         </div>
         <button ref={closeRef} className="icon-button" onClick={onClose} aria-label="Close evidence"><X size={18} /></button>
       </div>
-      <div className="source-meta">
-        <span>{evidence.source.domain}</span><span>·</span><span>{locatorLabel}</span>
+      <div className="source-meta" style={{ marginBottom: '24px' }}>
+        <span>{evidence.source.domain}</span>
+        {evidence.source.published_at && <><span>·</span><span>{new Date(evidence.source.published_at).toLocaleDateString()}</span></>}
+        <span>·</span><span>{locatorLabel}</span>
       </div>
 
-      <EvidenceAssetPreview evidence={evidence}/>
-
-      <blockquote>{evidence.text}</blockquote>
-      <div className="evidence-facts">
-        <div><span>Support</span><strong>{evidence.support_status.replaceAll('_', ' ')}</strong></div>
-        {evidence.source.canonical_identifier && <div><span>Identifier</span><code>{evidence.source.canonical_identifier}</code></div>}
-        {evidence.source.published_at && <div><span>Published</span><strong>{new Date(evidence.source.published_at).toLocaleDateString()}</strong></div>}
-        <div><span>Captured</span><strong>{new Date(evidence.captured_at).toLocaleString()}</strong></div>
-        <div><span>Method</span><strong>{evidence.source.extraction_method}</strong></div>
-        <div><span>Provider</span><strong>{evidence.source.provider}</strong></div>
-        <div><span>Version hash</span><code>{evidence.content_hash.slice(0, 16)}…</code></div>
-        {evidence.asset_name && <div><span>Asset</span><strong>{evidence.asset_name}</strong></div>}
-        {evidence.document_version_id && <div><span>Document version</span><code>{evidence.document_version_id.slice(0, 8)}…</code></div>}
-        {evidence.char_start !== null && evidence.char_end !== null && (
-          <div><span>Source offsets</span><code>{evidence.char_start}–{evidence.char_end}</code></div>
-        )}
+      <div className="drawer-cited-evidence" style={{ marginBottom: '24px' }}>
+        <blockquote style={{ marginTop: 0, marginBottom: '16px', fontSize: '15px', color: 'var(--ink)', borderLeft: '3px solid var(--accent)' }}>{evidence.text}</blockquote>
+        <EvidenceAssetPreview evidence={evidence}/>
       </div>
-      {evidence.asset_content_url && (
-        <a className="source-link" href={evidence.asset_content_url} target="_blank" rel="noreferrer">
-          Open original asset <ExternalLink size={15} />
-        </a>
-      )}
-      {!evidence.asset_content_url && evidence.source.url && evidence.source.domain !== 'local.ares.invalid' && (
-        <a className="source-link" href={evidence.source.url} target="_blank" rel="noreferrer">
-          Open original source <ExternalLink size={15} />
-        </a>
-      )}
+
+      <div className="drawer-support-context" style={{ marginBottom: '24px', padding: '16px', background: 'var(--surface-sunken)', borderRadius: '8px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--ink-light)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Support context</div>
+        <div style={{ fontWeight: 600, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="support-dot" data-support={evidence.support_status} style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'currentColor' }} />
+          {evidence.support_status.replaceAll('_', ' ').toUpperCase()}
+        </div>
+      </div>
+
+      <div className="drawer-actions" style={{ marginBottom: '32px' }}>
+        {evidence.asset_content_url ? (
+          <a className="button" href={evidence.asset_content_url} target="_blank" rel="noreferrer" style={{ width: '100%', justifyContent: 'center' }}>
+            Open original asset <ExternalLink size={15} />
+          </a>
+        ) : (evidence.source.url && evidence.source.domain !== 'local.ares.invalid') ? (
+          <a className="button" href={evidence.source.url} target="_blank" rel="noreferrer" style={{ width: '100%', justifyContent: 'center' }}>
+            Open original source <ExternalLink size={15} />
+          </a>
+        ) : null}
+      </div>
+
+      <details className="evidence-facts-details">
+        <summary style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--ink-light)', padding: '12px 0', borderTop: '1px solid var(--line)', fontWeight: 500 }}>Technical provenance</summary>
+        <div className="evidence-facts" style={{ marginTop: '12px' }}>
+          {evidence.source.canonical_identifier && <div><span>Identifier</span><code>{evidence.source.canonical_identifier}</code></div>}
+          <div><span>Captured</span><strong>{new Date(evidence.captured_at).toLocaleString()}</strong></div>
+          <div><span>Method</span><strong>{evidence.source.extraction_method}</strong></div>
+          <div><span>Provider</span><strong>{evidence.source.provider}</strong></div>
+          <div><span>Version hash</span><code>{evidence.content_hash.slice(0, 16)}…</code></div>
+          {evidence.asset_name && <div><span>Asset</span><strong>{evidence.asset_name}</strong></div>}
+          {evidence.document_version_id && <div><span>Document version</span><code>{evidence.document_version_id.slice(0, 8)}…</code></div>}
+          {evidence.char_start !== null && evidence.char_end !== null && (
+            <div><span>Source offsets</span><code>{evidence.char_start}–{evidence.char_end}</code></div>
+          )}
+        </div>
+      </details>
     </aside>
   )
 }
