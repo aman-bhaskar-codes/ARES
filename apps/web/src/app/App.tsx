@@ -25,9 +25,12 @@ import { parseResearchLocation, researchConversationUrl, researchRunUrl, type Re
 import type { Evidence, RunMode, RunSnapshot, SourceScope } from '../lib/api/types'
 import { Answer } from '../features/research/Answer'
 import { Composer } from '../features/research/Composer'
+import { FollowUpComposer } from '../features/research/FollowUpComposer'
 import { EvidenceDrawer } from '../features/research/EvidenceDrawer'
 import { EvidenceIndex } from '../features/research/EvidenceIndex'
 import { ResearchActivity } from '../features/research/ResearchActivity'
+import { ResearchGaps } from '../features/research/ResearchGaps'
+import { CompactResearchProgress } from '../features/research/CompactResearchProgress'
 import { RunQualityPanel } from '../features/research/RunQualityPanel'
 import { VisualizationWorkspace } from '../features/research/VisualizationWorkspace'
 import { useRunStream } from '../features/research/useRunStream'
@@ -489,7 +492,7 @@ export default function App() {
         ) : (
           <div className="thread-view">
             <RunHeader run={run} />
-            <ResearchActivity status={run.status} events={events} />
+            <CompactResearchProgress status={run.status} events={events} onViewActivity={() => navigate(runUrl('activity'))} />
             <ResearchViewNav 
               activeView={activeView} 
               onSelectView={selectView} 
@@ -506,11 +509,11 @@ export default function App() {
                 </div>
               )}
               {terminal.has(run.status) && quality.data && <RunQualityPanel quality={quality.data} onEvidence={openEvidence} />}
-              {run.gaps.length > 0 && <section className="gap-card"><Info size={18} /><div><strong>What remains unclear</strong>{run.gaps.map((gap) => <p key={gap}>{gap}</p>)}</div></section>}
+              <ResearchGaps gaps={run.gaps} runStatus={run.status} />
               {run.status === 'failed' && <section className="failure-card"><div><AlertTriangle size={18} /><strong>{run.error_code ?? 'Research failed'}</strong><p>{run.error_message}</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry as new run</button></section>}
               {run.status === 'cancelled' && <section className="failure-card calm"><div><strong>Research stopped</strong><p>Completed work was preserved. Retry starts a new run with the same source policy.</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry</button></section>}
               <div className="followup">
-                <Composer
+                <FollowUpComposer
                   busy={busy}
                   readOnly={!canWrite}
                   mode={mode}

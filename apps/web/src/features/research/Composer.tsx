@@ -4,7 +4,7 @@ import type { RunMode, SourceScope } from '../../lib/api/types'
 import { SourceScopeControls } from './SourceScopeControls'
 
 export function Composer({
-  busy, readOnly = false, mode, onMode, sourceScope, onSourceScope, selectedDocuments, onSubmit, onStop
+  busy, readOnly = false, mode, onMode, sourceScope, onSourceScope, selectedDocuments, onSubmit, onStop, placeholder
 }: {
   busy: boolean
   readOnly?: boolean
@@ -15,6 +15,7 @@ export function Composer({
   selectedDocuments: number
   onSubmit: (query: string) => Promise<void>
   onStop: () => void
+  placeholder?: string
 }) {
   const [query, setQuery] = useState('')
   const submit = async () => {
@@ -38,7 +39,7 @@ export function Composer({
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={onKey}
         rows={2}
-        placeholder="Ask a question worth tracing back to evidence…"
+        placeholder={placeholder ?? "Ask a question worth tracing back to evidence…"}
         disabled={busy || readOnly}
       />
       <SourceScopeControls value={sourceScope} onChange={readOnly ? () => undefined : onSourceScope} selectedDocuments={selectedDocuments} />
