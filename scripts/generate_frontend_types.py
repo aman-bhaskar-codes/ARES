@@ -34,8 +34,10 @@ def ts_type(schema: dict) -> str:
             for key, value in (schema.get("properties") or {}).items()
         ]
         additional = schema.get("additionalProperties")
-        if additional is True: parts.append("[key: string]: unknown;")
-        elif isinstance(additional, dict): parts.append(f"[key: string]: {ts_type(additional)};")
+        if additional is True:
+            parts.append("[key: string]: unknown;")
+        elif isinstance(additional, dict):
+            parts.append(f"[key: string]: {ts_type(additional)};")
         return "{ " + " ".join(parts) + " }" if parts else "Record<string, unknown>"
     return "unknown"
 
