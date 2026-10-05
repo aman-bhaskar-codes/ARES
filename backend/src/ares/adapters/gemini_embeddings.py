@@ -56,7 +56,16 @@ class GeminiEmbeddingProvider:
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        return self._embed([f"task: retrieval | document: {text}" for text in texts])
+        
+        all_vectors = []
+        batch_size = 100
+        prefixed_texts = [f"task: retrieval | document: {text}" for text in texts]
+        
+        for i in range(0, len(prefixed_texts), batch_size):
+            batch = prefixed_texts[i:i + batch_size]
+            all_vectors.extend(self._embed(batch))
+            
+        return all_vectors
 
     def close(self) -> None:
         if not self._owns_client:

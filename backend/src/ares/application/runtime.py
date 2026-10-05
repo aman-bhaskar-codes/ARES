@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from ares.adapters.academic import CompositeAcademicProvider
 from ares.adapters.arxiv import ArxivAcademicProvider
 from ares.adapters.crossref import CrossrefAcademicProvider
 from ares.adapters.gemini import GeminiLLMProvider
@@ -16,6 +15,7 @@ from ares.adapters.searxng import SearXNGSearchProvider
 from ares.api.settings import Settings
 from ares.application.engine import DemoResearchEngine, ResearchEngine
 from ares.application.persistent_rag import PersistentDocumentRAG
+from ares.application.providers import ProviderRegistry
 from ares.application.rag import HybridRAGRetriever
 from ares.application.repository import Repository
 
@@ -67,13 +67,12 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         embedding_runtime if embedding_runtime is not None else build_embedding_runtime(settings)
     )
 
-    academic = CompositeAcademicProvider(
-        [
-            OpenAlexAcademicProvider(settings.openalex_api_key),
-            CrossrefAcademicProvider(mailto=settings.crossref_mailto),
-            ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds),
-        ]
-    )
+    registry = ProviderRegistry()
+    registry.register(SearXNGSearchProvider(settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds))
+    registry.register(OpenAlexAcademicProvider(settings.openalex_api_key))
+    registry.register(CrossrefAcademicProvider(mailto=settings.crossref_mailto))
+    registry.register(ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds))
+    registry.register(GitHubSoftwareProvider(settings.github_read_token))
     persistent_documents = PersistentDocumentRAG(
         repository,
         embedder=embedder,
@@ -124,8 +123,7 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         gemini_timeout_seconds=settings.gemini_timeout_seconds,
         decisions=decisions,
         retriever=HybridRAGRetriever(embedder=embedder),
-        academic=academic,
-        software=GitHubSoftwareProvider(settings.github_read_token),
+        registry=registry,
         persistent_documents=persistent_documents,
         discovery_concurrency=settings.discovery_concurrency,
         research_cache_enabled=settings.research_cache_enabled,

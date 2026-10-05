@@ -5,15 +5,48 @@ from urllib.parse import urljoin
 
 import httpx
 
-from ares.domain.models import SearchHit
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.domain.models import FetchedDocument, SearchHit
 from ares.domain.research import SearchRequest
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
 
-class SearXNGSearchProvider:
+class SearXNGSearchProvider(DiscoveryProvider):
     def __init__(self, base_url: str, timeout_seconds: float = 10.0, *, client: httpx.Client | None = None):
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout_seconds = timeout_seconds
+        self._client = client or httpx.Client(timeout=timeout_seconds)
+        self._owns_client = client is None
+
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="searxng",
+            source_kind="web",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,
+                supports_exact_id=False,
+            ),
+            cost_class="free",
+            timeout_seconds=self.timeout_seconds,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=3600,
+        )
+
+    def search_documents(
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
+        # Map time range roughly if needed, or rely on engine to pass the string
+        req = SearchRequest(query=query, limit=limit, timeout_seconds=timeout_seconds)
+        hits = self.search(req)
+        return [(hit, None) for hit in hits]
         self._client = client or httpx.Client(timeout=timeout_seconds)
         self._owns_client = client is None
 

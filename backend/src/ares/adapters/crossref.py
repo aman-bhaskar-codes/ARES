@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -30,7 +31,7 @@ def _date_from_parts(value) -> datetime | None:
         return None
 
 
-class CrossrefAcademicProvider:
+class CrossrefAcademicProvider(DiscoveryProvider):
     """Crossref DOI metadata adapter using the public/polite REST API."""
 
     def __init__(
@@ -45,10 +46,31 @@ class CrossrefAcademicProvider:
         self._client = client or httpx.Client(base_url=base_url.rstrip("/"), headers=headers, timeout=20.0)
         self._owns_client = client is None
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="crossref",
+            source_kind="academic",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=20.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=604800,
+        )
+
     def search_documents(
-        self, query: str, *, limit: int = 6, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         params: dict[str, str | int] = {
             "query.bibliographic": query,
             "rows": min(max(limit, 1), 20),

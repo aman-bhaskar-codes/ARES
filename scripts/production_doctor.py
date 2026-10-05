@@ -34,8 +34,8 @@ def main() -> int:
         failures.append("AUTH_MODE must be oidc")
     if settings.readiness_requires_worker is False:
         warnings.append("READINESS_REQUIRES_WORKER=false; API may be ready while no worker can process research")
-    if settings.required_schema_revision != "0011":
-        failures.append("REQUIRED_SCHEMA_REVISION must be 0011 for the M10 development candidate")
+    if settings.required_schema_revision != "0012":
+        failures.append("REQUIRED_SCHEMA_REVISION must be 0012 for the M10 development candidate")
     if urlsplit(settings.database_url).username == urlsplit(settings.worker_database_url).username:
         failures.append("API and worker database URLs resolve to the same login role")
     if settings.otel_exporter_otlp_endpoint == "":

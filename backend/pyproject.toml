@@ -17,6 +17,7 @@ dependencies = [
   "pypdf==6.19.0",
   "python-multipart==0.0.32",
   "cryptography==50.0.2",
+  "fastembed>=0.8.1",
 ]
 
 [project.optional-dependencies]

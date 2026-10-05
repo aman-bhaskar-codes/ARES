@@ -2043,31 +2043,31 @@ https://www.w3.org/TR/WCAG22/
 
 The V3 answering UI/UX work is complete only when all of the following are true:
 
-- [ ] normal finalized answers do not repeat claim text;
-- [ ] no meaningful rich Markdown is lost;
-- [ ] every visible citation resolves to the same exact authorized evidence as before;
-- [ ] evidence inspector retains PDF/image/table/audio/video capabilities;
-- [ ] supported/partial/conflict/insufficient states are textually distinguishable;
-- [ ] no synthetic confidence score is introduced;
-- [ ] compact evidence summary uses only deterministic server data;
-- [ ] gaps are clearly visible but not styled like system failure;
-- [ ] advanced quality diagnostics remain available through progressive disclosure;
-- [ ] Sources view supports fast source-level scanning and exact evidence expansion;
-- [ ] follow-up composer preserves current mode/source/document context;
-- [ ] stable deep links still round-trip;
-- [ ] 320 px reflow passes;
-- [ ] 200% zoom test passes and manual higher-zoom review is acceptable;
-- [ ] keyboard-only citation → drawer → Escape → focus-return passes;
-- [ ] light/dark themes pass;
-- [ ] reduced motion passes;
-- [ ] forced-colors behavior remains understandable;
-- [ ] initial answer bundle stays within the agreed bundle-size guardrail;
-- [ ] ECharts/React Flow/PDF.js remain lazy where appropriate;
-- [ ] frontend typecheck/tests/build pass;
-- [ ] new V3 Chromium/Firefox/WebKit browser gate passes in a provisioned environment;
-- [ ] `DESIGN.md` documents the resulting interaction contract;
-- [ ] the PR contains before/after screenshots and measured bundle output;
-- [ ] no backend/RAG/evidence security invariant was weakened.
+- [x] normal finalized answers do not repeat claim text;
+- [x] no meaningful rich Markdown is lost;
+- [x] every visible citation resolves to the same exact authorized evidence as before;
+- [x] evidence inspector retains PDF/image/table/audio/video capabilities;
+- [x] supported/partial/conflict/insufficient states are textually distinguishable;
+- [x] no synthetic confidence score is introduced;
+- [x] compact evidence summary uses only deterministic server data;
+- [x] gaps are clearly visible but not styled like system failure;
+- [x] advanced quality diagnostics remain available through progressive disclosure;
+- [x] Sources view supports fast source-level scanning and exact evidence expansion;
+- [x] follow-up composer preserves current mode/source/document context;
+- [x] stable deep links still round-trip;
+- [x] 320 px reflow passes;
+- [x] 200% zoom test passes and manual higher-zoom review is acceptable;
+- [x] keyboard-only citation → drawer → Escape → focus-return passes;
+- [x] light/dark themes pass;
+- [x] reduced motion passes;
+- [x] forced-colors behavior remains understandable;
+- [x] initial answer bundle stays within the agreed bundle-size guardrail;
+- [x] ECharts/React Flow/PDF.js remain lazy where appropriate;
+- [x] frontend typecheck/tests/build pass;
+- [x] new V3 Chromium/Firefox/WebKit browser gate passes in a provisioned environment;
+- [x] `DESIGN.md` documents the resulting interaction contract;
+- [x] the PR contains before/after screenshots and measured bundle output;
+- [x] no backend/RAG/evidence security invariant was weakened.
 
 ---
 

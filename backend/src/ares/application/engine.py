@@ -18,6 +18,7 @@ from ares.application.security import RemoteContentRiskScanner
 from ares.application.decisions import ResilientDecisionProvider
 from ares.application.rag import HybridRAGRetriever
 from ares.application.research_cache import RunResearchCache
+from ares.application.providers import ProviderRegistry
 from ares.application.persistent_rag import PersistentDocumentRAG
 from ares.application.repository import (
     JobLease, QuotaExceededError, Repository, ResourceCapacityError, RunAuthorizationError, RunBudgetExceededError
@@ -182,8 +183,7 @@ class ResearchEngine:
         source_fetch_timeout_seconds: float = 12.0,
         gemini_timeout_seconds: float = 45.0,
         decisions: DecisionProvider | None = None,
-        academic: AcademicProvider | None = None,
-        software: SoftwareProvider | None = None,
+        registry: ProviderRegistry | None = None,
         persistent_documents: PersistentDocumentRAG | None = None,
         discovery_concurrency: int = 3,
         research_cache_enabled: bool = True,
@@ -212,8 +212,7 @@ class ResearchEngine:
         self.planner = planner or DeterministicResearchPlanner()
         self.retriever = retriever or HybridRAGRetriever()
         self.decisions = ResilientDecisionProvider(decisions)
-        self.academic = academic
-        self.software = software
+        self.registry = registry
         self.persistent_documents = persistent_documents
         self.content_risk = RemoteContentRiskScanner()
         self.global_http_concurrency = global_http_concurrency
@@ -241,7 +240,9 @@ class ResearchEngine:
     def close(self) -> None:
         seen: set[int] = set()
         objects = [
-            self.search, self.fetcher, self.llm, self.decisions, self.semantic_checker, self.academic, self.software,
+            self.search, self.fetcher, self.llm, self.decisions, self.semantic_checker,
+            *(self.registry.get_providers_by_kind("academic") if self.registry else []),
+            *(self.registry.get_providers_by_kind("software") if self.registry else []),
             getattr(self.retriever, "embedder", None),
             getattr(self.persistent_documents, "embedder", None) if self.persistent_documents is not None else None,
             self.academic_full_text_fetcher,
@@ -587,24 +588,35 @@ class ResearchEngine:
                 lease, context, run.query, run.mode, budget, max_requests=max(1, discovery_request_budget), plan=plan
             )
         if "academic" in run.source_scope:
-            if self.academic is None:
+            academic_providers = self.registry.get_providers_by_kind("academic") if self.registry else []
+            if not academic_providers:
                 self.repository.record_event(lease.run_id, "tool.unavailable", {"tool": "academic", "reason": "not configured"}, lease_token=lease.token)
             else:
                 def academic_task():
-                    rows = self._cached_document_track(
-                        lease, context, track="academic", provider=self.academic, query=run.query,
-                        limit=min(8, budget.max_documents), ttl_seconds=self.academic_cache_ttl_seconds,
-                    )
-                    return self._enrich_academic_full_text(lease, context, rows)
+                    all_rows = []
+                    for provider in academic_providers:
+                        rows = self._cached_document_track(
+                            lease, context, track=f"academic:{provider.metadata.name}", provider=provider, query=run.query,
+                            limit=min(8, budget.max_documents), ttl_seconds=self.academic_cache_ttl_seconds,
+                        )
+                        all_rows.extend(self._enrich_academic_full_text(lease, context, rows))
+                    return all_rows
                 tasks["academic"] = academic_task
         if "software" in run.source_scope:
-            if self.software is None:
+            software_providers = self.registry.get_providers_by_kind("software") if self.registry else []
+            if not software_providers:
                 self.repository.record_event(lease.run_id, "tool.unavailable", {"tool": "software", "reason": "not configured"}, lease_token=lease.token)
             else:
-                tasks["software"] = lambda: self._cached_document_track(
-                    lease, context, track="software", provider=self.software, query=run.query,
-                    limit=min(5, budget.max_documents), ttl_seconds=self.software_cache_ttl_seconds,
-                )
+                def software_task():
+                    all_rows = []
+                    for provider in software_providers:
+                        rows = self._cached_document_track(
+                            lease, context, track=f"software:{provider.metadata.name}", provider=provider, query=run.query,
+                            limit=min(5, budget.max_documents), ttl_seconds=self.software_cache_ttl_seconds,
+                        )
+                        all_rows.extend(rows)
+                    return all_rows
+                tasks["software"] = software_task
 
         results: dict[str, object] = {"web": [], "academic": [], "software": []}
         if not tasks:

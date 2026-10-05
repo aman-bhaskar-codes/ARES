@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urljoin
@@ -25,6 +26,7 @@ class CheckResult:
     required: bool
     ok: bool
     detail: str
+    latency_ms: float | None = None
 
 
 def _print(result: CheckResult) -> None:
@@ -34,11 +36,13 @@ def _print(result: CheckResult) -> None:
         state = "FAIL"
     else:
         state = "WARN"
-    print(f"[{state:4}] {result.name}: {result.detail}")
+    latency = f" [{result.latency_ms:.0f}ms]" if result.latency_ms is not None else ""
+    print(f"[{state:4}]{latency} {result.name}: {result.detail}")
 
 
 def _db_check(settings: Settings) -> CheckResult:
     engine = None
+    start = time.perf_counter()
     try:
         engine, _ = build_session_factory(settings.database_url)
         with engine.connect() as connection:
@@ -46,16 +50,18 @@ def _db_check(settings: Settings) -> CheckResult:
             try:
                 revision = connection.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).scalar_one()
             except Exception:
-                return CheckResult("database/schema", True, False, "connected, but alembic_version is unavailable")
+                return CheckResult("database/schema", True, False, "connected, but alembic_version is unavailable", (time.perf_counter() - start) * 1000)
         expected = settings.required_schema_revision
+        latency = (time.perf_counter() - start) * 1000
         return CheckResult(
             "database/schema",
             True,
             str(revision) == expected,
             f"connected; revision={revision}; expected={expected}",
+            latency,
         )
     except Exception as exc:
-        return CheckResult("database/schema", True, False, f"{type(exc).__name__}: {exc}")
+        return CheckResult("database/schema", True, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
     finally:
         if engine is not None:
             engine.dispose()
@@ -63,11 +69,12 @@ def _db_check(settings: Settings) -> CheckResult:
 
 def _searxng_check(settings: Settings, timeout: float) -> CheckResult:
     provider = SearXNGSearchProvider(settings.searxng_url, timeout_seconds=timeout)
+    start = time.perf_counter()
     try:
         provider.search(SearchRequest(query="ARES connectivity check", limit=1, timeout_seconds=timeout))
-        return CheckResult("SearXNG", settings.ares_mode == "local_live", True, "search API responded with valid JSON")
+        return CheckResult("SearXNG", settings.ares_mode == "local_live", True, "search API responded with valid JSON", (time.perf_counter() - start) * 1000)
     except Exception as exc:
-        return CheckResult("SearXNG", settings.ares_mode == "local_live", False, f"{type(exc).__name__}: {exc}")
+        return CheckResult("SearXNG", settings.ares_mode == "local_live", False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
     finally:
         provider.close()
 
@@ -76,6 +83,7 @@ def _gemini_check(settings: Settings, timeout: float) -> CheckResult:
     required = settings.ares_mode == "local_live"
     if not settings.gemini_api_key:
         return CheckResult("Gemini", required, not required, "API key not configured")
+    start = time.perf_counter()
     try:
         from google import genai  # type: ignore[import-not-found]
         from google.genai import types  # type: ignore[import-not-found]
@@ -87,11 +95,11 @@ def _gemini_check(settings: Settings, timeout: float) -> CheckResult:
         try:
             model = client.models.get(model=settings.gemini_model)
             resolved = getattr(model, "name", None) or settings.gemini_model
-            return CheckResult("Gemini", required, True, f"credentials/model metadata accepted ({resolved})")
+            return CheckResult("Gemini", required, True, f"credentials/model metadata accepted ({resolved})", (time.perf_counter() - start) * 1000)
         finally:
             client.close()
     except Exception as exc:
-        return CheckResult("Gemini", required, False, f"{type(exc).__name__}: {exc}")
+        return CheckResult("Gemini", required, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
 
 
 def _oidc_check(settings: Settings, timeout: float) -> CheckResult:
@@ -99,6 +107,7 @@ def _oidc_check(settings: Settings, timeout: float) -> CheckResult:
     if not required:
         return CheckResult("OIDC discovery", False, True, "disabled")
     endpoint = urljoin(settings.oidc_issuer.rstrip("/") + "/", ".well-known/openid-configuration")
+    start = time.perf_counter()
     try:
         with httpx.Client(timeout=timeout, follow_redirects=False) as client:
             response = client.get(endpoint, headers={"Accept": "application/json"})
@@ -109,21 +118,23 @@ def _oidc_check(settings: Settings, timeout: float) -> CheckResult:
         token_endpoint = payload.get("token_endpoint")
         jwks_uri = payload.get("jwks_uri")
         ok = all(isinstance(value, str) and value.startswith("https://") for value in [issuer, authorization_endpoint, token_endpoint, jwks_uri])
+        latency = (time.perf_counter() - start) * 1000
         if not ok:
-            return CheckResult("OIDC discovery", required, False, "discovery document is missing required HTTPS endpoints")
+            return CheckResult("OIDC discovery", required, False, "discovery document is missing required HTTPS endpoints", latency)
         if issuer.rstrip("/") != settings.oidc_issuer.rstrip("/"):
-            return CheckResult("OIDC discovery", required, False, "discovery issuer does not match OIDC_ISSUER")
-        return CheckResult("OIDC discovery", required, True, "issuer, authorization, token and JWKS endpoints validated")
+            return CheckResult("OIDC discovery", required, False, "discovery issuer does not match OIDC_ISSUER", latency)
+        return CheckResult("OIDC discovery", required, True, "issuer, authorization, token and JWKS endpoints validated", latency)
     except Exception as exc:
-        return CheckResult("OIDC discovery", required, False, f"{type(exc).__name__}: {exc}")
+        return CheckResult("OIDC discovery", required, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
 
 
 def _academic_check(name: str, provider, timeout: float) -> CheckResult:
+    start = time.perf_counter()
     try:
         provider.search_documents("evidence based research", limit=1, timeout_seconds=timeout)
-        return CheckResult(name, False, True, "read-only API responded")
+        return CheckResult(name, False, True, "read-only API responded", (time.perf_counter() - start) * 1000)
     except Exception as exc:
-        return CheckResult(name, False, False, f"{type(exc).__name__}: {exc}")
+        return CheckResult(name, False, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
     finally:
         provider.close()
 
@@ -136,15 +147,16 @@ def _github_check(settings: Settings, timeout: float) -> CheckResult:
     }
     if settings.github_read_token.strip():
         headers["Authorization"] = f"Bearer {settings.github_read_token.strip()}"
+    start = time.perf_counter()
     try:
         with httpx.Client(base_url="https://api.github.com", timeout=timeout, headers=headers) as client:
             response = client.get("/rate_limit")
             response.raise_for_status()
             payload = response.json()
         remaining = ((payload.get("resources") or {}).get("core") or {}).get("remaining")
-        return CheckResult("GitHub REST", False, True, f"authenticated/public API accepted request; remaining={remaining}")
+        return CheckResult("GitHub REST", False, True, f"authenticated/public API accepted request; remaining={remaining}", (time.perf_counter() - start) * 1000)
     except Exception as exc:
-        return CheckResult("GitHub REST", False, False, f"{type(exc).__name__}: {exc}")
+        return CheckResult("GitHub REST", False, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
 
 
 def _jev_check(settings: Settings, timeout: float) -> CheckResult:

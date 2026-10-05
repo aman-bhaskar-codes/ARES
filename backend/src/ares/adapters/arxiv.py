@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -25,7 +26,7 @@ def _parse_time(value: str | None) -> datetime | None:
         return None
 
 
-class ArxivAcademicProvider:
+class ArxivAcademicProvider(DiscoveryProvider):
     """Legacy arXiv Atom API adapter with conservative client-side pacing."""
 
     def __init__(
@@ -45,6 +46,22 @@ class ArxivAcademicProvider:
         self._lock = threading.Lock()
         self._last_request = 0.0
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="arxiv",
+            source_kind="academic",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=True,
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=25.0,
+            rate_limit_rpm=20,  # 3 seconds interval = 20 RPM
+            cache_ttl_seconds=604800,
+        )
+
     def _paced_get(self, **kwargs) -> httpx.Response:
         with self._lock:
             delay = self._interval - (time.monotonic() - self._last_request)
@@ -59,9 +76,14 @@ class ArxivAcademicProvider:
         return response
 
     def search_documents(
-        self, query: str, *, limit: int = 6, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         request_kwargs: dict[str, object] = {
             "params": {
                 "search_query": f"all:{query}",

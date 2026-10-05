@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -21,7 +22,7 @@ def _abstract_from_inverted(index: dict[str, list[int]] | None) -> str:
     return " ".join(word for _, word in positioned)
 
 
-class OpenAlexAcademicProvider:
+class OpenAlexAcademicProvider(DiscoveryProvider):
     """OpenAlex metadata/abstract adapter.
 
     This adapter never labels metadata or an abstract as full-text reading. The extraction method
@@ -33,10 +34,31 @@ class OpenAlexAcademicProvider:
         self._client = client or httpx.Client(base_url=base_url.rstrip("/"), timeout=20.0)
         self._owns_client = client is None
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="openalex",
+            source_kind="academic",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=20.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=604800,
+        )
+
     def search_documents(
-        self, query: str, *, limit: int = 6, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         params = {
             "search": query,
             "per_page": min(max(limit, 1), 20),

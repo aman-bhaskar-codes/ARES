@@ -7,11 +7,12 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
 
-class GitHubSoftwareProvider:
+class GitHubSoftwareProvider(DiscoveryProvider):
     """Read-only GitHub research adapter.
 
     Reads public repository metadata, latest release metadata, license identity, and a bounded
@@ -46,10 +47,31 @@ class GitHubSoftwareProvider:
             raise SearchProviderError(f"GitHub returned HTTP {response.status_code}")
         return response
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="github",
+            source_kind="software",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,  # it gets README, not full codebase
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=20.0,
+            rate_limit_rpm=60,  # default unauthenticated rate limit is 60/hr, but authenticated is 5000/hr, so conservatively 60
+            cache_ttl_seconds=604800,
+        )
+
     def search_documents(
-        self, query: str, *, limit: int = 5, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         request_timeout = {"timeout": timeout_seconds} if timeout_seconds is not None else {}
         response = self._get("/search/repositories", params={"q": query, "per_page": min(max(limit, 1), 10)}, **request_timeout)
         if response.status_code >= 400:
