@@ -1,0 +1,197 @@
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+}
+
+.nav-rail {
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px;
+  border-right: 1px solid var(--line);
+  background: #edf2f2;
+  z-index: 30;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 20px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: white;
+  font:
+    600 18px Georgia,
+    serif;
+}
+
+.brand-row strong {
+  display: block;
+  letter-spacing: 0.16em;
+  font-size: 13px;
+}
+
+.brand-row span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.topbar {
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(243, 246, 246, 0.87);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Milestone 6: authenticated workspace, roles and session states. */
+.auth-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--surface-2);
+}
+
+.auth-card .brand-mark {
+  margin-bottom: 22px;
+}
+
+.account-area {
+  position: relative;
+  margin-left: 4px;
+}
+
+.account-chip {
+  min-height: 38px;
+  max-width: 250px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 9px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.account-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.account-chip small {
+  border-left: 1px solid var(--line);
+  padding-left: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  width: min(310px, calc(100vw - 28px));
+  z-index: 35;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: 0 16px 45px #18323d1c;
+  padding: 10px;
+}
+
+.account-identity {
+  padding: 6px 6px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-identity strong,
+.account-identity span,
+.account-identity small {
+  display: block;
+}
+
+.account-identity strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.account-identity span {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+.account-identity small {
+  font-size: 9px;
+  text-transform: capitalize;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.account-menu label {
+  display: grid;
+  gap: 6px;
+  padding: 11px 6px;
+  color: var(--muted);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.account-menu select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  padding: 0 8px;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.account-menu > button {
+  width: 100%;
+  min-height: 39px;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  color: var(--danger);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-menu > button:hover {
+  background: #fff5f3;
+}
+
+.account-area {
+  margin-left: 0;
+}

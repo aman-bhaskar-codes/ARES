@@ -32,6 +32,8 @@ import { RunQualityPanel } from '../features/research/RunQualityPanel'
 import { VisualizationWorkspace } from '../features/research/VisualizationWorkspace'
 import { useRunStream } from '../features/research/useRunStream'
 import { WorkspacePanel } from '../features/workspace/WorkspacePanel'
+import { RunHeader } from '../features/research/RunHeader'
+import { ResearchViewNav } from '../features/research/ResearchViewNav'
 
 const terminal = new Set(['completed', 'partial', 'failed', 'cancelled'])
 const idempotencyKey = () => crypto.randomUUID()
@@ -486,21 +488,13 @@ export default function App() {
           </div>
         ) : (
           <div className="thread-view">
-            <div className="query-heading">
-              <span>You asked</span><h1>{run.query}</h1>
-              <div className="run-meta">
-                <span>{run.mode}</span>
-                {run.source_scope.map((scope) => <span key={scope}>{scope}</span>)}
-                {run.document_ids.length > 0 && <span>{run.document_ids.length} document{run.document_ids.length === 1 ? '' : 's'}</span>}
-              </div>
-            </div>
+            <RunHeader run={run} />
             <ResearchActivity status={run.status} events={events} />
-            <nav className="research-tabs" aria-label="Research workspace views">
-              <button className={activeView === 'answer' ? 'active' : ''} onClick={() => selectView('answer')}><BookOpenText size={15}/> Answer</button>
-              <button className={activeView === 'sources' ? 'active' : ''} onClick={() => selectView('sources')}><ListTree size={15}/> Sources {runEvidence.data?.length ? <span>{runEvidence.data.length}</span> : null}</button>
-              <button className={activeView === 'compare' ? 'active' : ''} onClick={() => selectView('compare')}><GitCompareArrows size={15}/> Compare</button>
-              <button className={activeView === 'activity' ? 'active' : ''} onClick={() => selectView('activity')}><Sparkles size={15}/> Activity</button>
-            </nav>
+            <ResearchViewNav 
+              activeView={activeView} 
+              onSelectView={selectView} 
+              evidenceCount={runEvidence.data?.length} 
+            />
 
             {activeView === 'answer' && <>
               {run.answer_blocks.map((block) => <Answer key={block.id} block={block} onEvidence={openEvidence} />)}

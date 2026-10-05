@@ -1,0 +1,221 @@
+.evidence-drawer {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: min(420px, 100vw);
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: -20px 0 60px #14313c16;
+  z-index: 50;
+  padding: 24px;
+  overflow: auto;
+}
+
+.evidence-drawer blockquote {
+  margin: 20px 0;
+  padding: 17px 18px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  font:
+    15px/1.65 Georgia,
+    serif;
+}
+
+/* Milestone 4: source policy, reusable documents, evidence status and system tooling. */
+.source-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 7px 5px;
+  border-top: 1px solid #edf2f2;
+}
+
+.source-scope button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.source-scope button.selected {
+  border-color: #9fc8cd;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.source-scope button small {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+}
+
+.evidence-preview {
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  background: #edf2f2;
+}
+
+.evidence-preview-head {
+  min-height: 38px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 10px;
+}
+
+.evidence-preview-head strong {
+  font-size: 10px;
+}
+
+.evidence-preview-head span {
+  margin-left: auto;
+  color: var(--muted);
+  max-width: 190px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-page-stage,
+.image-evidence-stage {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: #dfe7e8;
+  overflow: auto;
+}
+
+.pdf-page-stage.is-loading {
+  min-height: 180px;
+}
+
+.pdf-page-stage canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 3px 16px #102c3721;
+}
+
+.image-evidence-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.evidence-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.evidence-table th,
+.evidence-table td {
+  max-width: 180px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.evidence-table th {
+  background: var(--surface-2);
+  font-weight: 800;
+}
+
+.evidence-table .cited-cell {
+  outline: 2px solid #d17e2c;
+  outline-offset: -2px;
+  background: #fff4d9;
+}
+
+.evidence-preview .image-evidence-stage + .preview-caption {
+  border-top: 1px solid var(--line);
+}
+
+.evidence-index {
+  display: grid;
+  gap: 14px;
+}
+
+.evidence-index-list {
+  display: grid;
+  gap: 7px;
+}
+
+.evidence-index-row {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.evidence-index-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--surface-2);
+}
+
+.evidence-index-main {
+  min-width: 0;
+}
+
+.evidence-index-main strong,
+.evidence-index-main span,
+.evidence-index-main small {
+  display: block;
+}
+
+.evidence-index-main strong {
+  font-size: 12px;
+}
+
+.evidence-index-main span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.evidence-index-main small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
