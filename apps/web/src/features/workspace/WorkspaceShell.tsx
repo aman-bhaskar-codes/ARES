@@ -109,13 +109,16 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
     refetchIntervalInBackground: false,
   })
 
-  useQuery({
+  const { data: freshRun } = useQuery({
     queryKey: ['run', run?.id, events.at(-1)?.seq, snapshotRequiredSeq],
     queryFn: () => api.getRun(run!.id),
     enabled: Boolean(authenticated && run?.id),
     refetchInterval: run && !terminal.has(run.status) ? 1000 : false,
-    select: (fresh) => { setRun(fresh); return fresh }
   })
+
+  useEffect(() => {
+    if (freshRun) setRun(freshRun)
+  }, [freshRun])
 
   const cancel = useMutation({ mutationFn: () => api.cancelRun(run!.id), onSuccess: setRun })
   const switchWorkspace = useMutation({
