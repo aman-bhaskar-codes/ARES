@@ -66,23 +66,7 @@ class GeminiSemanticClaimChecker:
         self._model = model
         self._thinking_level = thinking_level
 
-    def assess_claim(
-        self,
-        claim: str,
-        evidence: list[EvidencePacket],
-        *,
-        timeout_seconds: float | None = None,
-    ) -> ClaimDecision:
-        if not evidence:
-            return ClaimDecision(
-                verdict=ClaimVerdict.INSUFFICIENT,
-                confidence=1.0,
-                provider="gemini",
-                checker_method="gemini_semantic",
-                checker_version="m10-v1",
-                assessment_state=AssessmentState.SEMANTIC_ASSESSED,
-                rationale="no evidence was supplied",
-            )
+    async def _async_assess_claim(self, claim: str, evidence: list[EvidencePacket]) -> ClaimDecision:
         payload = {
             "CLAIM": claim,
             "EVIDENCE": [
@@ -96,25 +80,25 @@ class GeminiSemanticClaimChecker:
                 for index, packet in enumerate(evidence)
             ],
         }
-        try:
-            interaction = self._client.interactions.create(
-                model=self._model,
-                system_instruction=_SYSTEM,
-                input=json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
-                store=False,
-                generation_config={
-                    "max_output_tokens": 900,
-                    "thinking_level": self._thinking_level,
-                    "thinking_summaries": "none",
-                },
-                response_format={
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": _SemanticAssessment.model_json_schema(),
-                },
-            )
-        except Exception as exc:
-            raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
+        interaction = await self._client.aio.interactions.create(
+            model=self._model,
+            system_instruction=_SYSTEM,
+            input=json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+            store=False,
+            generation_config={
+                "max_output_tokens": 900,
+                "thinking_level": self._thinking_level,
+                "thinking_summaries": "none",
+            },
+            response_format={
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": _SemanticAssessment.model_json_schema(),
+            },
+        )
+        return self._parse_assessment(interaction, evidence)
+
+    def _parse_assessment(self, interaction: Any, evidence: list[EvidencePacket]) -> ClaimDecision:
         raw = getattr(interaction, "output_text", None)
         if not isinstance(raw, str) or not raw.strip():
             raise SemanticCheckerUnavailable("Gemini semantic checker returned no output")
@@ -148,6 +132,73 @@ class GeminiSemanticClaimChecker:
             supporting_evidence_ids=resolve(parsed.supporting_indexes),
             conflicting_evidence_ids=resolve(parsed.conflicting_indexes),
         )
+
+    def assess_claim(
+        self,
+        claim: str,
+        evidence: list[EvidencePacket],
+        *,
+        timeout_seconds: float | None = None,
+    ) -> ClaimDecision:
+        if not evidence:
+            return ClaimDecision(
+                verdict=ClaimVerdict.INSUFFICIENT,
+                confidence=1.0,
+                provider="gemini",
+                checker_method="gemini_semantic",
+                checker_version="m10-v1",
+                assessment_state=AssessmentState.SEMANTIC_ASSESSED,
+                rationale="no evidence was supplied",
+            )
+            
+        if timeout_seconds is not None and getattr(self._client, "aio", None):
+            import asyncio
+            try:
+                return asyncio.run(
+                    asyncio.wait_for(
+                        self._async_assess_claim(claim, evidence),
+                        timeout=timeout_seconds,
+                    )
+                )
+            except asyncio.TimeoutError as exc:
+                raise SemanticCheckerUnavailable("Gemini semantic assessment timed out") from exc
+            except Exception as exc:
+                raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
+
+        payload = {
+            "CLAIM": claim,
+            "EVIDENCE": [
+                {
+                    "index": index,
+                    "origin_group_id": str(packet.origin_group_id or packet.source_id),
+                    "title": packet.title,
+                    "locator": packet.locator,
+                    "text": packet.text,
+                }
+                for index, packet in enumerate(evidence)
+            ],
+        }
+        try:
+            interaction = self._client.interactions.create(
+                model=self._model,
+                system_instruction=_SYSTEM,
+                input=json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+                store=False,
+                generation_config={
+                    "max_output_tokens": 900,
+                    "thinking_level": self._thinking_level,
+                    "thinking_summaries": "none",
+                },
+                response_format={
+                    "type": "text",
+                    "mime_type": "application/json",
+                    "schema": _SemanticAssessment.model_json_schema(),
+                },
+            )
+        except Exception as exc:
+            raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
+            
+        return self._parse_assessment(interaction, evidence)
 
     def close(self) -> None:
         if not self._owns_client:

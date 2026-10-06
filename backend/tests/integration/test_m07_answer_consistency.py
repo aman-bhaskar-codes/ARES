@@ -13,7 +13,7 @@ from test_live_engine_contract import FakeSearch, TrackingFetcher
 
 class SummaryLeakLLM:
     def synthesize(
-        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None = None
     ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown=(

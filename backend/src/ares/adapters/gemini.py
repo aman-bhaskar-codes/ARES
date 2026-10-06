@@ -93,36 +93,33 @@ class GeminiLLMProvider:
         self._model = model
         self._thinking_level = thinking_level
 
-    def synthesize(
+    async def _async_synthesize(
         self,
         query: str,
         evidence: list[EvidencePacket],
         *,
         max_output_tokens: int,
-        timeout_seconds: float | None = None,
     ) -> SynthesisResult:
-        if not evidence:
-            raise ProviderUnavailable("Gemini synthesis requires evidence")
         model_input = _build_synthesis_input(query, evidence)
-        try:
-            interaction = self._client.interactions.create(
-                model=self._model,
-                system_instruction=_SYSTEM_INSTRUCTION,
-                input=model_input,
-                store=False,
-                generation_config={
-                    "max_output_tokens": max_output_tokens,
-                    "thinking_level": self._thinking_level,
-                    "thinking_summaries": "none",
-                },
-                response_format={
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": _ModelAnswer.model_json_schema(),
-                },
-            )
-        except Exception as exc:  # SDK/network errors are normalized at the adapter boundary.
-            raise ProviderUnavailable("Gemini interaction failed") from exc
+        interaction = await self._client.aio.interactions.create(
+            model=self._model,
+            system_instruction=_SYSTEM_INSTRUCTION,
+            input=model_input,
+            store=False,
+            generation_config={
+                "max_output_tokens": max_output_tokens,
+                "thinking_level": self._thinking_level,
+                "thinking_summaries": "none",
+            },
+            response_format={
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": _ModelAnswer.model_json_schema(),
+            },
+        )
+        return self._parse_synthesis_interaction(interaction, evidence)
+
+    def _parse_synthesis_interaction(self, interaction: Any, evidence: list[EvidencePacket]) -> SynthesisResult:
         raw = getattr(interaction, "output_text", None)
         if not isinstance(raw, str) or not raw.strip():
             raise ProviderUnavailable("Gemini returned no structured output text")
@@ -145,6 +142,72 @@ class GeminiLLMProvider:
             claims=claims,
             gaps=parsed.gaps,
         )
+
+    def synthesize(
+        self,
+        query: str,
+        evidence: list[EvidencePacket],
+        *,
+        max_output_tokens: int,
+        timeout_seconds: float | None = None,
+    ) -> SynthesisResult:
+        if not evidence:
+            raise ProviderUnavailable("Gemini synthesis requires evidence")
+            
+        # Network cancellation requires async transport where thread futures fall short.
+        if timeout_seconds is not None and getattr(self._client, "aio", None):
+            import asyncio
+            try:
+                return asyncio.run(
+                    asyncio.wait_for(
+                        self._async_synthesize(query, evidence, max_output_tokens=max_output_tokens),
+                        timeout=timeout_seconds,
+                    )
+                )
+            except asyncio.TimeoutError as exc:
+                raise ProviderUnavailable("Gemini synthesis timed out") from exc
+            except Exception as exc:
+                raise ProviderUnavailable("Gemini interaction failed") from exc
+
+        model_input = _build_synthesis_input(query, evidence)
+        try:
+            interaction = self._client.interactions.create(
+                model=self._model,
+                system_instruction=_SYSTEM_INSTRUCTION,
+                input=model_input,
+                store=False,
+                generation_config={
+                    "max_output_tokens": max_output_tokens,
+                    "thinking_level": self._thinking_level,
+                    "thinking_summaries": "none",
+                },
+                response_format={
+                    "type": "text",
+                    "mime_type": "application/json",
+                    "schema": _ModelAnswer.model_json_schema(),
+                },
+            )
+        except Exception as exc:  # SDK/network errors are normalized at the adapter boundary.
+            raise ProviderUnavailable("Gemini interaction failed") from exc
+            
+        return self._parse_synthesis_interaction(interaction, evidence)
+
+    def manifest(self) -> dict:
+        import hashlib
+        import json
+        prompt_digest = hashlib.sha256(_SYSTEM_INSTRUCTION.encode()).hexdigest()
+        schema_digest = hashlib.sha256(json.dumps(_ModelAnswer.model_json_schema(), sort_keys=True).encode()).hexdigest()
+        return {
+            "adapter": "gemini",
+            "version": "m12-v1",
+            "model": self._model,
+            "prompt_digest": prompt_digest,
+            "schema_digest": schema_digest,
+            "generation_config": {
+                "thinking_level": self._thinking_level,
+                "thinking_summaries": "none"
+            }
+        }
 
     def close(self) -> None:
         if not self._owns_client:

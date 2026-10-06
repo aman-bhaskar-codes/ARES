@@ -58,7 +58,7 @@ class TrackingFetcher:
 
 class FakeLLM:
     def synthesize(
-        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None = None
     ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown="### Fixture live-path contract\n\nThe provider boundary returned structured claims.",
@@ -310,7 +310,7 @@ class NumericFetcher(TrackingFetcher):
 
 class LeakySummaryLLM:
     def synthesize(
-        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None = None
     ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown="The trial improved accuracy to 90 percent. THIS MUST NOT SURVIVE.",

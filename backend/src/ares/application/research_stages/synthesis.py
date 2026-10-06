@@ -177,13 +177,16 @@ class SynthesisStage:
         self.engine = engine
 
     def _synthesize(self, context: RunContext, query: str, evidence, max_output_tokens: int):
+        context.check()
         timeout = context.clamp_timeout(self.engine.gemini_timeout_seconds)
         pool = ThreadPoolExecutor(max_workers=1)
         future = pool.submit(
-            self.engine.llm.synthesize, query, evidence, max_output_tokens=max_output_tokens
+            self.engine.llm.synthesize, query, evidence, max_output_tokens=max_output_tokens, timeout_seconds=timeout
         )
         try:
-            return future.result(timeout=timeout)
+            result = future.result(timeout=timeout)
+            context.check()
+            return result
         except TimeoutError as exc:
             future.cancel()
             raise RunDeadlineExceeded(
@@ -218,9 +221,8 @@ class SynthesisStage:
                 ttl_seconds=max(30, int(context.remaining_seconds())),
             ):
                 with telemetry.stage("evaluation.semantic_claim", evidence=len(evidence)):
+                    context.check()
                     timeout = context.clamp_timeout(self.engine.semantic_checker_timeout_seconds)
-                    # The provider SDK timeout is defense in depth. Keep the worker's persisted
-                    # run deadline authoritative even if an SDK/transport ignores its own timeout.
                     pool = ThreadPoolExecutor(max_workers=1)
                     future = pool.submit(
                         self.engine.semantic_checker.assess_claim,
@@ -230,6 +232,7 @@ class SynthesisStage:
                     )
                     try:
                         decision = future.result(timeout=timeout)
+                        context.check()
                     except TimeoutError as exc:
                         future.cancel()
                         raise RunDeadlineExceeded(

@@ -823,16 +823,10 @@ class ResearchEngine:
                 "synthesis.final",
                 {
                     "query": run.query,
-                    "model": self.gemini_model,
                     "max_output_tokens": budget.model_output_tokens,
-                    "evidence": [
-                        {
-                            "id": str(packet.evidence_id),
-                            "content_hash": packet.content_hash,
-                            "text": packet.text,
-                        }
-                        for packet in evidence_packets
-                    ],
+                    "llm_manifest": self.llm.manifest() if hasattr(self.llm, "manifest") else {"model": self.gemini_model},
+                    "evidence_hashes": [packet.content_hash for packet in evidence_packets],
+                    "provenance_policy": "m12-v1",
                 },
             )
             restored = checkpoints.start(synthesis_key)
