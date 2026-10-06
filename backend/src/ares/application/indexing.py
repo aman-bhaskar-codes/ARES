@@ -28,6 +28,7 @@ class DocumentEmbeddingIndexer:
         repository: Repository,
         embedder: EmbeddingProvider | None,
         *,
+        profile_id: UUID | None = None,
         model_id: str,
         dimensions: int,
         batch_size: int = 32,
@@ -39,6 +40,7 @@ class DocumentEmbeddingIndexer:
     ) -> None:
         self.repository = repository
         self.embedder = embedder
+        self.profile_id = profile_id
         self.model_id = model_id
         self.dimensions = dimensions
         self.batch_size = batch_size
@@ -83,6 +85,7 @@ class DocumentEmbeddingIndexer:
             if len(vectors) != len(rows):
                 raise RuntimeError("embedding provider returned an unexpected vector count")
             self.repository.store_chunk_embeddings(
+                profile_id=self.profile_id,
                 model_id=self.model_id,
                 dimensions=self.dimensions,
                 embeddings=[(row.id, vector) for row, vector in zip(rows, vectors, strict=True)],

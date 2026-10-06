@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import delete, func, select, text
 
 from ares.adapters.db import (
+    RetrievalProfileRow,
     AssetRenditionRow,
     AssetVersionRow,
     DocumentChunkRow,
@@ -312,7 +313,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
             return scored[:limit]
 
     def store_chunk_embeddings(
-        self, *, model_id: str, dimensions: int, embeddings: list[tuple[UUID, list[float]]]
+        self, *, profile_id: UUID | None = None, model_id: str, dimensions: int, embeddings: list[tuple[UUID, list[float]]]
     ) -> None:
         if not embeddings:
             return
@@ -333,6 +334,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                     session.add(
                         DocumentEmbeddingRow(
                             chunk_id=chunk_id,
+                            profile_id=profile_id,
                             model_id=model_id,
                             dimensions=dimensions,
                             vector_json=vector,
@@ -345,24 +347,75 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                     session.execute(
                         text(
                             """
-                            INSERT INTO document_embeddings_pg (chunk_id, model_id, dimensions, embedding)
-                            VALUES (:chunk_id, :model_id, :dimensions, CAST(:embedding AS vector))
+                            INSERT INTO document_embeddings_pg (chunk_id, profile_id, model_id, dimensions, embedding)
+                            VALUES (:chunk_id, :profile_id, :model_id, :dimensions, CAST(:embedding AS vector))
                             ON CONFLICT (chunk_id, model_id, dimensions)
                             DO UPDATE SET embedding = EXCLUDED.embedding
                             """
                         ),
                         {
                             "chunk_id": chunk_id,
+                            "profile_id": profile_id,
                             "model_id": model_id,
                             "dimensions": dimensions,
                             "embedding": literal,
                         },
                     )
 
+    
+    def get_retrieval_profile_by_model(self, model_id: str) -> dict | None:
+        with self._sessions.begin() as session:
+            # For now, just grab the latest matching model ID
+            row = session.scalar(select(RetrievalProfileRow).where(RetrievalProfileRow.model_id == model_id).order_by(RetrievalProfileRow.created_at.desc()))
+            if row is None:
+                return None
+            return {
+                "id": row.id,
+                "profile_key": row.profile_key,
+                "provider": row.provider,
+                "model_id": row.model_id,
+                "artifact_digest": row.artifact_digest,
+                "tokenizer_version": row.tokenizer_version,
+                "dimensions": row.dimensions,
+                "distance_metric": row.distance_metric,
+                "language_coverage": row.language_coverage,
+                "chunk_policy": row.chunk_policy,
+                "extraction_revision": row.extraction_revision,
+            }
+
+    def get_retrieval_profile(self, profile_key: str) -> dict | None:
+        with self._sessions.begin() as session:
+            row = session.scalar(select(RetrievalProfileRow).where(RetrievalProfileRow.profile_key == profile_key))
+            if row is None:
+                return None
+            return {
+                "id": row.id,
+                "profile_key": row.profile_key,
+                "provider": row.provider,
+                "model_id": row.model_id,
+                "artifact_digest": row.artifact_digest,
+                "tokenizer_version": row.tokenizer_version,
+                "dimensions": row.dimensions,
+                "distance_metric": row.distance_metric,
+                "language_coverage": row.language_coverage,
+                "chunk_policy": row.chunk_policy,
+                "extraction_revision": row.extraction_revision,
+            }
+
+    def create_retrieval_profile(self, **kwargs) -> UUID:
+        with self._sessions.begin() as session:
+            row = session.scalar(select(RetrievalProfileRow).where(RetrievalProfileRow.profile_key == kwargs["profile_key"]))
+            if row is None:
+                row = RetrievalProfileRow(**kwargs)
+                session.add(row)
+                session.flush()
+            return row.id
+
     def vector_search_document_chunks(
         self,
         document_ids: list[UUID],
         *,
+        profile_id: UUID | None = None,
         model_id: str,
         dimensions: int,
         query_vector: list[float],
@@ -384,7 +437,13 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                     "embedding": literal,
                     "limit": limit,
                 }
+                if profile_id:
+                    params["profile_id"] = profile_id
+                
                 params.update({f"doc_{index}": doc_id for index, doc_id in enumerate(document_ids)})
+                
+                profile_condition = "AND p.profile_id = :profile_id" if profile_id else ""
+                
                 rows = session.execute(
                     text(
                         f"""
@@ -394,6 +453,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                         WHERE c.document_id IN ({placeholders})
                           AND p.model_id = :model_id
                           AND p.dimensions = :dimensions
+                          {profile_condition}
                         ORDER BY p.embedding <=> CAST(:embedding AS vector)
                         LIMIT :limit
                         """

@@ -523,6 +523,9 @@ class DocumentEmbeddingRow(Base):
     chunk_id: Mapped[UUID] = mapped_column(
         ForeignKey("document_chunks.id", ondelete="CASCADE"), index=True
     )
+    profile_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("retrieval_profiles.id", ondelete="CASCADE"), index=True, nullable=True
+    )
     model_id: Mapped[str] = mapped_column(String(160), index=True)
     dimensions: Mapped[int] = mapped_column(Integer)
     vector_json: Mapped[list[float]] = mapped_column(JSON)

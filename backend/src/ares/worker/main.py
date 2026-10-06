@@ -257,11 +257,18 @@ def main() -> None:
         if settings.worker_profile in {"research", "combined"}
         else None
     )
+    profile_id = None
+    if embedding_model_id:
+        profile = repository.get_retrieval_profile_by_model(embedding_model_id)
+        if profile:
+            profile_id = profile["id"]
+
     ingestion = None
     if settings.worker_profile in {"media", "combined"}:
         indexer = DocumentEmbeddingIndexer(
             repository,
             embedder,
+            profile_id=profile_id,
             model_id=embedding_model_id,
             dimensions=embedding_dimensions,
             batch_size=settings.local_embedding_batch_size

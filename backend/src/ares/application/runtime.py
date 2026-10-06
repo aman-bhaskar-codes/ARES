@@ -79,9 +79,17 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds)
     )
     registry.register(GitHubSoftwareProvider(settings.github_read_token))
+    
+    profile_id = None
+    if embedding_model_id:
+        profile = repository.get_retrieval_profile_by_model(embedding_model_id)
+        if profile:
+            profile_id = profile["id"]
+
     persistent_documents = PersistentDocumentRAG(
         repository,
         embedder=embedder,
+        profile_id=profile_id,
         model_id=embedding_model_id,
         dimensions=embedding_dimensions,
         rpm=settings.gemini_embedding_rpm or 1,

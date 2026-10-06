@@ -32,6 +32,7 @@ class PersistentDocumentRAG:
         repository: Repository,
         *,
         embedder: EmbeddingProvider | None = None,
+        profile_id: UUID | None = None,
         model_id: str = "",
         dimensions: int = 768,
         rpm: int = 1,
@@ -42,6 +43,7 @@ class PersistentDocumentRAG:
     ):
         self.repository = repository
         self.embedder = embedder
+        self.profile_id = profile_id
         self.model_id = model_id
         self.dimensions = dimensions
         self.rpm = rpm
@@ -91,6 +93,7 @@ class PersistentDocumentRAG:
                 query_vector = self.embedder.embed_query(query)
                 semantic = self.repository.vector_search_document_chunks(
                     semantic_document_ids,
+                    profile_id=self.profile_id,
                     model_id=self.model_id,
                     dimensions=self.dimensions,
                     query_vector=query_vector,
@@ -109,7 +112,7 @@ class PersistentDocumentRAG:
                 )
 
         lexical_rank = {row.id: rank for rank, row in enumerate(lexical_order, start=1)}
-        semantic_order = sorted(semantic_scores, key=semantic_scores.get, reverse=True)
+        semantic_order = sorted(semantic_scores.keys(), key=lambda k: semantic_scores[k], reverse=True)
         semantic_rank = {chunk_id: rank for rank, chunk_id in enumerate(semantic_order, start=1)}
         candidate_ids = list(dict.fromkeys([row.id for row in lexical_order] + semantic_order))
         if not candidate_ids:
