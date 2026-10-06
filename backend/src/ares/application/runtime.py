@@ -46,6 +46,8 @@ def build_embedding_runtime(settings: Settings):
     return None, "", settings.local_embedding_dimensions
 
 
+from ares.adapters.local_reranker import LocalCrossEncoderReranker
+
 def build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
     """Compose external adapters once at the worker process boundary."""
     if settings.ares_mode == "demo":
@@ -117,6 +119,9 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
             ),
         )
 
+    from ares.application.gemini_planner import GeminiResearchPlanner
+    planner = GeminiResearchPlanner(settings.gemini_api_key, settings.gemini_model)
+
     return ResearchEngine(
         repository,
         SearXNGSearchProvider(
@@ -129,6 +134,8 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
             thinking_level=settings.gemini_thinking_level,
             timeout_seconds=settings.gemini_timeout_seconds,
         ),
+        planner=planner,
+        candidate_reranker=LocalCrossEncoderReranker(),
         gemini_model=settings.gemini_model,
         gemini_rpm=settings.gemini_rpm or 1,
         gemini_tpm=settings.gemini_tpm or 1,

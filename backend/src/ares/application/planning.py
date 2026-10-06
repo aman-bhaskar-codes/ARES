@@ -8,6 +8,12 @@ from ares.domain.research import ResearchPlan
 _YEAR = re.compile(r"\b(19|20)\d{2}\b")
 
 
+from typing import Protocol
+
+class ResearchPlanner(Protocol):
+    def plan(self, query: str, mode: RunMode, date_window: DateWindow | None = None) -> ResearchPlan:
+        ...
+
 class DeterministicResearchPlanner:
     """Small policy-owned planner.
 
@@ -47,7 +53,35 @@ class DeterministicResearchPlanner:
             if any(term in lower for term in ("today", "latest", "current", "recent", "this week")):
                 time_range = "month"
 
+        intent = "narrow"
+        # Exact DOI/arXiv/repository/quoted-string queries retain deterministic priority.
+        if '"' in cleaned or "doi.org" in lower or "arxiv:" in lower or "github.com" in lower:
+            intent = "exact"
+        elif any(term in lower for term in ("compare", "versus", " vs ", "difference")):
+            intent = "comparison"
+        elif any(term in lower for term in ("trend", "history", "over time", "development")):
+            intent = "temporal"
+        elif any(term in lower for term in ("how does", "why is", "impact of", "effect of")):
+            intent = "multi-hop"
+
+        subqueries = [cleaned]
+        if mode is RunMode.RESEARCH and intent == "comparison":
+            parts = re.split(r'\b(?:versus|vs|compare(?:d to)?|difference between)\b', lower)
+            if len(parts) == 2:
+                subqueries = [parts[0].strip(), parts[1].strip(), cleaned]
+        elif mode is RunMode.RESEARCH and len(unique) > 1:
+            subqueries = [unique[0], unique[1]]
+
+        subqueries = subqueries[:3]
+
         facets: list[str] = []
         if mode is RunMode.RESEARCH:
             facets = ["main finding", "supporting evidence", "limitations or disagreement"]
-        return ResearchPlan(query_variants=unique, facets=facets, time_range=time_range)
+            
+        return ResearchPlan(
+            query_variants=unique, 
+            facets=facets, 
+            time_range=time_range,
+            intent=intent,
+            subqueries=subqueries
+        )

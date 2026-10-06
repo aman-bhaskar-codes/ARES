@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
-from ares.application.planning import DeterministicResearchPlanner
+from ares.application.planning import DeterministicResearchPlanner, ResearchPlanner
 from ares.application.checkpoints import CheckpointStore
 from ares.application.run_context import RunCancelled, RunContext, RunDeadlineExceeded
 from ares.application.finalization import compose_checked_markdown
@@ -17,6 +17,7 @@ from ares.application.decisions import ResilientDecisionProvider
 from ares.application.rag import HybridRAGRetriever
 from ares.application.research_cache import RunResearchCache
 from ares.application.providers import ProviderRegistry
+from ares.ports.reranking import CandidateReranker
 from ares.application.persistent_rag import PersistentDocumentRAG
 from ares.application.research_stages.discovery import DiscoveryStage
 from ares.application.research_stages.synthesis import SynthesisStage
@@ -217,8 +218,9 @@ class ResearchEngine:
         gemini_tpm: int,
         gemini_rpd: int,
         gemini_max_daily_spend_usd: float | None = None,
-        planner: DeterministicResearchPlanner | None = None,
+        planner: ResearchPlanner | None = None,
         retriever: HybridRAGRetriever | None = None,
+        candidate_reranker: "CandidateReranker | None" = None,
         global_http_concurrency: int = 4,
         gemini_concurrency: int = 1,
         provider_http_timeout_seconds: float = 20.0,
@@ -254,6 +256,7 @@ class ResearchEngine:
         self.gemini_max_daily_spend_usd = gemini_max_daily_spend_usd
         self.planner = planner or DeterministicResearchPlanner()
         self.retriever = retriever or HybridRAGRetriever()
+        self.candidate_reranker = candidate_reranker
         self.decisions = ResilientDecisionProvider(decisions)
         self.registry = registry
         self.persistent_documents = persistent_documents
@@ -528,15 +531,17 @@ class ResearchEngine:
                 return
 
             self._check_cancel(lease, context)
+            self._check_cancel(lease, context)
             self.repository.set_status(run_id, RunStatus.EXTRACTING, lease_token=lease.token)
-            max_evidence = 8 if run.mode.value == "quick" else 16
+            max_evidence = min(12, 8 if run.mode.value == "quick" else 16)
+            pool_size = 60
             network_documents = [
                 document for hit, document in fetched if hit.provider != "documents"
             ]
             if network_documents:
                 with telemetry.stage("retrieval.network", documents=len(network_documents)):
                     network_result = self.retriever.retrieve_with_trace(
-                        run.query, network_documents, limit=max_evidence
+                        run.query, network_documents, limit=pool_size
                     )
                 network_ranked = network_result.candidates
                 self.repository.record_event(
@@ -559,7 +564,7 @@ class ResearchEngine:
                         run.query,
                         documents=[row for row in document_rows if row.id in source_id_by_document],
                         source_id_by_document=source_id_by_document,
-                        limit=max_evidence,
+                        limit=pool_size,
                     )
                     document_ranked = persistent.candidates
                     self.repository.record_event(
@@ -575,7 +580,7 @@ class ResearchEngine:
                     )
                 else:
                     document_ranked = self.retriever.retrieve(
-                        run.query, [document for _, document in document_docs], limit=max_evidence
+                        run.query, [document for _, document in document_docs], limit=pool_size
                     )
 
             # Interleave source classes instead of comparing incomparable raw score scales.
@@ -585,8 +590,22 @@ class ResearchEngine:
                     ranked.append(network_ranked[index])
                 if index < len(document_ranked):
                     ranked.append(document_ranked[index])
-                if len(ranked) >= max_evidence:
+                if len(ranked) >= pool_size:
                     break
+            
+            # Deduplicate by candidate_id
+            seen = set()
+            deduped = []
+            for candidate in ranked:
+                if candidate.candidate_id not in seen:
+                    seen.add(candidate.candidate_id)
+                    deduped.append(candidate)
+            ranked = deduped[:60]
+            
+            if self.candidate_reranker and len(ranked) > 0:
+                ranked = self.candidate_reranker.rerank(run.query, ranked, max_results=30)
+                
+            ranked = ranked[:max_evidence]
             if not ranked:
                 self.repository.fail_run(
                     run_id,

@@ -399,7 +399,7 @@ class DiscoveryStage:
             else budget.max_search_requests
         )
         per_query_limit = max(3, min(8, budget.max_documents))
-        for variant in plan.query_variants:
+        for variant in plan.subqueries:
             if remaining <= 0:
                 break
             self.engine._check_cancel(lease, context)

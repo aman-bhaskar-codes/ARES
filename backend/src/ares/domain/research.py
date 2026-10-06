@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, model_validator, HttpUrl
 
 
 class SearchRequest(BaseModel):
@@ -23,6 +23,15 @@ class ResearchPlan(BaseModel):
     facets: list[str] = Field(default_factory=list, max_length=12)
     language: str = "all"
     time_range: Literal["day", "week", "month", "year"] | None = None
+    intent: Literal["exact", "narrow", "comparison", "multi-hop", "temporal", "analysis"] = "narrow"
+    subqueries: list[str] = Field(default_factory=list, max_length=3)
+
+    from pydantic import model_validator
+    @model_validator(mode="after")
+    def _default_subqueries(self) -> ResearchPlan:
+        if not self.subqueries:
+            self.subqueries = self.query_variants[:3]
+        return self
 
 
 class EvidenceCandidate(BaseModel):
