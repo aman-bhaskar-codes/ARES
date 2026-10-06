@@ -666,7 +666,7 @@ class ResearchEngine:
                 targeted_query = f"{run.query} {' '.join(coverage.missing_facets[:2])}"
                 self._check_cancel(lease, context)
                 with telemetry.stage("discovery.web.wave2"):
-                    extra_hits, _ = self._search_web_query(
+                    extra_hits, _ = self.discovery._search_web_query(
                         lease,
                         context,
                         query=targeted_query,

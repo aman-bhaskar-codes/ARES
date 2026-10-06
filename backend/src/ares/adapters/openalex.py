@@ -66,7 +66,7 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
         published_before: datetime | None = None,
     ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         params = {
-            "search": query,
+            "search": query.replace("?", " ").replace("*", " "),
             "per_page": min(max(limit, 1), 20),
             "select": "id,doi,title,publication_year,publication_date,abstract_inverted_index,primary_location,best_oa_location,type",
         }
