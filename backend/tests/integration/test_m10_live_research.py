@@ -214,7 +214,7 @@ def test_independent_discovery_tracks_overlap_in_time(tmp_path: Path) -> None:
         academic=SlowDocumentProvider(probe, "academic"),
         software=SlowDocumentProvider(probe, "software"),
     )
-    hits, academic, software, plan = engine._discover_tracks(
+    hits, academic, software, plan = engine.discovery._discover_tracks(
         lease,
         context,
         repository.get_run(run.id),
@@ -516,7 +516,7 @@ def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cach
         assert lease is not None
         context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
         # Academic documents are returned as the second discovery track result.
-        _, academic_rows, _, _ = engine._discover_tracks(
+        _, academic_rows, _, _ = engine.discovery._discover_tracks(
             lease,
             context,
             repository.get_run(run.id),
@@ -571,7 +571,7 @@ def test_rate_limited_web_track_does_not_discard_successful_academic_track(tmp_p
         FixtureFetcher(),
         academic=SlowDocumentProvider(probe, "academic"),
     )
-    web_rows, academic_rows, software_rows, _ = engine._discover_tracks(
+    web_rows, academic_rows, software_rows, _ = engine.discovery._discover_tracks(
         lease,
         context,
         repository.get_run(run.id),
@@ -632,7 +632,7 @@ def test_date_window_is_part_of_academic_cache_identity(tmp_path: Path) -> None:
         lease = repository.claim_next_job()
         assert lease is not None
         context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
-        engine._cached_document_track(
+        engine.discovery._cached_document_track(
             lease,
             context,
             track="academic",
@@ -739,7 +739,7 @@ def test_semantic_checker_has_worker_enforced_deadline_even_if_adapter_blocks(
     )
     started = time.perf_counter()
     with pytest.raises(RunDeadlineExceeded):
-        engine._semantic_assess_claim(
+        engine.synthesis._semantic_assess_claim(
             context,
             claim="bounded evidence",
             evidence=[packet],
