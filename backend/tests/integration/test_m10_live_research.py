@@ -10,6 +10,8 @@ from uuid import uuid4
 from ares.adapters.db import Base, build_session_factory
 from ares.application.engine import ResearchEngine
 from ares.application.observability import RunTelemetry
+from ares.application.providers import ProviderRegistry
+from ares.application.providers import ProviderCapabilities, ProviderMetadata
 from ares.application.repository import Repository
 from ares.application.run_context import RunContext
 from ares.domain.budgets import BUDGETS
@@ -51,6 +53,18 @@ class SlowWebSearch:
         self.probe = probe
         self.calls = calls if calls is not None else []
 
+    @property
+    def metadata(self):
+        return ProviderMetadata(
+            name="fixture-web",
+            source_kind="web",
+            capabilities=ProviderCapabilities(supports_time_range=False, supports_full_text=False, supports_exact_id=False),
+            cost_class="free",
+            timeout_seconds=10.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=0,
+        )
+
     def search(self, request: SearchRequest):
         self.calls.append(request.query)
         self.probe.enter()
@@ -70,6 +84,18 @@ class SlowDocumentProvider:
         self.probe = probe
         self.kind = kind
         self.calls = calls if calls is not None else []
+
+    @property
+    def metadata(self):
+        return ProviderMetadata(
+            name=f"fixture-{self.kind}",
+            source_kind="academic" if self.kind == "academic" else "software",
+            capabilities=ProviderCapabilities(supports_time_range=True, supports_full_text=True, supports_exact_id=False),
+            cost_class="free",
+            timeout_seconds=10.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=0,
+        )
 
     def search_documents(self, query: str, **kwargs):
         self.calls.append(query)
@@ -142,6 +168,13 @@ def repository_for(tmp_path: Path):
 
 
 def make_engine(repository: Repository, search, fetcher, *, academic=None, software=None):
+    registry = ProviderRegistry()
+    registry.register(search)
+    if academic:
+        registry.register(academic)
+    if software:
+        registry.register(software)
+        
     return ResearchEngine(
         repository,
         search,
@@ -152,8 +185,7 @@ def make_engine(repository: Repository, search, fetcher, *, academic=None, softw
         gemini_tpm=100_000,
         gemini_rpd=100,
         planner=OneVariantPlanner(),
-        academic=academic,
-        software=software,
+        registry=registry,
         discovery_concurrency=3,
         research_cache_enabled=True,
     )
@@ -434,9 +466,25 @@ def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cach
     )
 
     class Academic:
+        @property
+        def metadata(self):
+            return ProviderMetadata(
+                name="fixture-academic",
+                source_kind="academic",
+                capabilities=ProviderCapabilities(supports_time_range=True, supports_full_text=True, supports_exact_id=False),
+                cost_class="free",
+                timeout_seconds=10.0,
+                rate_limit_rpm=None,
+                cache_ttl_seconds=0,
+            )
+            
         def search_documents(self, query: str, **kwargs):
             return [(hit, metadata)]
 
+    registry = ProviderRegistry()
+    registry.register(SlowWebSearch(ConcurrencyProbe()))
+    registry.register(Academic())
+    
     engine = ResearchEngine(
         repository,
         SlowWebSearch(ConcurrencyProbe()),
@@ -447,7 +495,7 @@ def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cach
         gemini_tpm=100_000,
         gemini_rpd=100,
         planner=OneVariantPlanner(),
-        academic=Academic(),
+        registry=registry,
         discovery_concurrency=3,
         research_cache_enabled=True,
         academic_full_text_fetcher=fulltext,
@@ -487,6 +535,18 @@ def test_rate_limited_web_track_does_not_discard_successful_academic_track(tmp_p
     from ares.ports.errors import ProviderRateLimitError
 
     class RateLimitedWeb:
+        @property
+        def metadata(self):
+            return ProviderMetadata(
+                name="fixture-ratelimited-web",
+                source_kind="web",
+                capabilities=ProviderCapabilities(supports_time_range=False, supports_full_text=False, supports_exact_id=False),
+                cost_class="free",
+                timeout_seconds=10.0,
+                rate_limit_rpm=None,
+                cache_ttl_seconds=0,
+            )
+            
         def search(self, request: SearchRequest):
             raise ProviderRateLimitError("fixture 429", retry_after_seconds=7.0)
 
@@ -533,6 +593,18 @@ def test_date_window_is_part_of_academic_cache_identity(tmp_path: Path) -> None:
     calls: list[tuple[object, object]] = []
 
     class WindowedAcademic:
+        @property
+        def metadata(self):
+            return ProviderMetadata(
+                name="fixture-windowed",
+                source_kind="academic",
+                capabilities=ProviderCapabilities(supports_time_range=True, supports_full_text=True, supports_exact_id=False),
+                cost_class="free",
+                timeout_seconds=10.0,
+                rate_limit_rpm=None,
+                cache_ttl_seconds=0,
+            )
+            
         def search_documents(self, query: str, **kwargs):
             calls.append((kwargs.get("published_after"), kwargs.get("published_before")))
             return []
@@ -564,7 +636,7 @@ def test_date_window_is_part_of_academic_cache_identity(tmp_path: Path) -> None:
             lease,
             context,
             track="academic",
-            provider=engine.academic,
+            provider=engine.registry.get_provider("fixture-windowed"),
             query="same query",
             limit=3,
             ttl_seconds=3600,

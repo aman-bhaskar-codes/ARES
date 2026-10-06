@@ -54,7 +54,7 @@ def test_openalex_applies_run_timeout_to_http_request():
         transport=httpx.MockTransport(handler), base_url="https://api.openalex.org"
     )
     provider = OpenAlexAcademicProvider(client=client)
-    provider.search_documents("topic", timeout_seconds=1.75)
+    provider.search_documents("topic", limit=10, timeout_seconds=1.75)
     assert observed == [1.75]
 
 
@@ -74,6 +74,7 @@ def test_openalex_pushes_explicit_publication_window_to_provider() -> None:
     )
     provider.search_documents(
         "topic",
+        limit=10,
         published_after=datetime(2024, 1, 1, tzinfo=UTC),
         published_before=datetime(2024, 12, 31, tzinfo=UTC),
     )

@@ -9,10 +9,10 @@ def test_demo_needs_no_key() -> None:
 
 def test_live_mode_requires_explicit_quota_and_key() -> None:
     with pytest.raises(ValueError, match="GEMINI_API_KEY"):
-        Settings(ares_mode="local_live").validate_live_mode()
+        Settings(ares_mode="local_live", gemini_api_key="").validate_live_mode()
 
     with pytest.raises(ValueError, match="GEMINI_RPM"):
-        Settings(ares_mode="local_live", gemini_api_key="x").validate_live_mode()
+        Settings(ares_mode="local_live", gemini_api_key="x", gemini_rpm=None).validate_live_mode()
 
 
 def test_live_mode_rejects_billable_flag() -> None:

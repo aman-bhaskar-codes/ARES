@@ -56,7 +56,7 @@ def test_arxiv_applies_run_timeout_to_http_request() -> None:
         base_url="https://export.arxiv.org", transport=httpx.MockTransport(handler)
     )
     provider = ArxivAcademicProvider(client=client, min_interval_seconds=0)
-    provider.search_documents("topic", timeout_seconds=2.5)
+    provider.search_documents("topic", limit=10, timeout_seconds=2.5)
     assert observed == [2.5]
 
 
@@ -71,5 +71,5 @@ def test_arxiv_filters_known_publication_date_but_keeps_contract_local() -> None
     )
     provider = ArxivAcademicProvider(client=client, min_interval_seconds=0)
     assert (
-        provider.search_documents("topic", published_after=datetime(2026, 9, 11, tzinfo=UTC)) == []
+        provider.search_documents("topic", limit=10, published_after=datetime(2026, 9, 11, tzinfo=UTC)) == []
     )

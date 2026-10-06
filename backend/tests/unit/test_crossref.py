@@ -54,7 +54,7 @@ def test_crossref_applies_run_timeout_to_http_request() -> None:
         base_url="https://api.crossref.org", transport=httpx.MockTransport(handler)
     )
     provider = CrossrefAcademicProvider(client=client)
-    provider.search_documents("topic", timeout_seconds=2.25)
+    provider.search_documents("topic", limit=10, timeout_seconds=2.25)
     assert observed == [2.25]
 
 
@@ -74,6 +74,7 @@ def test_crossref_pushes_explicit_publication_window_to_provider() -> None:
     )
     provider.search_documents(
         "topic",
+        limit=10,
         published_after=datetime(2024, 1, 1, tzinfo=UTC),
         published_before=datetime(2024, 12, 31, tzinfo=UTC),
     )
