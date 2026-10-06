@@ -27,12 +27,22 @@ from ares.api.settings import Settings, get_settings
 from ares.api.body_limit import PathAwareRequestBodyLimitMiddleware
 from ares.api.event_stream import stream_run_events
 from ares.api.ingestion_stream import stream_ingestion_events
-from ares.application.observability import configure_logging, configure_telemetry, request_context, telemetry_export_status
+from ares.application.observability import (
+    configure_logging,
+    configure_telemetry,
+    request_context,
+    telemetry_export_status,
+)
 from ares.application.auth import AuthStore, AuthenticationError, OidcClient, _sha256
 from ares.application.identity import Principal, local_principal, principal_scope
 from ares.api.spa_static import SpaStaticFiles
 from ares.application.documents import DocumentIngestService
-from ares.application.asset_ingestion import AssetAdmissionError, AssetAdmissionService, AssetIngestionExecutor, BuiltinRichExtractor
+from ares.application.asset_ingestion import (
+    AssetAdmissionError,
+    AssetAdmissionService,
+    AssetIngestionExecutor,
+    BuiltinRichExtractor,
+)
 from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.media_capabilities import probe_local_media_runtime
 from ares.application.media_ingestion import FFmpegMediaProcessor
@@ -41,7 +51,12 @@ from ares.adapters.faster_whisper import FasterWhisperSubprocessTranscriber
 from ares.application.engine import DemoResearchEngine
 from ares.application.exports import ExportError, ExportService
 from ares.application.visualizations import VisualizationExportError, VisualizationService
-from ares.application.repository import IdempotencyConflictError, NotFoundError, Repository, RunAdmissionError
+from ares.application.repository import (
+    IdempotencyConflictError,
+    NotFoundError,
+    Repository,
+    RunAdmissionError,
+)
 from ares.domain.assets import (
     AssetAdmission,
     AssetView,
@@ -64,7 +79,6 @@ from ares.domain.models import (
     AuthMeView,
     WorkspaceSwitchRequest,
     WorkspaceView,
-    WorkerFleetView,
 )
 from ares.domain.visualizations import VisualizationView
 
@@ -74,8 +88,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(json_logs=cfg.json_logs)
     logger = logging.getLogger("ares.api")
     telemetry_shutdown = configure_telemetry(
-        endpoint=cfg.otel_exporter_otlp_endpoint, service_name=f"{cfg.otel_service_name}-api",
-        sample_ratio=cfg.otel_trace_sample_ratio, export_timeout_seconds=cfg.otel_export_timeout_seconds,
+        endpoint=cfg.otel_exporter_otlp_endpoint,
+        service_name=f"{cfg.otel_service_name}-api",
+        sample_ratio=cfg.otel_trace_sample_ratio,
+        export_timeout_seconds=cfg.otel_export_timeout_seconds,
     )
     Path(".data").mkdir(exist_ok=True)
     engine, sessions = build_session_factory(cfg.database_url)
@@ -87,9 +103,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if cfg.auth_mode == "oidc":
         cfg.validate_security_mode()
         oidc = OidcClient(
-            issuer=cfg.oidc_issuer, client_id=cfg.oidc_client_id, client_secret=cfg.oidc_client_secret,
-            redirect_uri=f"{cfg.public_base_url.rstrip('/')}/api/v1/auth/callback", scopes=cfg.oidc_scopes,
-            state_ttl_seconds=cfg.oidc_state_ttl_seconds, session_ttl_hours=cfg.session_ttl_hours, store=auth_store,
+            issuer=cfg.oidc_issuer,
+            client_id=cfg.oidc_client_id,
+            client_secret=cfg.oidc_client_secret,
+            redirect_uri=f"{cfg.public_base_url.rstrip('/')}/api/v1/auth/callback",
+            scopes=cfg.oidc_scopes,
+            state_ttl_seconds=cfg.oidc_state_ttl_seconds,
+            session_ttl_hours=cfg.session_ttl_hours,
+            store=auth_store,
         )
     blobs = FilesystemBlobStore(cfg.blob_root)
     pdf_parser = BoundedPdfParser(
@@ -98,6 +119,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         timeout_seconds=cfg.pdf_parse_timeout_seconds,
     )
     documents = DocumentIngestService(repository, blobs, pdf_parser)
+
     def local_media_runtime():
         return probe_local_media_runtime(
             ffmpeg_binary=cfg.ffmpeg_path,
@@ -144,7 +166,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return False
         try:
             inspector = inspect(engine)
-            return inspector.has_table("visualization_datasets") and inspector.has_table("visualizations")
+            return inspector.has_table("visualization_datasets") and inspector.has_table(
+                "visualizations"
+            )
         except Exception:
             return False
 
@@ -168,11 +192,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(dict.fromkeys([cfg.frontend_origin, "http://127.0.0.1:5173", "http://localhost:5173"])) if cfg.deployment_environment == "local" else [cfg.frontend_origin],
+        allow_origins=list(
+            dict.fromkeys([cfg.frontend_origin, "http://127.0.0.1:5173", "http://localhost:5173"])
+        )
+        if cfg.deployment_environment == "local"
+        else [cfg.frontend_origin],
         allow_credentials=True,
         allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["Content-Type", "Idempotency-Key", "Last-Event-ID", "X-Request-ID", "X-CSRF-Token", "Range"],
-        expose_headers=["X-Request-ID", "X-Idempotent-Replay", "Retry-After", "Accept-Ranges", "Content-Range", "Content-Length"],
+        allow_headers=[
+            "Content-Type",
+            "Idempotency-Key",
+            "Last-Event-ID",
+            "X-Request-ID",
+            "X-CSRF-Token",
+            "Range",
+        ],
+        expose_headers=[
+            "X-Request-ID",
+            "X-Idempotent-Replay",
+            "Retry-After",
+            "Accept-Ranges",
+            "Content-Range",
+            "Content-Length",
+        ],
     )
     if cfg.deployment_environment == "production":
         public_host = urlsplit(cfg.public_base_url).hostname
@@ -198,20 +240,50 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if cfg.auth_mode == "disabled":
             principal = local_principal()
         elif path.startswith("/api/") and path not in public_paths:
-            browser_session = auth_store.resolve_session(request.cookies.get(cfg.session_cookie_name, ""))
+            browser_session = auth_store.resolve_session(
+                request.cookies.get(cfg.session_cookie_name, "")
+            )
             if browser_session is None:
-                return JSONResponse(status_code=401, content={"detail": {"code": "AUTH_REQUIRED", "message": "sign in required"}})
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": {"code": "AUTH_REQUIRED", "message": "sign in required"}},
+                )
             principal = browser_session.principal
             if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
                 origin = request.headers.get("origin", "")
                 csrf_header = request.headers.get("x-csrf-token", "")
                 csrf_cookie = request.cookies.get(cfg.csrf_cookie_name, "")
                 if origin not in allowed_mutation_origins:
-                    return JSONResponse(status_code=403, content={"detail": {"code": "CSRF_ORIGIN", "message": "mutation origin rejected"}})
-                if not csrf_header or csrf_header != csrf_cookie or _sha256(csrf_header) != browser_session.csrf_hash:
-                    return JSONResponse(status_code=403, content={"detail": {"code": "CSRF_TOKEN", "message": "CSRF token rejected"}})
-                if path not in {"/api/v1/auth/logout", "/api/v1/auth/workspace"} and not principal.can_write:
-                    return JSONResponse(status_code=403, content={"detail": {"code": "ROLE_FORBIDDEN", "message": "workspace role is read-only"}})
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "detail": {"code": "CSRF_ORIGIN", "message": "mutation origin rejected"}
+                        },
+                    )
+                if (
+                    not csrf_header
+                    or csrf_header != csrf_cookie
+                    or _sha256(csrf_header) != browser_session.csrf_hash
+                ):
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "detail": {"code": "CSRF_TOKEN", "message": "CSRF token rejected"}
+                        },
+                    )
+                if (
+                    path not in {"/api/v1/auth/logout", "/api/v1/auth/workspace"}
+                    and not principal.can_write
+                ):
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "detail": {
+                                "code": "ROLE_FORBIDDEN",
+                                "message": "workspace role is read-only",
+                            }
+                        },
+                    )
         request.state.principal = principal
         request.state.browser_session = browser_session
         if principal is None:
@@ -234,7 +306,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "request failed",
                     extra={
                         "event": "http.request",
-                        "fields": {"method": request.method, "path": request.url.path, "status": 500},
+                        "fields": {
+                            "method": request.method,
+                            "path": request.url.path,
+                            "status": 500,
+                        },
                     },
                 )
                 raise
@@ -255,14 +331,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "no-referrer")
         response.headers.setdefault("X-Frame-Options", "DENY")
-        response.headers.setdefault("Permissions-Policy", f"camera=(), microphone={'(self)' if cfg.microphone_enabled else '()'}, geolocation=()")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            f"camera=(), microphone={'(self)' if cfg.microphone_enabled else '()'}, geolocation=()",
+        )
         response.headers.setdefault("Cross-Origin-Resource-Policy", "same-site")
         response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
         response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
         if request.url.path.startswith("/api/v1/auth/"):
             response.headers.setdefault("Cache-Control", "no-store")
         if request.url.path.startswith("/api/") or request.url.path.startswith("/health/"):
-            response.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+            response.headers.setdefault(
+                "Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'"
+            )
         else:
             response.headers.setdefault(
                 "Content-Security-Policy",
@@ -271,36 +352,58 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "frame-ancestors 'none'; form-action 'self'",
             )
         if cfg.deployment_environment == "production":
-            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
         return response
 
     @app.get("/api/v1/auth/login")
     async def auth_login(return_path: str = "/") -> RedirectResponse:
         if oidc is None:
-            raise HTTPException(status_code=404, detail={"code": "AUTH_DISABLED", "message": "OIDC is disabled"})
+            raise HTTPException(
+                status_code=404, detail={"code": "AUTH_DISABLED", "message": "OIDC is disabled"}
+            )
         try:
             url = await oidc.begin_login(return_path)
         except (AuthenticationError, httpx.HTTPError) as exc:
-            raise HTTPException(status_code=503, detail={"code": "OIDC_UNAVAILABLE", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=503, detail={"code": "OIDC_UNAVAILABLE", "message": str(exc)}
+            ) from exc
         return RedirectResponse(url, status_code=302)
 
     @app.get("/api/v1/auth/callback")
     async def auth_callback(code: str, state: str) -> RedirectResponse:
         if oidc is None:
-            raise HTTPException(status_code=404, detail={"code": "AUTH_DISABLED", "message": "OIDC is disabled"})
+            raise HTTPException(
+                status_code=404, detail={"code": "AUTH_DISABLED", "message": "OIDC is disabled"}
+            )
         try:
             result = await oidc.complete_login(code=code, state=state)
         except (AuthenticationError, httpx.HTTPError) as exc:
             auth_store.audit(None, "auth.login_failed", metadata={"reason": type(exc).__name__})
-            raise HTTPException(status_code=401, detail={"code": "OIDC_LOGIN_FAILED", "message": str(exc)}) from exc
-        response = RedirectResponse(f"{cfg.frontend_origin.rstrip('/')}{result.return_path}", status_code=303)
-        response.set_cookie(
-            cfg.session_cookie_name, result.session_token, httponly=True, secure=cfg.session_cookie_secure,
-            samesite="lax", path="/", max_age=cfg.session_ttl_hours * 3600,
+            raise HTTPException(
+                status_code=401, detail={"code": "OIDC_LOGIN_FAILED", "message": str(exc)}
+            ) from exc
+        response = RedirectResponse(
+            f"{cfg.frontend_origin.rstrip('/')}{result.return_path}", status_code=303
         )
         response.set_cookie(
-            cfg.csrf_cookie_name, result.csrf_token, httponly=False, secure=cfg.session_cookie_secure,
-            samesite="lax", path="/", max_age=cfg.session_ttl_hours * 3600,
+            cfg.session_cookie_name,
+            result.session_token,
+            httponly=True,
+            secure=cfg.session_cookie_secure,
+            samesite="lax",
+            path="/",
+            max_age=cfg.session_ttl_hours * 3600,
+        )
+        response.set_cookie(
+            cfg.csrf_cookie_name,
+            result.csrf_token,
+            httponly=False,
+            secure=cfg.session_cookie_secure,
+            samesite="lax",
+            path="/",
+            max_age=cfg.session_ttl_hours * 3600,
         )
         return response
 
@@ -308,31 +411,52 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def auth_me(request: Request) -> AuthMeView:
         principal: Principal = request.state.principal
         return AuthMeView(
-            user_id=principal.user_id, workspace_id=principal.workspace_id, role=principal.role.value,
-            subject=principal.subject, email=principal.email, display_name=principal.display_name,
-            auth_mode=cfg.auth_mode, csrf_required=cfg.auth_mode == "oidc",
+            user_id=principal.user_id,
+            workspace_id=principal.workspace_id,
+            role=principal.role.value,
+            subject=principal.subject,
+            email=principal.email,
+            display_name=principal.display_name,
+            auth_mode=cfg.auth_mode,
+            csrf_required=cfg.auth_mode == "oidc",
         )
 
     @app.get("/api/v1/workspaces", response_model=list[WorkspaceView])
     def list_workspaces(request: Request) -> list[WorkspaceView]:
         principal: Principal = request.state.principal
         if cfg.auth_mode == "disabled":
-            return [WorkspaceView(id=principal.workspace_id, name="Local workspace", role=principal.role.value)]
-        return [WorkspaceView.model_validate(item) for item in auth_store.list_workspaces(principal)]
+            return [
+                WorkspaceView(
+                    id=principal.workspace_id, name="Local workspace", role=principal.role.value
+                )
+            ]
+        return [
+            WorkspaceView.model_validate(item) for item in auth_store.list_workspaces(principal)
+        ]
 
     @app.post("/api/v1/auth/workspace", response_model=AuthMeView)
     def switch_workspace(payload: WorkspaceSwitchRequest, request: Request) -> AuthMeView:
         principal: Principal = request.state.principal
         if cfg.auth_mode == "disabled":
-            raise HTTPException(status_code=409, detail={"code": "AUTH_DISABLED", "message": "local mode has one workspace"})
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "AUTH_DISABLED", "message": "local mode has one workspace"},
+            )
         try:
             updated = auth_store.switch_workspace(principal, payload.workspace_id)
         except AuthenticationError as exc:
-            raise HTTPException(status_code=404, detail={"code": "WORKSPACE_NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "WORKSPACE_NOT_FOUND", "message": str(exc)}
+            ) from exc
         return AuthMeView(
-            user_id=updated.user_id, workspace_id=updated.workspace_id, role=updated.role.value,
-            subject=updated.subject, email=updated.email, display_name=updated.display_name,
-            auth_mode=cfg.auth_mode, csrf_required=True,
+            user_id=updated.user_id,
+            workspace_id=updated.workspace_id,
+            role=updated.role.value,
+            subject=updated.subject,
+            email=updated.email,
+            display_name=updated.display_name,
+            auth_mode=cfg.auth_mode,
+            csrf_required=True,
         )
 
     @app.post("/api/v1/auth/logout", status_code=204)
@@ -355,7 +479,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             with engine.connect() as connection:
                 connection.execute(text("select 1"))
                 if cfg.deployment_environment == "production":
-                    revision = connection.scalar(text("SELECT version_num FROM alembic_version LIMIT 1"))
+                    revision = connection.scalar(
+                        text("SELECT version_num FROM alembic_version LIMIT 1")
+                    )
                     if revision != cfg.required_schema_revision:
                         raise RuntimeError(
                             f"database schema revision {revision!r} does not match required {cfg.required_schema_revision!r}"
@@ -368,22 +494,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     raise RuntimeError("no active research-capable worker is available")
             return {"status": "ready", "mode": cfg.ares_mode}
         except Exception as exc:
-            raise HTTPException(status_code=503, detail={"code": "NOT_READY", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=503, detail={"code": "NOT_READY", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v1/system/status")
     def system_status() -> dict[str, object]:
         postgres = cfg.database_url.startswith("postgresql")
         if cfg.local_embeddings_enabled or cfg.gemini_embeddings_enabled:
-            retrieval_backend = "postgresql+pgvector-exact" if postgres else "sqlite-persisted-vector-exact"
+            retrieval_backend = (
+                "postgresql+pgvector-exact" if postgres else "sqlite-persisted-vector-exact"
+            )
         else:
             retrieval_backend = "persisted-lexical"
         fleet = repository.get_worker_fleet(stale_seconds=cfg.worker_stale_seconds)
         worker_profiles = repository.get_worker_profiles(stale_seconds=cfg.worker_stale_seconds)
-        worker_capabilities = repository.get_worker_capabilities(stale_seconds=cfg.worker_stale_seconds)
-        media_ready = (
-            cfg.ares_mode == "demo"
-            or bool(worker_capabilities.get("ingestion", False))
+        worker_capabilities = repository.get_worker_capabilities(
+            stale_seconds=cfg.worker_stale_seconds
         )
+        media_ready = cfg.ares_mode == "demo" or bool(worker_capabilities.get("ingestion", False))
         if cfg.ares_mode == "demo":
             local_media = local_media_runtime()
             docling_ready = importlib.util.find_spec("docling") is not None
@@ -426,8 +555,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "accepted_mime_types": [
                     "application/pdf",
                     "text/csv",
-                    *(["image/png", "image/jpeg", "image/webp"] if cfg.rich_parser_enabled and cfg.ocr_enabled else []),
-                    *(["audio/wav", "audio/mpeg", "audio/mp4", "audio/webm", "audio/ogg"] if cfg.audio_enabled else []),
+                    *(
+                        ["image/png", "image/jpeg", "image/webp"]
+                        if cfg.rich_parser_enabled and cfg.ocr_enabled
+                        else []
+                    ),
+                    *(
+                        ["audio/wav", "audio/mpeg", "audio/mp4", "audio/webm", "audio/ogg"]
+                        if cfg.audio_enabled
+                        else []
+                    ),
                     *(["video/mp4", "video/webm"] if cfg.video_enabled else []),
                 ],
                 "max_upload_bytes": cfg.max_upload_bytes,
@@ -451,11 +588,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "metered": True,
                 },
                 "searxng": {"configured": bool(cfg.searxng_url), "metered": False},
-                "openalex": {"configured": True, "authenticated": bool(cfg.openalex_api_key), "metered": False},
-                "crossref": {"configured": True, "polite_pool": bool(cfg.crossref_mailto), "metered": False},
+                "openalex": {
+                    "configured": True,
+                    "authenticated": bool(cfg.openalex_api_key),
+                    "metered": False,
+                },
+                "crossref": {
+                    "configured": True,
+                    "polite_pool": bool(cfg.crossref_mailto),
+                    "metered": False,
+                },
                 "arxiv": {"configured": True, "metered": False},
-                "github": {"configured": True, "authenticated": bool(cfg.github_read_token), "metered": False},
-                "gemini_embeddings": {"configured": cfg.gemini_embeddings_enabled, "metered": False},
+                "github": {
+                    "configured": True,
+                    "authenticated": bool(cfg.github_read_token),
+                    "metered": False,
+                },
+                "gemini_embeddings": {
+                    "configured": cfg.gemini_embeddings_enabled,
+                    "metered": False,
+                },
                 "local_embeddings": {
                     "configured": cfg.local_embeddings_enabled,
                     "ready": local_embeddings_ready,
@@ -500,7 +652,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return repository.list_runs_for_conversation(conversation_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v2/assets", response_model=list[AssetView])
     def list_assets(limit: int = Query(default=100, ge=1, le=500)) -> list[AssetView]:
@@ -511,14 +665,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not cfg.async_ingestion_enabled:
             raise HTTPException(
                 status_code=503,
-                detail={"code": "ASYNC_INGESTION_DISABLED", "message": "rich asset ingestion is disabled"},
+                detail={
+                    "code": "ASYNC_INGESTION_DISABLED",
+                    "message": "rich asset ingestion is disabled",
+                },
             )
         name = Path(file.filename or "asset").name.strip()[:240] or "asset"
         supplied = file.content_type or "application/octet-stream"
         temporary_path: str | None = None
         received = 0
         try:
-            with tempfile.NamedTemporaryFile(prefix="ares-upload-", suffix=".stage", delete=False) as staged:
+            with tempfile.NamedTemporaryFile(
+                prefix="ares-upload-", suffix=".stage", delete=False
+            ) as staged:
                 temporary_path = staged.name
                 while True:
                     chunk = await file.read(1024 * 1024)
@@ -533,7 +692,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     if received > max_asset_bytes:
                         raise HTTPException(
                             status_code=413,
-                            detail={"code": "UPLOAD_TOO_LARGE", "message": "asset exceeds the configured upload limit"},
+                            detail={
+                                "code": "UPLOAD_TOO_LARGE",
+                                "message": "asset exceeds the configured upload limit",
+                            },
                         )
                     staged.write(chunk)
                 staged.flush()
@@ -547,7 +709,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 )
             except AssetAdmissionError as exc:
                 message = str(exc)
-                status = 415 if "unsupported file type" in message or "signature" in message else 422
+                status = (
+                    415 if "unsupported file type" in message or "signature" in message else 422
+                )
                 raise HTTPException(
                     status_code=status,
                     detail={"code": "ASSET_ADMISSION_REJECTED", "message": message},
@@ -564,7 +728,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             blob_keys = await asyncio.to_thread(repository.delete_asset_with_blobs, asset_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         for blob_key in blob_keys:
             await asyncio.to_thread(blobs.delete, blob_key)
         return Response(status_code=204)
@@ -578,23 +744,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return repository.get_ingestion(ingestion_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
-    @app.post("/api/v2/ingestions/{ingestion_id}/cancel", response_model=IngestionView, status_code=202)
+    @app.post(
+        "/api/v2/ingestions/{ingestion_id}/cancel", response_model=IngestionView, status_code=202
+    )
     def cancel_ingestion(ingestion_id: UUID) -> IngestionView:
         try:
             return repository.request_ingestion_cancel(ingestion_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
-    @app.post("/api/v2/ingestions/{ingestion_id}/retry", response_model=IngestionView, status_code=202)
+    @app.post(
+        "/api/v2/ingestions/{ingestion_id}/retry", response_model=IngestionView, status_code=202
+    )
     def retry_ingestion(ingestion_id: UUID) -> IngestionView:
         try:
             return repository.retry_ingestion(ingestion_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except ValueError as exc:
-            raise HTTPException(status_code=409, detail={"code": "INGESTION_NOT_RETRYABLE", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=409, detail={"code": "INGESTION_NOT_RETRYABLE", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v2/ingestions/{ingestion_id}/events")
     async def ingestion_events(
@@ -603,7 +781,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             repository.get_ingestion(ingestion_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         header = request.headers.get("last-event-id")
         try:
             header_cursor = max(0, int(header)) if header else 0
@@ -645,14 +825,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     @app.get("/api/v2/assets/{asset_id}/content")
-    async def get_asset_content(asset_id: UUID, range_header: str | None = Header(default=None, alias="Range")) -> Response:
+    async def get_asset_content(
+        asset_id: UUID, range_header: str | None = Header(default=None, alias="Range")
+    ) -> Response:
         try:
             asset = await asyncio.to_thread(repository.get_asset_record, asset_id)
             size = await asyncio.to_thread(blobs.get_size, asset.original_blob_key)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except FileNotFoundError as exc:
-            raise HTTPException(status_code=410, detail={"code": "ASSET_GONE", "message": "asset bytes are unavailable"}) from exc
+            raise HTTPException(
+                status_code=410,
+                detail={"code": "ASSET_GONE", "message": "asset bytes are unavailable"},
+            ) from exc
         base_headers = {
             "Accept-Ranges": "bytes",
             "Content-Disposition": f'inline; filename="{asset.original_name.replace(chr(34), "")}"',
@@ -660,24 +847,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         }
         if not range_header:
             content = await asyncio.to_thread(blobs.get_bytes, asset.original_blob_key)
-            return Response(content=content, media_type=asset.mime_type, headers={**base_headers, "Content-Length": str(len(content))})
+            return Response(
+                content=content,
+                media_type=asset.mime_type,
+                headers={**base_headers, "Content-Length": str(len(content))},
+            )
         match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
         if not match or "," in range_header:
-            raise HTTPException(status_code=416, detail={"code": "INVALID_RANGE", "message": "only one byte range is supported"})
+            raise HTTPException(
+                status_code=416,
+                detail={"code": "INVALID_RANGE", "message": "only one byte range is supported"},
+            )
         left, right = match.groups()
         if not left and not right:
-            raise HTTPException(status_code=416, detail={"code": "INVALID_RANGE", "message": "invalid byte range"})
+            raise HTTPException(
+                status_code=416, detail={"code": "INVALID_RANGE", "message": "invalid byte range"}
+            )
         if left:
             start = int(left)
             end = min(size - 1, int(right) if right else size - 1)
         else:
             suffix = int(right)
             if suffix <= 0:
-                raise HTTPException(status_code=416, detail={"code": "INVALID_RANGE", "message": "invalid suffix range"})
+                raise HTTPException(
+                    status_code=416,
+                    detail={"code": "INVALID_RANGE", "message": "invalid suffix range"},
+                )
             start = max(0, size - suffix)
             end = size - 1
         if start >= size or end < start:
-            return Response(status_code=416, headers={**base_headers, "Content-Range": f"bytes */{size}"})
+            return Response(
+                status_code=416, headers={**base_headers, "Content-Range": f"bytes */{size}"}
+            )
         content = await asyncio.to_thread(blobs.get_range, asset.original_blob_key, start, end)
         return Response(
             content=content,
@@ -700,7 +901,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return repository.get_media_storyboard(asset_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v2/renditions/{rendition_id}/content")
     async def get_rendition_content(rendition_id: UUID) -> Response:
@@ -708,9 +911,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             rendition = await asyncio.to_thread(repository.get_rendition_record, rendition_id)
             content = await asyncio.to_thread(blobs.get_bytes, rendition.blob_key)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except FileNotFoundError as exc:
-            raise HTTPException(status_code=410, detail={"code": "RENDITION_GONE", "message": "rendition bytes are unavailable"}) from exc
+            raise HTTPException(
+                status_code=410,
+                detail={"code": "RENDITION_GONE", "message": "rendition bytes are unavailable"},
+            ) from exc
         return Response(
             content=content,
             media_type=rendition.mime_type,
@@ -726,21 +934,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return repository.get_segment(segment_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v2/segments/{segment_id}/table", response_model=TableView)
     def get_segment_table(segment_id: UUID) -> TableView:
         try:
             return repository.get_table_for_segment(segment_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v2/tables/{table_id}", response_model=TableView)
     def get_table(table_id: UUID) -> TableView:
         try:
             return repository.get_table(table_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v1/documents", response_model=list[DocumentView])
     def list_documents() -> list[DocumentView]:
@@ -756,7 +970,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if file.content_type not in {None, "", "application/pdf", "application/octet-stream"}:
             raise HTTPException(
                 status_code=415,
-                detail={"code": "UNSUPPORTED_MEDIA_TYPE", "message": "PDF upload must use application/pdf"},
+                detail={
+                    "code": "UNSUPPORTED_MEDIA_TYPE",
+                    "message": "PDF upload must use application/pdf",
+                },
             )
         chunks: list[bytes] = []
         received = 0
@@ -768,7 +985,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if received > cfg.max_upload_bytes:
                 raise HTTPException(
                     status_code=413,
-                    detail={"code": "UPLOAD_TOO_LARGE", "message": "PDF exceeds the configured upload limit"},
+                    detail={
+                        "code": "UPLOAD_TOO_LARGE",
+                        "message": "PDF exceeds the configured upload limit",
+                    },
                 )
             chunks.append(chunk)
         raw = b"".join(chunks)
@@ -785,18 +1005,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             blob_keys = await asyncio.to_thread(repository.delete_document_with_blobs, document_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         for blob_key in blob_keys:
             await asyncio.to_thread(blobs.delete, blob_key)
         return Response(status_code=204)
 
     @app.post("/api/v1/runs", response_model=RunSnapshot, status_code=202)
     def create_run(
-        payload: RunCreate, response: Response, idempotency_key: str = Header(..., alias="Idempotency-Key")
+        payload: RunCreate,
+        response: Response,
+        idempotency_key: str = Header(..., alias="Idempotency-Key"),
     ) -> RunSnapshot:
         try:
             snapshot, created = repository.create_run(
-                payload, idempotency_key=idempotency_key, max_active_runs=cfg.max_active_runs,
+                payload,
+                idempotency_key=idempotency_key,
+                max_active_runs=cfg.max_active_runs,
                 max_active_runs_per_workspace=cfg.max_active_runs_per_workspace,
                 max_active_runs_per_user=cfg.max_active_runs_per_user,
             )
@@ -807,9 +1033,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 headers={"Retry-After": "5"},
             ) from exc
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except IdempotencyConflictError as exc:
-            raise HTTPException(status_code=409, detail={"code": "IDEMPOTENCY_CONFLICT", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=409, detail={"code": "IDEMPOTENCY_CONFLICT", "message": str(exc)}
+            ) from exc
         if not created:
             response.headers["X-Idempotent-Replay"] = "true"
         return snapshot
@@ -819,21 +1049,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return repository.get_run(run_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v1/runs/{run_id}/evidence", response_model=list[EvidenceView])
     def list_run_evidence(run_id: UUID) -> list[EvidenceView]:
         try:
             return repository.list_run_evidence(run_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v1/runs/{run_id}/quality", response_model=RunQualityView)
     def get_run_quality(run_id: UUID) -> RunQualityView:
         try:
             return repository.get_run_quality(run_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v2/runs/{run_id}/visualizations", response_model=list[VisualizationView])
     def get_run_visualizations(run_id: UUID) -> list[VisualizationView]:
@@ -842,17 +1078,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not visualization_storage_ready():
             raise HTTPException(
                 status_code=503,
-                detail={"code": "VISUALIZATIONS_NOT_READY", "message": "Visualization storage is not migrated or reachable."},
+                detail={
+                    "code": "VISUALIZATIONS_NOT_READY",
+                    "message": "Visualization storage is not migrated or reachable.",
+                },
             )
         try:
             return visualizations.list_for_run(run_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get(
         "/api/v2/runs/{run_id}/visualizations/{visualization_id}/export.csv",
         response_class=Response,
-        responses={200: {"content": {"text/csv": {"schema": {"type": "string"}}}, "description": "Lineage-bearing CSV export"}},
+        responses={
+            200: {
+                "content": {"text/csv": {"schema": {"type": "string"}}},
+                "description": "Lineage-bearing CSV export",
+            }
+        },
     )
     def export_run_visualization_csv(run_id: UUID, visualization_id: UUID) -> Response:
         if not cfg.visualizations_enabled:
@@ -863,12 +1109,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not visualization_storage_ready():
             raise HTTPException(
                 status_code=503,
-                detail={"code": "VISUALIZATIONS_NOT_READY", "message": "Visualization storage is not migrated or reachable."},
+                detail={
+                    "code": "VISUALIZATIONS_NOT_READY",
+                    "message": "Visualization storage is not migrated or reachable.",
+                },
             )
         try:
             filename, content = visualizations.export_csv(run_id, visualization_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except VisualizationExportError as exc:
             raise HTTPException(
                 status_code=409,
@@ -889,23 +1140,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return repository.request_cancel(run_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v1/evidence/{evidence_id}", response_model=EvidenceView)
     def get_evidence(evidence_id: UUID) -> EvidenceView:
         try:
             return repository.get_evidence(evidence_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
 
     @app.post("/api/v1/runs/{run_id}/exports", response_model=ArtifactView, status_code=201)
     async def create_export(run_id: UUID, payload: ExportCreate) -> ArtifactView:
         try:
             return await asyncio.to_thread(exports.create, run_id, payload)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except ExportError as exc:
-            raise HTTPException(status_code=409, detail={"code": "EXPORT_NOT_READY", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=409, detail={"code": "EXPORT_NOT_READY", "message": str(exc)}
+            ) from exc
 
     @app.get("/api/v1/artifacts/{artifact_id}")
     async def download_artifact(artifact_id: UUID) -> Response:
@@ -913,9 +1172,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             record = await asyncio.to_thread(repository.get_artifact_record, artifact_id)
             content = await asyncio.to_thread(blobs.get_bytes, record.blob_key)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         except FileNotFoundError as exc:
-            raise HTTPException(status_code=410, detail={"code": "ARTIFACT_GONE", "message": "artifact bytes are unavailable"}) from exc
+            raise HTTPException(
+                status_code=410,
+                detail={"code": "ARTIFACT_GONE", "message": "artifact bytes are unavailable"},
+            ) from exc
         return Response(
             content=content,
             media_type=record.content_type,
@@ -929,7 +1193,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             repository.get_run(run_id)
         except NotFoundError as exc:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc
+            raise HTTPException(
+                status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+            ) from exc
         header = request.headers.get("last-event-id")
         try:
             header_cursor = max(0, int(header)) if header else 0
@@ -953,13 +1219,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
 
         generator = stream_run_events(
-            repository=repository, run_id=run_id, request=request, principal=principal, after=cursor,
-            revalidate=revalidate, page_size=cfg.event_page_size, max_replay=cfg.event_max_replay,
+            repository=repository,
+            run_id=run_id,
+            request=request,
+            principal=principal,
+            after=cursor,
+            revalidate=revalidate,
+            page_size=cfg.event_page_size,
+            max_replay=cfg.event_max_replay,
             heartbeat_seconds=cfg.event_heartbeat_seconds,
             authorization_recheck_seconds=cfg.stream_authorization_recheck_seconds,
         )
         return StreamingResponse(
-            generator, media_type="text/event-stream",
+            generator,
+            media_type="text/event-stream",
             headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
         )
 
@@ -988,9 +1261,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         media_processor = None
         local_media = local_media_runtime()
-        media_processor_ready = (
-            (cfg.audio_enabled and local_media.transcription_ready)
-            or (cfg.video_enabled and local_media.video_processing_ready)
+        media_processor_ready = (cfg.audio_enabled and local_media.transcription_ready) or (
+            cfg.video_enabled and local_media.video_processing_ready
         )
         if media_processor_ready:
             transcriber = (
@@ -1025,8 +1297,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         media = AssetIngestionExecutor(
             repository,
             blobs,
-            BuiltinRichExtractor(pdf_parser, max_csv_rows=cfg.max_csv_rows, max_table_cells=cfg.max_table_cells, max_cell_chars=cfg.max_cell_chars),
-            DocumentEmbeddingIndexer(repository, None, model_id="", dimensions=cfg.local_embedding_dimensions),
+            BuiltinRichExtractor(
+                pdf_parser,
+                max_csv_rows=cfg.max_csv_rows,
+                max_table_cells=cfg.max_table_cells,
+                max_cell_chars=cfg.max_cell_chars,
+            ),
+            DocumentEmbeddingIndexer(
+                repository, None, model_id="", dimensions=cfg.local_embedding_dimensions
+            ),
             rich_parser=rich_parser,
             ocr_enabled=cfg.ocr_enabled,
             media_processor=media_processor,
@@ -1035,7 +1314,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             max_table_cells=cfg.max_table_cells,
         )
         media.execute(ingestion_lease)
-        return {"processed": True, "kind": "ingestion", "ingestion_id": str(ingestion_lease.ingestion_id)}
+        return {
+            "processed": True,
+            "kind": "ingestion",
+            "ingestion_id": str(ingestion_lease.ingestion_id),
+        }
 
     if cfg.web_dist_dir:
         web_root = Path(cfg.web_dist_dir)

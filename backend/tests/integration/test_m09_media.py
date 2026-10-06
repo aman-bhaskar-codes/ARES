@@ -17,7 +17,11 @@ from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.api.app import create_app
 from ares.api.settings import Settings
-from ares.application.asset_ingestion import AssetAdmissionService, AssetIngestionExecutor, BuiltinRichExtractor
+from ares.application.asset_ingestion import (
+    AssetAdmissionService,
+    AssetIngestionExecutor,
+    BuiltinRichExtractor,
+)
 from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.identity import Principal, WorkspaceRole, principal_scope
 from ares.application.media_ingestion import FFmpegMediaProcessor
@@ -29,7 +33,9 @@ class FakeTranscriber:
     def __init__(self) -> None:
         self.calls: list[Path] = []
 
-    def transcribe(self, path: Path, *, language: str | None = None, cancelled=None) -> TranscriptionResult:
+    def transcribe(
+        self, path: Path, *, language: str | None = None, cancelled=None
+    ) -> TranscriptionResult:
         del language
         if cancelled is not None and cancelled():
             raise RuntimeError("cancelled")
@@ -119,7 +125,9 @@ def _executor(repository, blobs, processor) -> AssetIngestionExecutor:
     return AssetIngestionExecutor(
         repository,
         blobs,
-        BuiltinRichExtractor(BoundedPdfParser(max_bytes=2_000_000, max_pages=10, timeout_seconds=5)),
+        BuiltinRichExtractor(
+            BoundedPdfParser(max_bytes=2_000_000, max_pages=10, timeout_seconds=5)
+        ),
         DocumentEmbeddingIndexer(repository, None, model_id="", dimensions=3),
         media_processor=processor,
         max_frame_ocr_frames=0,
@@ -128,16 +136,17 @@ def _executor(repository, blobs, processor) -> AssetIngestionExecutor:
 
 def test_audio_processor_preserves_timestamped_source_transcript() -> None:
     transcriber = FakeTranscriber()
-    result = _processor(transcriber).extract(
-        _wav_bytes(), mime_type="audio/wav", name="voice.wav"
-    )
+    result = _processor(transcriber).extract(_wav_bytes(), mime_type="audio/wav", name="voice.wav")
 
     assert result.duration_ms >= 1_200
     assert result.width is None and result.height is None
     assert len(transcriber.calls) == 1
     assert [segment.text for segment in result.extraction.segments] == ["alpha ten", "beta ninety"]
     assert all(segment.modality == "audio" for segment in result.extraction.segments)
-    assert [segment.locator.kind for segment in result.extraction.segments] == ["time_range", "time_range"]
+    assert [segment.locator.kind for segment in result.extraction.segments] == [
+        "time_range",
+        "time_range",
+    ]
     assert result.extraction.segments[0].locator.start_ms == 0
     assert result.extraction.segments[1].locator.end_ms == 1_200
     assert result.extraction.segments[0].locator.track == "audio"
@@ -148,7 +157,9 @@ def test_audio_processor_preserves_timestamped_source_transcript() -> None:
     assert all(0.0 <= float(value) <= 1.0 for value in peaks)
 
 
-def test_video_processor_uses_bounded_pts_frames_and_shared_transcript_pipeline(tmp_path: Path) -> None:
+def test_video_processor_uses_bounded_pts_frames_and_shared_transcript_pipeline(
+    tmp_path: Path,
+) -> None:
     transcriber = FakeTranscriber()
     result = _processor(transcriber, frame_cap=6).extract(
         _make_video(tmp_path), mime_type="video/mp4", name="clip.mp4"
@@ -170,7 +181,9 @@ def test_video_processor_uses_bounded_pts_frames_and_shared_transcript_pipeline(
     assert "not exhaustive" in str(result.media_metadata["visual_coverage_warning"]).lower()
 
 
-def test_audio_ingestion_publishes_timestamp_segments_into_existing_rag_chunks(repository, tmp_path: Path) -> None:
+def test_audio_ingestion_publishes_timestamp_segments_into_existing_rag_chunks(
+    repository, tmp_path: Path
+) -> None:
     blobs = FilesystemBlobStore(str(tmp_path / "blobs"))
     staged = tmp_path / "sample.wav"
     staged.write_bytes(_wav_bytes())
@@ -194,12 +207,18 @@ def test_audio_ingestion_publishes_timestamp_segments_into_existing_rag_chunks(r
     assert asset.duration_ms is not None and asset.duration_ms >= 1_200
     chunks = repository.get_document_chunks([ingestion.document_id])
     assert chunks
-    cited = [repository.get_segment(chunk.evidence_segment_id) for chunk in chunks if chunk.evidence_segment_id]
+    cited = [
+        repository.get_segment(chunk.evidence_segment_id)
+        for chunk in chunks
+        if chunk.evidence_segment_id
+    ]
     assert cited and all(segment.locator.kind == "time_range" for segment in cited)
     assert {segment.origin_group_id for segment in cited} == {cited[0].origin_group_id}
 
 
-def test_video_storyboard_renditions_are_authorized_and_deleted_with_asset(repository, tmp_path: Path) -> None:
+def test_video_storyboard_renditions_are_authorized_and_deleted_with_asset(
+    repository, tmp_path: Path
+) -> None:
     blobs = FilesystemBlobStore(str(tmp_path / "video-blobs"))
     staged = tmp_path / "sample.mp4"
     staged.write_bytes(_make_video(tmp_path))
@@ -308,7 +327,9 @@ def test_demo_video_degrades_to_visual_only_when_asr_is_unavailable(tmp_path: Pa
     ingestion = client.get(f"/api/v2/ingestions/{ingestion_id}")
     assert ingestion.status_code == 200
     assert ingestion.json()["status"] == "partial"
-    assert any("without transcript evidence" in warning.lower() for warning in ingestion.json()["warnings"])
+    assert any(
+        "without transcript evidence" in warning.lower() for warning in ingestion.json()["warnings"]
+    )
 
     storyboard = client.get(f"/api/v2/assets/{asset_id}/storyboard")
     assert storyboard.status_code == 200
@@ -373,7 +394,9 @@ def test_running_media_cancellation_prevents_publication(repository, tmp_path: P
     assert errors == []
 
 
-def test_cancelled_media_asset_can_be_deleted_without_a_document(repository, tmp_path: Path) -> None:
+def test_cancelled_media_asset_can_be_deleted_without_a_document(
+    repository, tmp_path: Path
+) -> None:
     blobs = FilesystemBlobStore(str(tmp_path / "delete-cancelled-blobs"))
     staged = tmp_path / "delete-cancelled.wav"
     staged.write_bytes(_wav_bytes())

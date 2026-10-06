@@ -36,7 +36,9 @@ async def stream_ingestion_events(
         with principal_scope(principal):
             return call()
 
-    snapshot = await asyncio.to_thread(lambda: scoped(lambda: repository.get_ingestion(ingestion_id)))
+    snapshot = await asyncio.to_thread(
+        lambda: scoped(lambda: repository.get_ingestion(ingestion_id))
+    )
     cursor = max(0, after)
     if snapshot.last_seq - cursor > max_replay:
         synthetic = IngestionEventEnvelope(
@@ -66,7 +68,11 @@ async def stream_ingestion_events(
             last_auth = now
         try:
             items = await asyncio.to_thread(
-                lambda: scoped(lambda: repository.list_ingestion_events(ingestion_id, after=cursor, limit=page_size))
+                lambda: scoped(
+                    lambda: repository.list_ingestion_events(
+                        ingestion_id, after=cursor, limit=page_size
+                    )
+                )
             )
         except NotFoundError:
             return
@@ -77,7 +83,9 @@ async def stream_ingestion_events(
                 cursor = max(cursor, item.seq)
                 yield _wire(item, named=True)
                 yield _wire(item, named=False)
-            latest = await asyncio.to_thread(lambda: scoped(lambda: repository.get_ingestion(ingestion_id)))
+            latest = await asyncio.to_thread(
+                lambda: scoped(lambda: repository.get_ingestion(ingestion_id))
+            )
             if latest.status.terminal and cursor >= latest.last_seq:
                 return
             continue

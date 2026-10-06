@@ -15,7 +15,9 @@ class DeterministicResearchPlanner:
     expands only the discovery query while preserving the user's original wording as variant 1.
     """
 
-    def plan(self, query: str, mode: RunMode, date_window: DateWindow | None = None) -> ResearchPlan:
+    def plan(
+        self, query: str, mode: RunMode, date_window: DateWindow | None = None
+    ) -> ResearchPlan:
         cleaned = " ".join(query.split())
         variants = [cleaned]
         lower = cleaned.lower()

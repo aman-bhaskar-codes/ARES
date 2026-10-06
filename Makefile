@@ -1,15 +1,15 @@
 .PHONY: doctor connectivity-doctor connectivity-doctor-strict infra migrate verify-migrations production-doctor test test-postgres test-media test-compile openapi eval-routing eval-regression eval-multimodal eval-m10-retrieval eval-m11-heldout lint security-scan lock-check sbom verify-m11-release release-m11 test-e2e check api worker install-media worker-media provision-whisper web load-smoke perf-baseline perf-m10
 
 doctor:
-	PYTHONPATH=backend/src uv run --project backend python scripts/doctor.py
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/doctor.py
 
 connectivity-doctor:
 	@test -f .env || (echo ".env is required" && exit 1)
-	PYTHONPATH=backend/src uv run --project backend python scripts/connectivity_doctor.py --env-file .env --network
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/connectivity_doctor.py --env-file .env --network
 
 connectivity-doctor-strict:
 	@test -f .env || (echo ".env is required" && exit 1)
-	PYTHONPATH=backend/src uv run --project backend python scripts/connectivity_doctor.py --env-file .env --network --require-optional
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/connectivity_doctor.py --env-file .env --network --require-optional
 
 infra:
 	docker compose -f infra/local/compose.yaml up -d postgres searxng
@@ -18,11 +18,11 @@ migrate:
 	uv run --project backend alembic -c backend/alembic.ini upgrade head
 
 verify-migrations:
-	PYTHONPATH=backend/src uv run --project backend python scripts/verify_migrations.py
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/verify_migrations.py
 
 production-doctor:
 	@test -f .env.production || (echo ".env.production is required" && exit 1)
-	PYTHONPATH=backend/src uv run --project backend python scripts/production_doctor.py --env-file .env.production
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/production_doctor.py --env-file .env.production
 
 lock-check:
 	uv lock --project backend --check
@@ -49,20 +49,20 @@ eval-multimodal:
 	@test -n "$$ARES_MEDIA_EVAL_MANIFEST" || (echo "ARES_MEDIA_EVAL_MANIFEST is required" && exit 1)
 	@test -n "$$WHISPER_MODEL_PATH" || (echo "WHISPER_MODEL_PATH is required" && exit 1)
 	@test -n "$$WHISPER_MODEL_REVISION" || (echo "WHISPER_MODEL_REVISION is required" && exit 1)
-	PYTHONPATH=backend/src uv run --project backend python scripts/eval_media.py \
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/eval_media.py \
 		--manifest "$$ARES_MEDIA_EVAL_MANIFEST" --model-path "$$WHISPER_MODEL_PATH" \
 		--model-revision "$$WHISPER_MODEL_REVISION" --report evals/reports/media_latest.json
 
 provision-whisper:
 	@test -n "$$WHISPER_MODEL_REVISION" || (echo "WHISPER_MODEL_REVISION must be an exact commit SHA" && exit 1)
-	PYTHONPATH=backend/src uv run --project backend python scripts/provision_whisper_model.py \
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/provision_whisper_model.py \
 		--revision "$$WHISPER_MODEL_REVISION" --license-reviewed
 
 test-compile:
 	PYTHONPATH=backend/src uv run --project backend python -m compileall -q backend/src backend/tests scripts
 
 openapi:
-	PYTHONPATH=backend/src uv run --project backend python scripts/export_openapi.py
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/export_openapi.py
 
 eval-routing:
 	PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite routing --decision-provider deterministic
@@ -73,37 +73,37 @@ eval-regression:
 
 eval-m11-heldout:
 	@test -n "$$ARES_M11_HELDOUT_MANIFEST" || (echo "ARES_M11_HELDOUT_MANIFEST is required" && exit 1)
-	python scripts/validate_m11_heldout.py "$$ARES_M11_HELDOUT_MANIFEST" --minimum-cases 100
+	uv run --project backend python scripts/validate_m11_heldout.py "$$ARES_M11_HELDOUT_MANIFEST" --minimum-cases 100
 
 lint:
 	uv run --project backend ruff check backend/src backend/tests evals scripts
 
 security-scan:
-	python scripts/check_secrets.py
+	uv run --project backend python scripts/check_secrets.py
 
 perf-baseline:
-	PYTHONPATH=backend/src uv run --project backend python scripts/perf_baseline.py --runs 60
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/perf_baseline.py --runs 60
 
 load-smoke:
-	PYTHONPATH=backend/src uv run --project backend python scripts/load_smoke.py
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/load_smoke.py
 
 sbom:
-	python scripts/generate_sbom.py --output dist/ARES_M11.sbom.cdx.json
+	uv run --project backend python scripts/generate_sbom.py --output dist/ARES_M11.sbom.cdx.json
 
 verify-m11-release:
-	PYTHONPATH=backend/src python scripts/verify_m11_release.py
+	PYTHONPATH=backend/src uv run --project backend python scripts/verify_m11_release.py
 
 
 release-m11: verify-m11-release sbom
-	python scripts/release_archive.py --output dist/ARES_M11_release_candidate.zip --prefix ARES_M11_release_candidate
+	uv run --project backend python scripts/release_archive.py --output dist/ARES_M11_release_candidate.zip --prefix ARES_M11_release_candidate
 
 test-e2e:
 	@test -n "$$ARES_E2E_CONVERSATION_ID" || (echo "ARES_E2E_CONVERSATION_ID is required" && exit 1)
 	@test -n "$$ARES_E2E_RUN_ID" || (echo "ARES_E2E_RUN_ID is required" && exit 1)
 	@test -n "$$ARES_E2E_EVIDENCE_ID" || (echo "ARES_E2E_EVIDENCE_ID is required" && exit 1)
-	python scripts/e2e_m11.py --browser chromium
-	python scripts/e2e_m11.py --browser firefox
-	python scripts/e2e_m11.py --browser webkit
+	uv run --project backend python scripts/e2e_m11.py --browser chromium
+	uv run --project backend python scripts/e2e_m11.py --browser firefox
+	uv run --project backend python scripts/e2e_m11.py --browser webkit
 
 check: doctor lock-check lint security-scan test eval-regression test-compile verify-migrations openapi verify-m11-release
 
@@ -123,7 +123,7 @@ web:
 	pnpm --filter @ares/web dev
 
 perf-m10:
-	PYTHONPATH=backend/src uv run --project backend python scripts/perf_m10_discovery.py --runs 30
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/perf_m10_discovery.py --runs 30
 
 eval-m10-retrieval:
-	PYTHONPATH=backend/src uv run --project backend python scripts/eval_m10_retrieval.py
+	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/eval_m10_retrieval.py

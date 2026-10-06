@@ -13,7 +13,9 @@ def test_expired_worker_leases_fail_closed_after_retry_budget(tmp_path: Path) ->
     Base.metadata.create_all(engine)
     repository = Repository(sessions)
     conversation = repository.create_conversation("retry")
-    run, _ = repository.create_run(RunCreate(conversation_id=conversation.id, query="retry me"), "retry-1")
+    run, _ = repository.create_run(
+        RunCreate(conversation_id=conversation.id, query="retry me"), "retry-1"
+    )
 
     first = repository.claim_next_job(max_attempts=2)
     assert first is not None and first.attempt == 1

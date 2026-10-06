@@ -24,7 +24,6 @@ from ares.adapters.db import (
     DocumentTableCellRow,
     DocumentTableRow,
     DocumentVersionRow,
-    EmbeddingProfileRow,
     EvidenceRow,
     EvidenceSegmentRow,
     ExtractionVersionRow,
@@ -104,7 +103,12 @@ from ares.domain.visualizations import (
 from ares.application.documents import PreparedChunk
 from ares.application.source_identity import source_origin_group
 from ares.application.identity import (
-    SYSTEM_USER_ID, SYSTEM_WORKSPACE_ID, Principal, WorkspaceRole, current_principal, local_principal
+    SYSTEM_USER_ID,
+    SYSTEM_WORKSPACE_ID,
+    Principal,
+    WorkspaceRole,
+    current_principal,
+    local_principal,
 )
 from ares.domain.state_machine import assert_transition
 from ares.domain.budgets import BUDGETS, BUDGET_VERSION
@@ -203,22 +207,37 @@ class Repository:
         if principal.user_id != SYSTEM_USER_ID or principal.workspace_id != SYSTEM_WORKSPACE_ID:
             return
         if session.get(UserRow, SYSTEM_USER_ID) is None:
-            session.add(UserRow(
-                id=SYSTEM_USER_ID, subject="local:system", display_name="Local ARES",
-                created_at=datetime.now(UTC), updated_at=datetime.now(UTC),
-            ))
+            session.add(
+                UserRow(
+                    id=SYSTEM_USER_ID,
+                    subject="local:system",
+                    display_name="Local ARES",
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
+                )
+            )
         if session.get(WorkspaceRow, SYSTEM_WORKSPACE_ID) is None:
-            session.add(WorkspaceRow(id=SYSTEM_WORKSPACE_ID, name="Local workspace", created_at=datetime.now(UTC)))
+            session.add(
+                WorkspaceRow(
+                    id=SYSTEM_WORKSPACE_ID, name="Local workspace", created_at=datetime.now(UTC)
+                )
+            )
         session.flush()
-        membership = session.scalar(select(WorkspaceMembershipRow).where(
-            WorkspaceMembershipRow.workspace_id == SYSTEM_WORKSPACE_ID,
-            WorkspaceMembershipRow.user_id == SYSTEM_USER_ID,
-        ))
+        membership = session.scalar(
+            select(WorkspaceMembershipRow).where(
+                WorkspaceMembershipRow.workspace_id == SYSTEM_WORKSPACE_ID,
+                WorkspaceMembershipRow.user_id == SYSTEM_USER_ID,
+            )
+        )
         if membership is None:
-            session.add(WorkspaceMembershipRow(
-                workspace_id=SYSTEM_WORKSPACE_ID, user_id=SYSTEM_USER_ID, role=WorkspaceRole.OWNER.value,
-                created_at=datetime.now(UTC),
-            ))
+            session.add(
+                WorkspaceMembershipRow(
+                    workspace_id=SYSTEM_WORKSPACE_ID,
+                    user_id=SYSTEM_USER_ID,
+                    role=WorkspaceRole.OWNER.value,
+                    created_at=datetime.now(UTC),
+                )
+            )
             session.flush()
 
     def _run_row(self, session: Session, run_id: UUID) -> RunRow | None:
@@ -240,7 +259,8 @@ class Repository:
         with self._sessions.begin() as session:
             self._ensure_local_identity(session, principal)
             row = ConversationRow(
-                workspace_id=principal.workspace_id, created_by_user_id=principal.user_id,
+                workspace_id=principal.workspace_id,
+                created_by_user_id=principal.user_id,
                 title=(title or "New research").strip() or "New research",
             )
             session.add(row)
@@ -253,12 +273,19 @@ class Repository:
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(ConversationRow.workspace_id == workspace_id)
-            rows = session.scalars(stmt.order_by(ConversationRow.updated_at.desc()).limit(limit)).all()
+            rows = session.scalars(
+                stmt.order_by(ConversationRow.updated_at.desc()).limit(limit)
+            ).all()
             return [ConversationView.model_validate(row) for row in rows]
 
     def create_run(
-        self, request: RunCreate, idempotency_key: str, *, max_active_runs: int | None = None,
-        max_active_runs_per_workspace: int | None = None, max_active_runs_per_user: int | None = None,
+        self,
+        request: RunCreate,
+        idempotency_key: str,
+        *,
+        max_active_runs: int | None = None,
+        max_active_runs_per_workspace: int | None = None,
+        max_active_runs_per_user: int | None = None,
     ) -> tuple[RunSnapshot, bool]:
         request_hash = _hash_request(request)
         principal = self._request_principal()
@@ -267,84 +294,146 @@ class Repository:
         ).hexdigest()
         with self._sessions.begin() as session:
             self._ensure_local_identity(session, principal)
-            conversation = session.scalar(select(ConversationRow).where(
-                ConversationRow.id == request.conversation_id,
-                ConversationRow.workspace_id == principal.workspace_id,
-            ))
+            conversation = session.scalar(
+                select(ConversationRow).where(
+                    ConversationRow.id == request.conversation_id,
+                    ConversationRow.workspace_id == principal.workspace_id,
+                )
+            )
             if conversation is None:
                 raise NotFoundError("conversation not found")
             if request.document_ids:
-                owned_documents = set(session.scalars(
-                    select(UserDocumentRow.id).where(
-                        UserDocumentRow.id.in_(request.document_ids),
-                        UserDocumentRow.workspace_id == principal.workspace_id,
-                    )
-                ).all())
-                missing = [document_id for document_id in request.document_ids if document_id not in owned_documents]
+                owned_documents = set(
+                    session.scalars(
+                        select(UserDocumentRow.id).where(
+                            UserDocumentRow.id.in_(request.document_ids),
+                            UserDocumentRow.workspace_id == principal.workspace_id,
+                        )
+                    ).all()
+                )
+                missing = [
+                    document_id
+                    for document_id in request.document_ids
+                    if document_id not in owned_documents
+                ]
                 if missing:
                     raise NotFoundError(f"document not found: {missing[0]}")
-            existing = session.scalar(select(RunRow).where(
-                RunRow.idempotency_key == scoped_key, RunRow.workspace_id == principal.workspace_id
-            ))
+            existing = session.scalar(
+                select(RunRow).where(
+                    RunRow.idempotency_key == scoped_key,
+                    RunRow.workspace_id == principal.workspace_id,
+                )
+            )
             if existing:
                 if existing.request_hash != request_hash:
-                    raise IdempotencyConflictError("idempotency key reused with a different request")
+                    raise IdempotencyConflictError(
+                        "idempotency key reused with a different request"
+                    )
                 return self._snapshot(existing), False
 
             terminal = [
-                RunStatus.COMPLETED.value, RunStatus.PARTIAL.value, RunStatus.FAILED.value, RunStatus.CANCELLED.value
+                RunStatus.COMPLETED.value,
+                RunStatus.PARTIAL.value,
+                RunStatus.FAILED.value,
+                RunStatus.CANCELLED.value,
             ]
-            if any(v is not None for v in (max_active_runs, max_active_runs_per_workspace, max_active_runs_per_user)):
+            if any(
+                v is not None
+                for v in (max_active_runs, max_active_runs_per_workspace, max_active_runs_per_user)
+            ):
                 if session.bind is not None and session.bind.dialect.name == "postgresql":
                     session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": 1095914835})
                 if max_active_runs is not None:
                     if session.bind is not None and session.bind.dialect.name == "postgresql":
-                        global_active = int(session.scalar(text("SELECT ares_global_active_run_count()")) or 0)
-                    else:
-                        global_active = int(session.scalar(
-                            select(func.count()).select_from(RunRow).where(RunRow.status.not_in(terminal))
-                        ) or 0)
-                    if global_active >= max_active_runs:
-                        raise RunAdmissionError(f"global active run limit reached ({max_active_runs})")
-                if max_active_runs_per_workspace is not None:
-                    workspace_active = int(session.scalar(
-                        select(func.count()).select_from(RunRow).where(
-                            RunRow.workspace_id == principal.workspace_id, RunRow.status.not_in(terminal)
+                        global_active = int(
+                            session.scalar(text("SELECT ares_global_active_run_count()")) or 0
                         )
-                    ) or 0)
+                    else:
+                        global_active = int(
+                            session.scalar(
+                                select(func.count())
+                                .select_from(RunRow)
+                                .where(RunRow.status.not_in(terminal))
+                            )
+                            or 0
+                        )
+                    if global_active >= max_active_runs:
+                        raise RunAdmissionError(
+                            f"global active run limit reached ({max_active_runs})"
+                        )
+                if max_active_runs_per_workspace is not None:
+                    workspace_active = int(
+                        session.scalar(
+                            select(func.count())
+                            .select_from(RunRow)
+                            .where(
+                                RunRow.workspace_id == principal.workspace_id,
+                                RunRow.status.not_in(terminal),
+                            )
+                        )
+                        or 0
+                    )
                     if workspace_active >= max_active_runs_per_workspace:
                         raise RunAdmissionError(
                             f"workspace active run limit reached ({max_active_runs_per_workspace})"
                         )
                 if max_active_runs_per_user is not None:
-                    user_active = int(session.scalar(
-                        select(func.count()).select_from(RunRow).where(
-                            RunRow.workspace_id == principal.workspace_id,
-                            RunRow.created_by_user_id == principal.user_id,
-                            RunRow.status.not_in(terminal),
+                    user_active = int(
+                        session.scalar(
+                            select(func.count())
+                            .select_from(RunRow)
+                            .where(
+                                RunRow.workspace_id == principal.workspace_id,
+                                RunRow.created_by_user_id == principal.user_id,
+                                RunRow.status.not_in(terminal),
+                            )
                         )
-                    ) or 0)
+                        or 0
+                    )
                     if user_active >= max_active_runs_per_user:
-                        raise RunAdmissionError(f"user active run limit reached ({max_active_runs_per_user})")
+                        raise RunAdmissionError(
+                            f"user active run limit reached ({max_active_runs_per_user})"
+                        )
 
             now = datetime.now(UTC)
             budget = BUDGETS[request.mode]
             run = RunRow(
-                conversation_id=request.conversation_id, workspace_id=principal.workspace_id,
-                created_by_user_id=principal.user_id, query=request.query, mode=request.mode.value,
-                source_scope=list(request.source_scope), document_ids=[str(value) for value in request.document_ids],
-                date_window=request.date_window.model_dump(mode="json") if request.date_window else None,
-                deadline_at=now + timedelta(seconds=budget.wall_clock_seconds), budget_version=BUDGET_VERSION,
-                usage_ledger={}, last_seq=1, status=RunStatus.QUEUED.value,
-                idempotency_key=scoped_key, request_hash=request_hash, created_at=now, updated_at=now,
+                conversation_id=request.conversation_id,
+                workspace_id=principal.workspace_id,
+                created_by_user_id=principal.user_id,
+                query=request.query,
+                mode=request.mode.value,
+                source_scope=list(request.source_scope),
+                document_ids=[str(value) for value in request.document_ids],
+                date_window=request.date_window.model_dump(mode="json")
+                if request.date_window
+                else None,
+                deadline_at=now + timedelta(seconds=budget.wall_clock_seconds),
+                budget_version=BUDGET_VERSION,
+                usage_ledger={},
+                last_seq=1,
+                status=RunStatus.QUEUED.value,
+                idempotency_key=scoped_key,
+                request_hash=request_hash,
+                created_at=now,
+                updated_at=now,
             )
             session.add(run)
             session.flush()
             session.add(JobRow(run_id=run.id))
-            session.add(RunEventRow(
-                run_id=run.id, seq=1, schema_version=2, event_type="run.created",
-                payload={"status": "queued", "budget_version": BUDGET_VERSION, "deadline_at": run.deadline_at.isoformat()},
-            ))
+            session.add(
+                RunEventRow(
+                    run_id=run.id,
+                    seq=1,
+                    schema_version=2,
+                    event_type="run.created",
+                    payload={
+                        "status": "queued",
+                        "budget_version": BUDGET_VERSION,
+                        "deadline_at": run.deadline_at.isoformat(),
+                    },
+                )
+            )
             conversation.updated_at = datetime.now(UTC)
             session.flush()
             return self._snapshot(run), True
@@ -356,7 +445,9 @@ class Repository:
                 raise NotFoundError("run not found")
             return self._snapshot(row)
 
-    def initialize_run_execution_contract(self, run_id: UUID, *, wall_clock_seconds: int, lease_token: UUID) -> RunSnapshot:
+    def initialize_run_execution_contract(
+        self, run_id: UUID, *, wall_clock_seconds: int, lease_token: UUID
+    ) -> RunSnapshot:
         with self._sessions.begin() as session:
             self._require_lease(session, run_id, lease_token)
             row = session.scalar(select(RunRow).where(RunRow.id == run_id).with_for_update())
@@ -385,8 +476,14 @@ class Repository:
             previous = current.value
             row.status = RunStatus.PLANNING.value
             self._append_event(
-                session, lease.run_id, "run.resumed",
-                {"attempt": lease.attempt, "previous_status": previous, "status": RunStatus.PLANNING.value},
+                session,
+                lease.run_id,
+                "run.resumed",
+                {
+                    "attempt": lease.attempt,
+                    "previous_status": previous,
+                    "status": RunStatus.PLANNING.value,
+                },
             )
 
     def authorize_run_execution(self, run_id: UUID, *, lease_token: UUID) -> None:
@@ -395,22 +492,31 @@ class Repository:
             run = session.get(RunRow, run_id)
             if run is None:
                 raise NotFoundError("run not found")
-            membership = session.scalar(select(WorkspaceMembershipRow.id).where(
-                WorkspaceMembershipRow.workspace_id == run.workspace_id,
-                WorkspaceMembershipRow.user_id == run.created_by_user_id,
-            ))
+            membership = session.scalar(
+                select(WorkspaceMembershipRow.id).where(
+                    WorkspaceMembershipRow.workspace_id == run.workspace_id,
+                    WorkspaceMembershipRow.user_id == run.created_by_user_id,
+                )
+            )
             if membership is None:
                 raise RunAuthorizationError("run creator no longer has workspace access")
             ids = [UUID(value) for value in (run.document_ids or [])]
             if ids:
-                owned = set(session.scalars(select(UserDocumentRow.id).where(
-                    UserDocumentRow.id.in_(ids), UserDocumentRow.workspace_id == run.workspace_id
-                )).all())
+                owned = set(
+                    session.scalars(
+                        select(UserDocumentRow.id).where(
+                            UserDocumentRow.id.in_(ids),
+                            UserDocumentRow.workspace_id == run.workspace_id,
+                        )
+                    ).all()
+                )
                 missing = [value for value in ids if value not in owned]
                 if missing:
                     raise RunAuthorizationError(f"document access revoked or deleted: {missing[0]}")
 
-    def get_documents_for_run(self, run_id: UUID, document_ids: list[UUID], *, lease_token: UUID) -> list[UserDocumentRow]:
+    def get_documents_for_run(
+        self, run_id: UUID, document_ids: list[UUID], *, lease_token: UUID
+    ) -> list[UserDocumentRow]:
         if not document_ids:
             return []
         with self._sessions() as session:
@@ -420,17 +526,24 @@ class Repository:
                 raise NotFoundError("run not found")
             admitted = {UUID(value) for value in (run.document_ids or [])}
             if not set(document_ids).issubset(admitted):
-                raise RunAuthorizationError("run requested documents outside its admitted document set")
-            rows = session.scalars(select(UserDocumentRow).where(
-                UserDocumentRow.id.in_(document_ids), UserDocumentRow.workspace_id == run.workspace_id
-            )).all()
+                raise RunAuthorizationError(
+                    "run requested documents outside its admitted document set"
+                )
+            rows = session.scalars(
+                select(UserDocumentRow).where(
+                    UserDocumentRow.id.in_(document_ids),
+                    UserDocumentRow.workspace_id == run.workspace_id,
+                )
+            ).all()
             by_id = {row.id: row for row in rows}
             missing = [value for value in document_ids if value not in by_id]
             if missing:
                 raise RunAuthorizationError(f"document access revoked or deleted: {missing[0]}")
             return [by_id[value] for value in document_ids]
 
-    def consume_run_usage(self, run_id: UUID, *, delta: dict[str, int], limits: dict[str, int], lease_token: UUID) -> dict[str, int]:
+    def consume_run_usage(
+        self, run_id: UUID, *, delta: dict[str, int], limits: dict[str, int], lease_token: UUID
+    ) -> dict[str, int]:
         with self._sessions.begin() as session:
             self._require_lease(session, run_id, lease_token)
             row = session.scalar(select(RunRow).where(RunRow.id == run_id).with_for_update())
@@ -442,14 +555,17 @@ class Repository:
                     raise ValueError("run usage deltas cannot be negative")
                 candidate = ledger.get(key, 0) + int(amount)
                 if key in limits and candidate > limits[key]:
-                    raise RunBudgetExceededError(f"run budget exhausted for {key}: {candidate} > {limits[key]}")
+                    raise RunBudgetExceededError(
+                        f"run budget exhausted for {key}: {candidate} > {limits[key]}"
+                    )
                 ledger[key] = candidate
             row.usage_ledger = ledger
             session.flush()
             return dict(ledger)
 
-
-    def list_runs_for_conversation(self, conversation_id: UUID, limit: int = 50) -> list[RunSnapshot]:
+    def list_runs_for_conversation(
+        self, conversation_id: UUID, limit: int = 50
+    ) -> list[RunSnapshot]:
         with self._sessions() as session:
             exists = self._conversation_row(session, conversation_id)
             if exists is None:
@@ -600,7 +716,9 @@ class Repository:
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(AssetVersionRow.workspace_id == workspace_id)
-            rows = session.scalars(stmt.order_by(AssetVersionRow.created_at.desc()).limit(limit)).all()
+            rows = session.scalars(
+                stmt.order_by(AssetVersionRow.created_at.desc()).limit(limit)
+            ).all()
             return [self._asset_view(row) for row in rows]
 
     def get_asset_record(self, asset_id: UUID) -> AssetVersionRow:
@@ -632,12 +750,16 @@ class Repository:
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(IngestionJobRow.workspace_id == workspace_id)
-            rows = session.scalars(stmt.order_by(IngestionJobRow.created_at.desc()).limit(limit)).all()
+            rows = session.scalars(
+                stmt.order_by(IngestionJobRow.created_at.desc()).limit(limit)
+            ).all()
             return [self._ingestion_view(row) for row in rows]
 
     def request_ingestion_cancel(self, ingestion_id: UUID) -> IngestionView:
         with self._sessions.begin() as session:
-            stmt = select(IngestionJobRow).where(IngestionJobRow.id == ingestion_id).with_for_update()
+            stmt = (
+                select(IngestionJobRow).where(IngestionJobRow.id == ingestion_id).with_for_update()
+            )
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(IngestionJobRow.workspace_id == workspace_id)
@@ -663,14 +785,19 @@ class Repository:
 
     def retry_ingestion(self, ingestion_id: UUID) -> IngestionView:
         with self._sessions.begin() as session:
-            stmt = select(IngestionJobRow).where(IngestionJobRow.id == ingestion_id).with_for_update()
+            stmt = (
+                select(IngestionJobRow).where(IngestionJobRow.id == ingestion_id).with_for_update()
+            )
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(IngestionJobRow.workspace_id == workspace_id)
             row = session.scalar(stmt)
             if row is None:
                 raise NotFoundError("ingestion not found")
-            if IngestionStatus(row.status) not in {IngestionStatus.FAILED, IngestionStatus.CANCELLED}:
+            if IngestionStatus(row.status) not in {
+                IngestionStatus.FAILED,
+                IngestionStatus.CANCELLED,
+            }:
                 raise ValueError("only failed or cancelled ingestions can be retried")
             row.status = IngestionStatus.QUEUED.value
             row.stage = IngestionStage.QUEUED.value
@@ -705,7 +832,9 @@ class Repository:
                 raise NotFoundError("ingestion not found")
             events = session.scalars(
                 select(IngestionEventRow)
-                .where(IngestionEventRow.ingestion_id == ingestion_id, IngestionEventRow.seq > after)
+                .where(
+                    IngestionEventRow.ingestion_id == ingestion_id, IngestionEventRow.seq > after
+                )
                 .order_by(IngestionEventRow.seq.asc())
                 .limit(limit)
             ).all()
@@ -729,20 +858,24 @@ class Repository:
         token = uuid4()
         with self._sessions.begin() as session:
             exhausted = session.scalars(
-                select(IngestionJobRow).where(
+                select(IngestionJobRow)
+                .where(
                     IngestionJobRow.attempts >= max_attempts,
                     or_(
                         IngestionJobRow.status == IngestionStatus.QUEUED.value,
                         (IngestionJobRow.status == IngestionStatus.RUNNING.value)
                         & (IngestionJobRow.leased_until < now),
                     ),
-                ).with_for_update(skip_locked=True)
+                )
+                .with_for_update(skip_locked=True)
             ).all()
             for job in exhausted:
                 job.status = IngestionStatus.FAILED.value
                 job.stage = IngestionStage.FAILED.value
                 job.error_code = "INGESTION_RETRY_EXHAUSTED"
-                job.error_message = f"ingestion retry budget exhausted after {job.attempts} attempts"
+                job.error_message = (
+                    f"ingestion retry budget exhausted after {job.attempts} attempts"
+                )
                 job.leased_until = None
                 job.lease_token = None
                 job.completed_at = now
@@ -774,7 +907,11 @@ class Repository:
             if row is None:
                 return None
             row.status = IngestionStatus.RUNNING.value
-            row.stage = IngestionStage.PARSING.value if row.document_id is None else IngestionStage.INDEXING.value
+            row.stage = (
+                IngestionStage.PARSING.value
+                if row.document_id is None
+                else IngestionStage.INDEXING.value
+            )
             row.lease_token = token
             row.leased_until = expires
             row.attempts += 1
@@ -841,7 +978,9 @@ class Repository:
                 raise RunAuthorizationError("ingestion creator no longer has workspace access")
             asset = session.get(AssetVersionRow, row.asset_version_id)
             if asset is None or asset.workspace_id != row.workspace_id:
-                raise RunAuthorizationError("ingestion asset is missing or moved outside its workspace")
+                raise RunAuthorizationError(
+                    "ingestion asset is missing or moved outside its workspace"
+                )
 
     def get_ingestion_asset_for_worker(self, lease: IngestionLease) -> AssetVersionRow:
         with self._sessions() as session:
@@ -857,7 +996,9 @@ class Repository:
             row = self._require_ingestion_lease(session, lease.ingestion_id, lease.token)
             return bool(row.cancellation_requested)
 
-    def set_ingestion_asset_dimensions(self, lease: IngestionLease, *, width: int, height: int) -> None:
+    def set_ingestion_asset_dimensions(
+        self, lease: IngestionLease, *, width: int, height: int
+    ) -> None:
         if width <= 0 or height <= 0:
             raise ValueError("asset dimensions must be positive")
         with self._sessions.begin() as session:
@@ -1015,8 +1156,14 @@ class Repository:
                 session.add(segment)
                 session.flush()
                 segment_rows.append(segment)
-                if draft.table_key is not None and draft.table_row is not None and draft.table_column is not None:
-                    table_segment_lookup[(draft.table_key, draft.table_row, draft.table_column)] = segment.id
+                if (
+                    draft.table_key is not None
+                    and draft.table_row is not None
+                    and draft.table_column is not None
+                ):
+                    table_segment_lookup[(draft.table_key, draft.table_row, draft.table_column)] = (
+                        segment.id
+                    )
 
             for chunk in chunks:
                 segment_id = None
@@ -1053,7 +1200,9 @@ class Repository:
                         DocumentTableCellRow(
                             workspace_id=job.workspace_id,
                             table_id=table_row.id,
-                            segment_id=table_segment_lookup.get((table.table_key, cell.row, cell.column)),
+                            segment_id=table_segment_lookup.get(
+                                (table.table_key, cell.row, cell.column)
+                            ),
                             row_index=cell.row,
                             column_index=cell.column,
                             row_span=cell.row_span,
@@ -1062,7 +1211,9 @@ class Repository:
                             normalized_value_json=cell.normalized_value,
                             unit=cell.unit,
                             is_header=cell.is_header,
-                            locator_json=cell.locator.model_dump(mode="json") if cell.locator else None,
+                            locator_json=cell.locator.model_dump(mode="json")
+                            if cell.locator
+                            else None,
                         )
                     )
 
@@ -1215,7 +1366,9 @@ class Repository:
             document.semantic_ready = ready
             job.semantic_ready = ready
             if ready:
-                self._append_ingestion_event(session, job, "index.ready", {"document_id": str(document_id)})
+                self._append_ingestion_event(
+                    session, job, "index.ready", {"document_id": str(document_id)}
+                )
 
     def complete_ingestion(
         self,
@@ -1232,7 +1385,9 @@ class Repository:
                 asset_status = AssetStatus.CANCELLED
                 event_type = "ingestion.cancelled"
             else:
-                job.status = IngestionStatus.PARTIAL.value if partial else IngestionStatus.READY.value
+                job.status = (
+                    IngestionStatus.PARTIAL.value if partial else IngestionStatus.READY.value
+                )
                 job.stage = IngestionStage.PARTIAL.value if partial else IngestionStage.READY.value
                 asset_status = AssetStatus.PARTIAL if partial else AssetStatus.READY
                 event_type = "ingestion.partial" if partial else "ingestion.ready"
@@ -1322,7 +1477,8 @@ class Repository:
         with self._sessions.begin() as session:
             self._ensure_local_identity(session, principal)
             row = UserDocumentRow(
-                workspace_id=principal.workspace_id, created_by_user_id=principal.user_id,
+                workspace_id=principal.workspace_id,
+                created_by_user_id=principal.user_id,
                 name=name,
                 mime_type=mime_type,
                 text=text,
@@ -1359,7 +1515,9 @@ class Repository:
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(UserDocumentRow.workspace_id == workspace_id)
-            rows = session.scalars(stmt.order_by(UserDocumentRow.created_at.desc()).limit(limit)).all()
+            rows = session.scalars(
+                stmt.order_by(UserDocumentRow.created_at.desc()).limit(limit)
+            ).all()
             return [self._document_view(row) for row in rows]
 
     def get_documents(self, document_ids: list[UUID]) -> list[UserDocumentRow]:
@@ -1485,9 +1643,7 @@ class Repository:
                 )
             if chunk_ids:
                 session.execute(
-                    delete(DocumentEmbeddingRow).where(
-                        DocumentEmbeddingRow.chunk_id.in_(chunk_ids)
-                    )
+                    delete(DocumentEmbeddingRow).where(DocumentEmbeddingRow.chunk_id.in_(chunk_ids))
                 )
             if document_ids:
                 session.execute(
@@ -1495,17 +1651,19 @@ class Repository:
                 )
             if table_ids:
                 session.execute(
-                    delete(DocumentTableCellRow).where(
-                        DocumentTableCellRow.table_id.in_(table_ids)
-                    )
+                    delete(DocumentTableCellRow).where(DocumentTableCellRow.table_id.in_(table_ids))
                 )
             session.execute(delete(MediaFrameRow).where(MediaFrameRow.asset_version_id == asset_id))
             session.execute(delete(MediaTrackRow).where(MediaTrackRow.asset_version_id == asset_id))
-            session.execute(delete(AssetRenditionRow).where(AssetRenditionRow.asset_version_id == asset_id))
+            session.execute(
+                delete(AssetRenditionRow).where(AssetRenditionRow.asset_version_id == asset_id)
+            )
             if table_ids:
                 session.execute(delete(DocumentTableRow).where(DocumentTableRow.id.in_(table_ids)))
             if segment_ids:
-                session.execute(delete(EvidenceSegmentRow).where(EvidenceSegmentRow.id.in_(segment_ids)))
+                session.execute(
+                    delete(EvidenceSegmentRow).where(EvidenceSegmentRow.id.in_(segment_ids))
+                )
             if document_ids:
                 session.execute(delete(UserDocumentRow).where(UserDocumentRow.id.in_(document_ids)))
             if extraction_ids:
@@ -1513,7 +1671,9 @@ class Repository:
                     delete(ExtractionVersionRow).where(ExtractionVersionRow.id.in_(extraction_ids))
                 )
             if ingestion_ids:
-                session.execute(delete(IngestionJobRow).where(IngestionJobRow.id.in_(ingestion_ids)))
+                session.execute(
+                    delete(IngestionJobRow).where(IngestionJobRow.id.in_(ingestion_ids))
+                )
             session.execute(delete(AssetVersionRow).where(AssetVersionRow.id == asset_id))
             session.flush()
 
@@ -1523,25 +1683,25 @@ class Repository:
                     continue
                 document_refs = int(
                     session.scalar(
-                        select(func.count()).select_from(UserDocumentRow).where(
-                            UserDocumentRow.blob_key == blob_key
-                        )
+                        select(func.count())
+                        .select_from(UserDocumentRow)
+                        .where(UserDocumentRow.blob_key == blob_key)
                     )
                     or 0
                 )
                 asset_refs = int(
                     session.scalar(
-                        select(func.count()).select_from(AssetVersionRow).where(
-                            AssetVersionRow.original_blob_key == blob_key
-                        )
+                        select(func.count())
+                        .select_from(AssetVersionRow)
+                        .where(AssetVersionRow.original_blob_key == blob_key)
                     )
                     or 0
                 )
                 rendition_refs = int(
                     session.scalar(
-                        select(func.count()).select_from(AssetRenditionRow).where(
-                            AssetRenditionRow.blob_key == blob_key
-                        )
+                        select(func.count())
+                        .select_from(AssetRenditionRow)
+                        .where(AssetRenditionRow.blob_key == blob_key)
                     )
                     or 0
                 )
@@ -1568,7 +1728,9 @@ class Repository:
                     AssetRenditionRow.asset_version_id == asset_version_id
                 )
                 if workspace_id is not None:
-                    rendition_stmt = rendition_stmt.where(AssetRenditionRow.workspace_id == workspace_id)
+                    rendition_stmt = rendition_stmt.where(
+                        AssetRenditionRow.workspace_id == workspace_id
+                    )
                 candidate_keys.extend(str(value) for value in session.scalars(rendition_stmt).all())
             session.delete(row)
             session.flush()
@@ -1601,7 +1763,9 @@ class Repository:
             for blob_key in dict.fromkeys(candidate_keys):
                 document_refs = int(
                     session.scalar(
-                        select(func.count()).select_from(UserDocumentRow).where(UserDocumentRow.blob_key == blob_key)
+                        select(func.count())
+                        .select_from(UserDocumentRow)
+                        .where(UserDocumentRow.blob_key == blob_key)
                     )
                     or 0
                 )
@@ -1615,7 +1779,9 @@ class Repository:
                 )
                 rendition_refs = int(
                     session.scalar(
-                        select(func.count()).select_from(AssetRenditionRow).where(AssetRenditionRow.blob_key == blob_key)
+                        select(func.count())
+                        .select_from(AssetRenditionRow)
+                        .where(AssetRenditionRow.blob_key == blob_key)
                     )
                     or 0
                 )
@@ -1644,12 +1810,16 @@ class Repository:
             still_referenced = False
             if blob_key:
                 still_referenced = bool(
-                    session.scalar(select(func.count()).select_from(UserDocumentRow).where(UserDocumentRow.blob_key == blob_key))
+                    session.scalar(
+                        select(func.count())
+                        .select_from(UserDocumentRow)
+                        .where(UserDocumentRow.blob_key == blob_key)
+                    )
                 ) or bool(
                     session.scalar(
-                        select(func.count()).select_from(AssetVersionRow).where(
-                            AssetVersionRow.original_blob_key == blob_key
-                        )
+                        select(func.count())
+                        .select_from(AssetVersionRow)
+                        .where(AssetVersionRow.original_blob_key == blob_key)
                     )
                 )
             return blob_key, still_referenced
@@ -1670,7 +1840,9 @@ class Repository:
         if not chunk_ids:
             return []
         with self._sessions() as session:
-            rows = session.scalars(select(DocumentChunkRow).where(DocumentChunkRow.id.in_(chunk_ids))).all()
+            rows = session.scalars(
+                select(DocumentChunkRow).where(DocumentChunkRow.id.in_(chunk_ids))
+            ).all()
             by_id = {row.id: row for row in rows}
             return [by_id[value] for value in chunk_ids if value in by_id]
 
@@ -1709,9 +1881,15 @@ class Repository:
                 ids = [UUID(str(row[0])) for row in rows]
                 by_id = {
                     item.id: item
-                    for item in session.scalars(select(DocumentChunkRow).where(DocumentChunkRow.id.in_(ids))).all()
+                    for item in session.scalars(
+                        select(DocumentChunkRow).where(DocumentChunkRow.id.in_(ids))
+                    ).all()
                 }
-                return [(by_id[chunk_id], float(score)) for chunk_id, score in ((UUID(str(r[0])), r[1]) for r in rows) if chunk_id in by_id]
+                return [
+                    (by_id[chunk_id], float(score))
+                    for chunk_id, score in ((UUID(str(r[0])), r[1]) for r in rows)
+                    if chunk_id in by_id
+                ]
 
             # SQLite remains the deterministic demo/test fallback. It intentionally has no
             # performance claim; production retrieval uses the indexed PostgreSQL path above.
@@ -1831,7 +2009,10 @@ class Repository:
         with self._sessions() as session:
             stmt = (
                 select(EvidenceSegmentRow, ExtractionVersionRow.asset_version_id)
-                .join(ExtractionVersionRow, ExtractionVersionRow.id == EvidenceSegmentRow.extraction_version_id)
+                .join(
+                    ExtractionVersionRow,
+                    ExtractionVersionRow.id == EvidenceSegmentRow.extraction_version_id,
+                )
                 .where(EvidenceSegmentRow.id == segment_id)
             )
             workspace_id = self._visible_workspace_id()
@@ -1905,7 +2086,9 @@ class Repository:
                 extraction_version_id=table_row.extraction_version_id,
                 table_key=table_row.table_key,
                 page=table_row.page,
-                locator=locator_adapter.validate_python(table_row.locator_json) if table_row.locator_json else None,
+                locator=locator_adapter.validate_python(table_row.locator_json)
+                if table_row.locator_json
+                else None,
                 rows=table_row.rows,
                 columns=table_row.columns,
                 cells=[
@@ -1967,7 +2150,10 @@ class Repository:
                 if existing is None:
                     session.add(
                         DocumentEmbeddingRow(
-                            chunk_id=chunk_id, model_id=model_id, dimensions=dimensions, vector_json=vector
+                            chunk_id=chunk_id,
+                            model_id=model_id,
+                            dimensions=dimensions,
+                            vector_json=vector,
                         )
                     )
                 else:
@@ -2060,7 +2246,9 @@ class Repository:
             if self._run_row(session, run_id) is None:
                 raise NotFoundError("run not found")
             ids = session.scalars(
-                select(EvidenceRow.id).where(EvidenceRow.run_id == run_id).order_by(EvidenceRow.captured_at, EvidenceRow.id)
+                select(EvidenceRow.id)
+                .where(EvidenceRow.run_id == run_id)
+                .order_by(EvidenceRow.captured_at, EvidenceRow.id)
             ).all()
         return [self.get_evidence(evidence_id) for evidence_id in ids]
 
@@ -2090,14 +2278,24 @@ class Repository:
             session.add(row)
             session.flush()
             return ArtifactView(
-                id=row.id, run_id=row.run_id, format=row.format, file_name=row.file_name,
-                content_type=row.content_type, byte_count=row.byte_count, content_hash=row.content_hash,
-                download_url=f"/api/v1/artifacts/{row.id}", created_at=row.created_at,
+                id=row.id,
+                run_id=row.run_id,
+                format=row.format,
+                file_name=row.file_name,
+                content_type=row.content_type,
+                byte_count=row.byte_count,
+                content_hash=row.content_hash,
+                download_url=f"/api/v1/artifacts/{row.id}",
+                created_at=row.created_at,
             )
 
     def get_artifact_record(self, artifact_id: UUID) -> ArtifactRow:
         with self._sessions() as session:
-            stmt = select(ArtifactRow).join(RunRow, RunRow.id == ArtifactRow.run_id).where(ArtifactRow.id == artifact_id)
+            stmt = (
+                select(ArtifactRow)
+                .join(RunRow, RunRow.id == ArtifactRow.run_id)
+                .where(ArtifactRow.id == artifact_id)
+            )
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(RunRow.workspace_id == workspace_id)
@@ -2109,23 +2307,34 @@ class Repository:
 
     def is_blob_referenced(self, blob_key: str) -> bool:
         with self._sessions() as session:
-            return bool(
-                session.scalar(
-                    select(func.count()).select_from(UserDocumentRow).where(UserDocumentRow.blob_key == blob_key)
-                )
-            ) or bool(
-                session.scalar(
-                    select(func.count()).select_from(ArtifactRow).where(ArtifactRow.blob_key == blob_key)
-                )
-            ) or bool(
-                session.scalar(
-                    select(func.count()).select_from(AssetVersionRow).where(
-                        AssetVersionRow.original_blob_key == blob_key
+            return (
+                bool(
+                    session.scalar(
+                        select(func.count())
+                        .select_from(UserDocumentRow)
+                        .where(UserDocumentRow.blob_key == blob_key)
                     )
                 )
-            ) or bool(
-                session.scalar(
-                    select(func.count()).select_from(AssetRenditionRow).where(AssetRenditionRow.blob_key == blob_key)
+                or bool(
+                    session.scalar(
+                        select(func.count())
+                        .select_from(ArtifactRow)
+                        .where(ArtifactRow.blob_key == blob_key)
+                    )
+                )
+                or bool(
+                    session.scalar(
+                        select(func.count())
+                        .select_from(AssetVersionRow)
+                        .where(AssetVersionRow.original_blob_key == blob_key)
+                    )
+                )
+                or bool(
+                    session.scalar(
+                        select(func.count())
+                        .select_from(AssetRenditionRow)
+                        .where(AssetRenditionRow.blob_key == blob_key)
+                    )
                 )
             )
 
@@ -2148,13 +2357,15 @@ class Repository:
         token = uuid4()
         with self._sessions.begin() as session:
             exhausted = session.scalars(
-                select(JobRow).where(
+                select(JobRow)
+                .where(
                     JobRow.attempts >= max_attempts,
                     or_(
                         JobRow.state == "queued",
                         (JobRow.state == "running") & (JobRow.leased_until < now),
                     ),
-                ).with_for_update(skip_locked=True)
+                )
+                .with_for_update(skip_locked=True)
             ).all()
             for job in exhausted:
                 job.state = "failed"
@@ -2164,7 +2375,9 @@ class Repository:
                 if run is not None and not RunStatus(run.status).terminal:
                     run.status = RunStatus.FAILED.value
                     run.error_code = "WORKER_RETRY_EXHAUSTED"
-                    run.error_message = f"worker retry budget exhausted after {job.attempts} attempts"
+                    run.error_message = (
+                        f"worker retry budget exhausted after {job.attempts} attempts"
+                    )
                     self._append_event(
                         session,
                         run.id,
@@ -2199,7 +2412,9 @@ class Repository:
                 "job.claimed",
                 {"attempt": row.attempts, "lease_seconds": lease_seconds},
             )
-            return JobLease(run_id=row.run_id, token=token, leased_until=expires, attempt=row.attempts)
+            return JobLease(
+                run_id=row.run_id, token=token, leased_until=expires, attempt=row.attempts
+            )
 
     def heartbeat(self, lease: JobLease, *, lease_seconds: int = 30) -> JobLease:
         now = datetime.now(UTC)
@@ -2260,7 +2475,9 @@ class Repository:
                 event_type = "run.partial"
             elif target is RunStatus.FAILED:
                 event_type = "run.failed"
-            self._append_event(session, run_id, event_type, {"status": target.value, **(payload or {})})
+            self._append_event(
+                session, run_id, event_type, {"status": target.value, **(payload or {})}
+            )
 
     def is_cancel_requested(self, run_id: UUID, *, lease_token: UUID | None = None) -> bool:
         with self._sessions() as session:
@@ -2271,7 +2488,9 @@ class Repository:
                 raise NotFoundError("run not found")
             return bool(value)
 
-    def fail_run(self, run_id: UUID, code: str, message: str, *, lease_token: UUID | None = None) -> None:
+    def fail_run(
+        self, run_id: UUID, code: str, message: str, *, lease_token: UUID | None = None
+    ) -> None:
         with self._sessions.begin() as session:
             if lease_token is not None:
                 self._require_lease(session, run_id, lease_token)
@@ -2283,7 +2502,9 @@ class Repository:
             row.error_code = code
             row.error_message = message[:2000]
             row.status = RunStatus.FAILED.value
-            self._append_event(session, run_id, "run.failed", {"code": code, "message": message[:500]})
+            self._append_event(
+                session, run_id, "run.failed", {"code": code, "message": message[:500]}
+            )
 
     def add_source_and_evidence(
         self,
@@ -2333,90 +2554,181 @@ class Repository:
             return evidence.id
 
     def persist_document_evidence(
-        self, run_id: UUID, *, document: FetchedDocument, candidates: list[EvidenceCandidate],
-        provider: str = "web", discovery_rank: int | None = None, snippet: str = "",
+        self,
+        run_id: UUID,
+        *,
+        document: FetchedDocument,
+        candidates: list[EvidenceCandidate],
+        provider: str = "web",
+        discovery_rank: int | None = None,
+        snippet: str = "",
         lease_token: UUID | None = None,
     ) -> list[EvidencePacket]:
         """Persist immutable fetched evidence idempotently for retry/recovery."""
         from urllib.parse import urlparse
+
         with self._sessions.begin() as session:
-            if lease_token is not None: self._require_lease(session, run_id, lease_token)
+            if lease_token is not None:
+                self._require_lease(session, run_id, lease_token)
             source = None
             if document.canonical_identifier:
-                source = session.scalar(select(SourceRow).where(
-                    SourceRow.run_id == run_id, SourceRow.canonical_identifier == document.canonical_identifier
-                ))
+                source = session.scalar(
+                    select(SourceRow).where(
+                        SourceRow.run_id == run_id,
+                        SourceRow.canonical_identifier == document.canonical_identifier,
+                    )
+                )
             if source is None:
-                source = session.scalar(select(SourceRow).where(
-                    SourceRow.run_id == run_id, SourceRow.content_hash == document.content_hash, SourceRow.url == str(document.final_url)
-                ))
+                source = session.scalar(
+                    select(SourceRow).where(
+                        SourceRow.run_id == run_id,
+                        SourceRow.content_hash == document.content_hash,
+                        SourceRow.url == str(document.final_url),
+                    )
+                )
             new_source = source is None
             if source is None:
                 source = SourceRow(
-                    id=document.source_id, run_id=run_id, title=document.title, url=str(document.final_url),
-                    domain=urlparse(str(document.final_url)).netloc, provider=provider, source_kind=document.source_kind,
-                    canonical_identifier=document.canonical_identifier, published_at=document.published_at,
-                    discovery_rank=discovery_rank, snippet=snippet[:4000], fetched_at=document.fetched_at,
-                    extraction_method=document.extraction_method, content_hash=document.content_hash,
+                    id=document.source_id,
+                    run_id=run_id,
+                    title=document.title,
+                    url=str(document.final_url),
+                    domain=urlparse(str(document.final_url)).netloc,
+                    provider=provider,
+                    source_kind=document.source_kind,
+                    canonical_identifier=document.canonical_identifier,
+                    published_at=document.published_at,
+                    discovery_rank=discovery_rank,
+                    snippet=snippet[:4000],
+                    fetched_at=document.fetched_at,
+                    extraction_method=document.extraction_method,
+                    content_hash=document.content_hash,
                     origin_group_id=source_origin_group(document),
                 )
-                session.add(source); session.flush()
+                session.add(source)
+                session.flush()
             if source.origin_group_id is None:
                 source.origin_group_id = source_origin_group(document)
-            version = session.scalar(select(DocumentVersionRow).where(
-                DocumentVersionRow.source_id == source.id, DocumentVersionRow.content_hash == document.content_hash,
-                DocumentVersionRow.final_url == str(document.final_url)
-            ))
+            version = session.scalar(
+                select(DocumentVersionRow).where(
+                    DocumentVersionRow.source_id == source.id,
+                    DocumentVersionRow.content_hash == document.content_hash,
+                    DocumentVersionRow.final_url == str(document.final_url),
+                )
+            )
             new_version = version is None
             if version is None:
                 version = DocumentVersionRow(
-                    source_id=source.id, requested_url=str(document.url), final_url=str(document.final_url),
-                    content_hash=document.content_hash, extraction_method=document.extraction_method, mime_type=document.mime_type,
-                    byte_count=document.byte_count, text=document.text, page_map=document.page_map, fetched_at=document.fetched_at,
+                    source_id=source.id,
+                    requested_url=str(document.url),
+                    final_url=str(document.final_url),
+                    content_hash=document.content_hash,
+                    extraction_method=document.extraction_method,
+                    mime_type=document.mime_type,
+                    byte_count=document.byte_count,
+                    text=document.text,
+                    page_map=document.page_map,
+                    fetched_at=document.fetched_at,
                 )
-                session.add(version); session.flush()
+                session.add(version)
+                session.flush()
             if new_source or new_version:
-                self._append_event(session, run_id, "source.read", {
-                    "source_id": str(source.id), "document_version_id": str(version.id), "title": source.title,
-                    "url": source.url, "content_hash": version.content_hash,
-                })
+                self._append_event(
+                    session,
+                    run_id,
+                    "source.read",
+                    {
+                        "source_id": str(source.id),
+                        "document_version_id": str(version.id),
+                        "title": source.title,
+                        "url": source.url,
+                        "content_hash": version.content_hash,
+                    },
+                )
             packets: list[EvidencePacket] = []
             for candidate in candidates:
-                if candidate.source_id != document.source_id: raise ValueError("evidence candidate does not belong to fetched document")
-                if candidate.char_end > len(document.text) or candidate.char_start >= candidate.char_end: raise ValueError("evidence candidate has invalid source offsets")
-                if document.text[candidate.char_start:candidate.char_end].strip() != candidate.text.strip(): raise ValueError("evidence text does not match immutable document version")
-                evidence = session.scalar(select(EvidenceRow).where(
-                    EvidenceRow.run_id == run_id, EvidenceRow.document_version_id == version.id,
-                    EvidenceRow.char_start == candidate.char_start, EvidenceRow.char_end == candidate.char_end,
-                    EvidenceRow.locator == candidate.locator,
-                ))
+                if candidate.source_id != document.source_id:
+                    raise ValueError("evidence candidate does not belong to fetched document")
+                if (
+                    candidate.char_end > len(document.text)
+                    or candidate.char_start >= candidate.char_end
+                ):
+                    raise ValueError("evidence candidate has invalid source offsets")
+                if (
+                    document.text[candidate.char_start : candidate.char_end].strip()
+                    != candidate.text.strip()
+                ):
+                    raise ValueError("evidence text does not match immutable document version")
+                evidence = session.scalar(
+                    select(EvidenceRow).where(
+                        EvidenceRow.run_id == run_id,
+                        EvidenceRow.document_version_id == version.id,
+                        EvidenceRow.char_start == candidate.char_start,
+                        EvidenceRow.char_end == candidate.char_end,
+                        EvidenceRow.locator == candidate.locator,
+                    )
+                )
                 if evidence is None:
                     evidence = EvidenceRow(
-                        run_id=run_id, source_id=source.id, document_version_id=version.id, text=candidate.text,
-                        locator=candidate.locator, char_start=candidate.char_start, char_end=candidate.char_end,
-                        page_start=candidate.page_start, page_end=candidate.page_end, segment_id=candidate.segment_id,
-                        support_status=SupportStatus.SUPPORTED.value, captured_at=datetime.now(UTC),
+                        run_id=run_id,
+                        source_id=source.id,
+                        document_version_id=version.id,
+                        text=candidate.text,
+                        locator=candidate.locator,
+                        char_start=candidate.char_start,
+                        char_end=candidate.char_end,
+                        page_start=candidate.page_start,
+                        page_end=candidate.page_end,
+                        segment_id=candidate.segment_id,
+                        support_status=SupportStatus.SUPPORTED.value,
+                        captured_at=datetime.now(UTC),
                     )
-                    session.add(evidence); session.flush()
-                    self._append_event(session, run_id, "evidence.added", {
-                        "evidence_id": str(evidence.id), "source_id": str(source.id),
-                        "document_version_id": str(version.id), "locator": candidate.locator,
-                        "page_start": candidate.page_start, "page_end": candidate.page_end,
-                        "segment_id": str(candidate.segment_id) if candidate.segment_id else None,
-                    })
+                    session.add(evidence)
+                    session.flush()
+                    self._append_event(
+                        session,
+                        run_id,
+                        "evidence.added",
+                        {
+                            "evidence_id": str(evidence.id),
+                            "source_id": str(source.id),
+                            "document_version_id": str(version.id),
+                            "locator": candidate.locator,
+                            "page_start": candidate.page_start,
+                            "page_end": candidate.page_end,
+                            "segment_id": str(candidate.segment_id)
+                            if candidate.segment_id
+                            else None,
+                        },
+                    )
                 elif evidence.segment_id is None and candidate.segment_id is not None:
                     evidence.segment_id = candidate.segment_id
-                packets.append(EvidencePacket(
-                    evidence_id=evidence.id, source_id=source.id, origin_group_id=source.origin_group_id,
-                    title=source.title, url=source.url, domain=source.domain, text=evidence.text, locator=evidence.locator,
-                    captured_at=evidence.captured_at, content_hash=version.content_hash,
-                ))
+                packets.append(
+                    EvidencePacket(
+                        evidence_id=evidence.id,
+                        source_id=source.id,
+                        origin_group_id=source.origin_group_id,
+                        title=source.title,
+                        url=source.url,
+                        domain=source.domain,
+                        text=evidence.text,
+                        locator=evidence.locator,
+                        captured_at=evidence.captured_at,
+                        content_hash=version.content_hash,
+                    )
+                )
             return packets
 
     def finalize_answer(
-        self, run_id: UUID, markdown: str,
-        claims: list[FinalizedClaim | tuple[str, list[UUID]] | tuple[str, list[UUID], SupportStatus]],
-        gaps: list[str], *, lease_token: UUID | None = None,
+        self,
+        run_id: UUID,
+        markdown: str,
+        claims: list[
+            FinalizedClaim | tuple[str, list[UUID]] | tuple[str, list[UUID], SupportStatus]
+        ],
+        gaps: list[str],
+        *,
+        lease_token: UUID | None = None,
     ) -> None:
         normalized: list[FinalizedClaim] = []
         for item in claims:
@@ -2424,59 +2736,104 @@ class Repository:
                 normalized.append(item)
             else:
                 status = item[2] if len(item) == 3 else SupportStatus.SUPPORTED
-                normalized.append(FinalizedClaim(
-                    text=item[0], evidence_ids=item[1], support_status=status,
-                    checker_method="legacy", checker_version="legacy", assessment_state="legacy",
-                    assessment_rationale="legacy finalization call",
-                ))
+                normalized.append(
+                    FinalizedClaim(
+                        text=item[0],
+                        evidence_ids=item[1],
+                        support_status=status,
+                        checker_method="legacy",
+                        checker_version="legacy",
+                        assessment_state="legacy",
+                        assessment_rationale="legacy finalization call",
+                    )
+                )
         with self._sessions.begin() as session:
-            if lease_token is not None: self._require_lease(session, run_id, lease_token)
+            if lease_token is not None:
+                self._require_lease(session, run_id, lease_token)
             row = self._run_row(session, run_id)
-            if row is None: raise NotFoundError("run not found")
-            existing = set(session.scalars(select(EvidenceRow.id).where(EvidenceRow.run_id == run_id)).all())
+            if row is None:
+                raise NotFoundError("run not found")
+            existing = set(
+                session.scalars(select(EvidenceRow.id).where(EvidenceRow.run_id == run_id)).all()
+            )
             evidence_ids: list[UUID] = []
             for claim in normalized:
                 for eid in claim.evidence_ids:
-                    if eid not in evidence_ids: evidence_ids.append(eid)
+                    if eid not in evidence_ids:
+                        evidence_ids.append(eid)
             missing = [eid for eid in evidence_ids if eid not in existing]
-            if missing: raise ValueError(f"answer references evidence not owned by run: {missing}")
+            if missing:
+                raise ValueError(f"answer references evidence not owned by run: {missing}")
             prior = session.scalars(select(ClaimRow.id).where(ClaimRow.run_id == run_id)).all()
             if prior:
-                session.execute(delete(ClaimEvidenceRow).where(ClaimEvidenceRow.claim_id.in_(prior)))
+                session.execute(
+                    delete(ClaimEvidenceRow).where(ClaimEvidenceRow.claim_id.in_(prior))
+                )
                 session.execute(delete(ClaimRow).where(ClaimRow.id.in_(prior)))
             labels = {eid: i + 1 for i, eid in enumerate(evidence_ids)}
             answer_claims: list[AnswerClaim] = []
             for claim in normalized:
                 claim_row = ClaimRow(
-                    run_id=run_id, text=claim.text, support_status=claim.support_status.value,
-                    checker_method=claim.checker_method, checker_version=claim.checker_version,
-                    assessment_state=claim.assessment_state, assessment_rationale=claim.assessment_rationale,
+                    run_id=run_id,
+                    text=claim.text,
+                    support_status=claim.support_status.value,
+                    checker_method=claim.checker_method,
+                    checker_version=claim.checker_version,
+                    assessment_state=claim.assessment_state,
+                    assessment_rationale=claim.assessment_rationale,
                 )
-                session.add(claim_row); session.flush()
+                session.add(claim_row)
+                session.flush()
                 citation_labels = []
                 for eid in claim.evidence_ids:
-                    if labels[eid] not in citation_labels: citation_labels.append(labels[eid])
+                    if labels[eid] not in citation_labels:
+                        citation_labels.append(labels[eid])
                     relation = claim.evidence_relations.get(
-                        str(eid), "contextualizes" if claim.support_status is SupportStatus.CONFLICTING else "supports"
+                        str(eid),
+                        "contextualizes"
+                        if claim.support_status is SupportStatus.CONFLICTING
+                        else "supports",
                     )
-                    session.add(ClaimEvidenceRow(
-                        claim_id=claim_row.id, evidence_id=eid, relation=relation,
-                        rationale=claim.evidence_rationales.get(str(eid), claim.assessment_rationale)[:4000],
-                        checker_method=claim.checker_method, checker_version=claim.checker_version,
-                    ))
-                answer_claims.append(AnswerClaim(
-                    text=claim.text, citation_labels=citation_labels, support_status=claim.support_status,
-                    checker_method=claim.checker_method, checker_version=claim.checker_version,
-                    assessment_state=claim.assessment_state, assessment_rationale=claim.assessment_rationale,
-                ))
-            block = AnswerBlock(id="answer-1", markdown=markdown, citations=[CitationRef(evidence_id=eid, label=i + 1) for i, eid in enumerate(evidence_ids)], claims=answer_claims)
-            row.answer_blocks = [block.model_dump(mode="json")]; row.gaps = gaps
+                    session.add(
+                        ClaimEvidenceRow(
+                            claim_id=claim_row.id,
+                            evidence_id=eid,
+                            relation=relation,
+                            rationale=claim.evidence_rationales.get(
+                                str(eid), claim.assessment_rationale
+                            )[:4000],
+                            checker_method=claim.checker_method,
+                            checker_version=claim.checker_version,
+                        )
+                    )
+                answer_claims.append(
+                    AnswerClaim(
+                        text=claim.text,
+                        citation_labels=citation_labels,
+                        support_status=claim.support_status,
+                        checker_method=claim.checker_method,
+                        checker_version=claim.checker_version,
+                        assessment_state=claim.assessment_state,
+                        assessment_rationale=claim.assessment_rationale,
+                    )
+                )
+            block = AnswerBlock(
+                id="answer-1",
+                markdown=markdown,
+                citations=[
+                    CitationRef(evidence_id=eid, label=i + 1) for i, eid in enumerate(evidence_ids)
+                ],
+                claims=answer_claims,
+            )
+            row.answer_blocks = [block.model_dump(mode="json")]
+            row.gaps = gaps
             block_payload = block.model_dump(mode="json")
             # Preserve the M07 event for rolling clients and add the explicit M10 semantic: this
             # payload is complete, server-validated, and safe to replace by block id/version.
             self._append_event(session, run_id, "answer.block", block_payload)
-            self._append_event(session, run_id, "answer.block.validated", {**block_payload, "version": 1})
-
+            self._append_event(
+                session, run_id, "answer.block.validated", {**block_payload, "version": 1}
+            )
 
     def reserve_provider_usage(
         self,
@@ -2525,27 +2882,38 @@ class Repository:
             if locked.rowcount != 1:
                 raise RuntimeError("provider quota lock could not be acquired")
 
-            minute_requests = session.scalar(
-                select(func.coalesce(func.sum(ProviderUsageRow.requests), 0)).where(
-                    ProviderUsageRow.provider == provider,
-                    ProviderUsageRow.model == model,
-                    ProviderUsageRow.created_at >= minute_start,
+            minute_requests = (
+                session.scalar(
+                    select(func.coalesce(func.sum(ProviderUsageRow.requests), 0)).where(
+                        ProviderUsageRow.provider == provider,
+                        ProviderUsageRow.model == model,
+                        ProviderUsageRow.created_at >= minute_start,
+                    )
                 )
-            ) or 0
-            minute_tokens = session.scalar(
-                select(func.coalesce(func.sum(ProviderUsageRow.input_tokens_reserved), 0)).where(
-                    ProviderUsageRow.provider == provider,
-                    ProviderUsageRow.model == model,
-                    ProviderUsageRow.created_at >= minute_start,
+                or 0
+            )
+            minute_tokens = (
+                session.scalar(
+                    select(
+                        func.coalesce(func.sum(ProviderUsageRow.input_tokens_reserved), 0)
+                    ).where(
+                        ProviderUsageRow.provider == provider,
+                        ProviderUsageRow.model == model,
+                        ProviderUsageRow.created_at >= minute_start,
+                    )
                 )
-            ) or 0
-            day_requests = session.scalar(
-                select(func.coalesce(func.sum(ProviderUsageRow.requests), 0)).where(
-                    ProviderUsageRow.provider == provider,
-                    ProviderUsageRow.model == model,
-                    ProviderUsageRow.created_at >= day_start,
+                or 0
+            )
+            day_requests = (
+                session.scalar(
+                    select(func.coalesce(func.sum(ProviderUsageRow.requests), 0)).where(
+                        ProviderUsageRow.provider == provider,
+                        ProviderUsageRow.model == model,
+                        ProviderUsageRow.created_at >= day_start,
+                    )
                 )
-            ) or 0
+                or 0
+            )
             if int(minute_requests) + 1 > rpm:
                 raise QuotaExceededError("configured Gemini requests-per-minute ceiling reached")
             if int(minute_tokens) + input_tokens > tpm:
@@ -2553,20 +2921,27 @@ class Repository:
             if int(day_requests) + 1 > rpd:
                 raise QuotaExceededError("configured Gemini rolling daily request ceiling reached")
             usage = ProviderUsageRow(
-                provider=provider, model=model, run_id=run_id, requests=1,
-                input_tokens_reserved=input_tokens, created_at=now,
+                provider=provider,
+                model=model,
+                run_id=run_id,
+                requests=1,
+                input_tokens_reserved=input_tokens,
+                created_at=now,
             )
-            session.add(usage); session.flush()
+            session.add(usage)
+            session.flush()
             return usage.id
 
-    def reconcile_provider_usage(self, usage_id: UUID, *, input_tokens_actual: int | None, output_tokens_actual: int | None) -> None:
+    def reconcile_provider_usage(
+        self, usage_id: UUID, *, input_tokens_actual: int | None, output_tokens_actual: int | None
+    ) -> None:
         with self._sessions.begin() as session:
             row = session.get(ProviderUsageRow, usage_id)
-            if row is None: raise NotFoundError("provider usage reservation not found")
+            if row is None:
+                raise NotFoundError("provider usage reservation not found")
             row.input_tokens_actual = input_tokens_actual
             row.output_tokens_actual = output_tokens_actual
             row.reconciled_at = datetime.now(UTC)
-
 
     def persist_facet_coverage(
         self, run_id: UUID, facets, *, checker_method: str, checker_version: str, lease_token: UUID
@@ -2578,13 +2953,21 @@ class Repository:
             if run is None:
                 raise NotFoundError("run not found")
             for facet in facets:
-                row = session.scalar(select(FacetCoverageRow).where(
-                    FacetCoverageRow.run_id == run_id, FacetCoverageRow.facet_key == facet.facet
-                ).with_for_update())
+                row = session.scalar(
+                    select(FacetCoverageRow)
+                    .where(
+                        FacetCoverageRow.run_id == run_id, FacetCoverageRow.facet_key == facet.facet
+                    )
+                    .with_for_update()
+                )
                 values = {
                     "status": facet.status.value,
-                    "supporting_evidence_ids": [str(value) for value in facet.supporting_evidence_ids],
-                    "conflicting_evidence_ids": [str(value) for value in facet.conflicting_evidence_ids],
+                    "supporting_evidence_ids": [
+                        str(value) for value in facet.supporting_evidence_ids
+                    ],
+                    "conflicting_evidence_ids": [
+                        str(value) for value in facet.conflicting_evidence_ids
+                    ],
                     "rationale": facet.rationale[:4000],
                     "checker_method": checker_method,
                     "checker_version": checker_version,
@@ -2592,7 +2975,10 @@ class Repository:
                 }
                 if row is None:
                     row = FacetCoverageRow(
-                        workspace_id=run.workspace_id, run_id=run_id, facet_key=facet.facet, **values
+                        workspace_id=run.workspace_id,
+                        run_id=run_id,
+                        facet_key=facet.facet,
+                        **values,
                     )
                     session.add(row)
                 else:
@@ -2600,7 +2986,13 @@ class Repository:
                         setattr(row, key, value)
 
     def get_research_cache(
-        self, run_id: UUID, *, namespace: str, cache_key: str, policy_version: str, lease_token: UUID
+        self,
+        run_id: UUID,
+        *,
+        namespace: str,
+        cache_key: str,
+        policy_version: str,
+        lease_token: UUID,
     ) -> dict[str, object] | None:
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
@@ -2608,16 +3000,26 @@ class Repository:
             run = session.get(RunRow, run_id)
             if run is None:
                 raise NotFoundError("run not found")
-            row = session.scalar(select(ResearchCacheRow).where(
-                ResearchCacheRow.workspace_id == run.workspace_id,
-                ResearchCacheRow.namespace == namespace,
-                ResearchCacheRow.cache_key == cache_key,
-                ResearchCacheRow.policy_version == policy_version,
-            ))
+            row = session.scalar(
+                select(ResearchCacheRow).where(
+                    ResearchCacheRow.workspace_id == run.workspace_id,
+                    ResearchCacheRow.namespace == namespace,
+                    ResearchCacheRow.cache_key == cache_key,
+                    ResearchCacheRow.policy_version == policy_version,
+                )
+            )
             if row is None:
                 return None
-            expires_at = row.expires_at if row.expires_at.tzinfo is not None else row.expires_at.replace(tzinfo=UTC)
-            created_at = row.created_at if row.created_at.tzinfo is not None else row.created_at.replace(tzinfo=UTC)
+            expires_at = (
+                row.expires_at
+                if row.expires_at.tzinfo is not None
+                else row.expires_at.replace(tzinfo=UTC)
+            )
+            created_at = (
+                row.created_at
+                if row.created_at.tzinfo is not None
+                else row.created_at.replace(tzinfo=UTC)
+            )
             retrieved_at = row.retrieved_at
             if retrieved_at is not None and retrieved_at.tzinfo is None:
                 retrieved_at = retrieved_at.replace(tzinfo=UTC)
@@ -2642,20 +3044,30 @@ class Repository:
             return 0
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
-            ids = list(session.scalars(
-                select(ResearchCacheRow.id)
-                .where(ResearchCacheRow.expires_at <= now)
-                .order_by(ResearchCacheRow.expires_at.asc())
-                .limit(limit)
-            ))
+            ids = list(
+                session.scalars(
+                    select(ResearchCacheRow.id)
+                    .where(ResearchCacheRow.expires_at <= now)
+                    .order_by(ResearchCacheRow.expires_at.asc())
+                    .limit(limit)
+                )
+            )
             if not ids:
                 return 0
             session.execute(delete(ResearchCacheRow).where(ResearchCacheRow.id.in_(ids)))
             return len(ids)
 
     def put_research_cache(
-        self, run_id: UUID, *, namespace: str, cache_key: str, policy_version: str,
-        payload: dict[str, object], ttl_seconds: int, retrieved_at: datetime | None, lease_token: UUID
+        self,
+        run_id: UUID,
+        *,
+        namespace: str,
+        cache_key: str,
+        policy_version: str,
+        payload: dict[str, object],
+        ttl_seconds: int,
+        retrieved_at: datetime | None,
+        lease_token: UUID,
     ) -> None:
         if ttl_seconds < 1:
             raise ValueError("research cache ttl must be positive")
@@ -2666,17 +3078,26 @@ class Repository:
             run = session.get(RunRow, run_id)
             if run is None:
                 raise NotFoundError("run not found")
-            row = session.scalar(select(ResearchCacheRow).where(
-                ResearchCacheRow.workspace_id == run.workspace_id,
-                ResearchCacheRow.namespace == namespace,
-                ResearchCacheRow.cache_key == cache_key,
-                ResearchCacheRow.policy_version == policy_version,
-            ).with_for_update())
+            row = session.scalar(
+                select(ResearchCacheRow)
+                .where(
+                    ResearchCacheRow.workspace_id == run.workspace_id,
+                    ResearchCacheRow.namespace == namespace,
+                    ResearchCacheRow.cache_key == cache_key,
+                    ResearchCacheRow.policy_version == policy_version,
+                )
+                .with_for_update()
+            )
             if row is None:
                 row = ResearchCacheRow(
-                    workspace_id=run.workspace_id, namespace=namespace, cache_key=cache_key,
-                    policy_version=policy_version, payload_json=dict(payload), retrieved_at=retrieved_at,
-                    created_at=now, expires_at=expires_at,
+                    workspace_id=run.workspace_id,
+                    namespace=namespace,
+                    cache_key=cache_key,
+                    policy_version=policy_version,
+                    payload_json=dict(payload),
+                    retrieved_at=retrieved_at,
+                    created_at=now,
+                    expires_at=expires_at,
                 )
                 session.add(row)
             else:
@@ -2685,21 +3106,41 @@ class Repository:
                 row.created_at = now
                 row.expires_at = expires_at
 
-    def start_checkpoint(self, run_id: UUID, *, step_key: str, input_hash: str, lease_token: UUID, schema_version: int = 1) -> dict[str, object] | None:
+    def start_checkpoint(
+        self,
+        run_id: UUID,
+        *,
+        step_key: str,
+        input_hash: str,
+        lease_token: UUID,
+        schema_version: int = 1,
+    ) -> dict[str, object] | None:
         with self._sessions.begin() as session:
             self._require_lease(session, run_id, lease_token)
             run = session.get(RunRow, run_id)
             if run is None:
                 raise NotFoundError("run not found")
-            row = session.scalar(select(RunStepRow).where(
-                RunStepRow.run_id == run_id, RunStepRow.step_key == step_key,
-                RunStepRow.input_hash == input_hash, RunStepRow.schema_version == schema_version
-            ).with_for_update())
+            row = session.scalar(
+                select(RunStepRow)
+                .where(
+                    RunStepRow.run_id == run_id,
+                    RunStepRow.step_key == step_key,
+                    RunStepRow.input_hash == input_hash,
+                    RunStepRow.schema_version == schema_version,
+                )
+                .with_for_update()
+            )
             if row is not None and row.status == "completed":
                 return dict(row.output_json or {})
             if row is None:
-                row = RunStepRow(run_id=run_id, workspace_id=run.workspace_id, step_key=step_key,
-                    input_hash=input_hash, schema_version=schema_version, lease_token=lease_token)
+                row = RunStepRow(
+                    run_id=run_id,
+                    workspace_id=run.workspace_id,
+                    step_key=step_key,
+                    input_hash=input_hash,
+                    schema_version=schema_version,
+                    lease_token=lease_token,
+                )
                 session.add(row)
             else:
                 row.status = "started"
@@ -2708,59 +3149,150 @@ class Repository:
                 row.completed_at = None
             return None
 
-    def complete_checkpoint(self, run_id: UUID, *, step_key: str, input_hash: str, output: dict[str, object], lease_token: UUID, schema_version: int = 1) -> None:
+    def complete_checkpoint(
+        self,
+        run_id: UUID,
+        *,
+        step_key: str,
+        input_hash: str,
+        output: dict[str, object],
+        lease_token: UUID,
+        schema_version: int = 1,
+    ) -> None:
         with self._sessions.begin() as session:
             self._require_lease(session, run_id, lease_token)
-            row = session.scalar(select(RunStepRow).where(
-                RunStepRow.run_id == run_id, RunStepRow.step_key == step_key,
-                RunStepRow.input_hash == input_hash, RunStepRow.schema_version == schema_version
-            ).with_for_update())
+            row = session.scalar(
+                select(RunStepRow)
+                .where(
+                    RunStepRow.run_id == run_id,
+                    RunStepRow.step_key == step_key,
+                    RunStepRow.input_hash == input_hash,
+                    RunStepRow.schema_version == schema_version,
+                )
+                .with_for_update()
+            )
             if row is None:
                 run = session.get(RunRow, run_id)
-                if run is None: raise NotFoundError("run not found")
-                row = RunStepRow(run_id=run_id, workspace_id=run.workspace_id, step_key=step_key, input_hash=input_hash, schema_version=schema_version)
-                session.add(row); session.flush()
+                if run is None:
+                    raise NotFoundError("run not found")
+                row = RunStepRow(
+                    run_id=run_id,
+                    workspace_id=run.workspace_id,
+                    step_key=step_key,
+                    input_hash=input_hash,
+                    schema_version=schema_version,
+                )
+                session.add(row)
+                session.flush()
             if row.lease_token not in {None, lease_token}:
                 raise StaleLeaseError("checkpoint belongs to a different worker lease")
-            row.status = "completed"; row.output_json = output; row.lease_token = lease_token; row.completed_at = datetime.now(UTC)
-            self._append_event(session, run_id, "run.checkpointed", {"step": step_key, "input_hash": input_hash, "schema_version": schema_version})
+            row.status = "completed"
+            row.output_json = output
+            row.lease_token = lease_token
+            row.completed_at = datetime.now(UTC)
+            self._append_event(
+                session,
+                run_id,
+                "run.checkpointed",
+                {"step": step_key, "input_hash": input_hash, "schema_version": schema_version},
+            )
 
-    def acquire_resource_lease(self, run_id: UUID, *, resource_key: str, capacity: int, ttl_seconds: int, lease_token: UUID) -> ResourceLease:
-        if capacity < 1 or ttl_seconds < 1: raise ValueError("resource lease capacity and ttl must be positive")
-        now = datetime.now(UTC); until = now + timedelta(seconds=ttl_seconds)
+    def acquire_resource_lease(
+        self, run_id: UUID, *, resource_key: str, capacity: int, ttl_seconds: int, lease_token: UUID
+    ) -> ResourceLease:
+        if capacity < 1 or ttl_seconds < 1:
+            raise ValueError("resource lease capacity and ttl must be positive")
+        now = datetime.now(UTC)
+        until = now + timedelta(seconds=ttl_seconds)
         with self._sessions.begin() as session:
             self._require_lease(session, run_id, lease_token)
             run = session.get(RunRow, run_id)
-            if run is None: raise NotFoundError("run not found")
+            if run is None:
+                raise NotFoundError("run not found")
             if session.bind is not None and session.bind.dialect.name == "postgresql":
-                key = int.from_bytes(hashlib.sha256(resource_key.encode()).digest()[:8], "big", signed=True)
+                key = int.from_bytes(
+                    hashlib.sha256(resource_key.encode()).digest()[:8], "big", signed=True
+                )
                 session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
-            session.execute(delete(ResourceLeaseRow).where(ResourceLeaseRow.resource_key == resource_key, ResourceLeaseRow.leased_until <= now))
-            occupied = set(session.scalars(select(ResourceLeaseRow.slot).where(ResourceLeaseRow.resource_key == resource_key)).all())
+            session.execute(
+                delete(ResourceLeaseRow).where(
+                    ResourceLeaseRow.resource_key == resource_key,
+                    ResourceLeaseRow.leased_until <= now,
+                )
+            )
+            occupied = set(
+                session.scalars(
+                    select(ResourceLeaseRow.slot).where(
+                        ResourceLeaseRow.resource_key == resource_key
+                    )
+                ).all()
+            )
             slot = next((value for value in range(capacity) if value not in occupied), None)
-            if slot is None: raise ResourceCapacityError(f"resource capacity exhausted: {resource_key}")
+            if slot is None:
+                raise ResourceCapacityError(f"resource capacity exhausted: {resource_key}")
             token = uuid4()
-            session.add(ResourceLeaseRow(workspace_id=run.workspace_id, owner_run_id=run_id, resource_key=resource_key, slot=slot, lease_token=token, leased_until=until, created_at=now))
+            session.add(
+                ResourceLeaseRow(
+                    workspace_id=run.workspace_id,
+                    owner_run_id=run_id,
+                    resource_key=resource_key,
+                    slot=slot,
+                    lease_token=token,
+                    leased_until=until,
+                    created_at=now,
+                )
+            )
             session.flush()
-            return ResourceLease(run_id=run_id, resource_key=resource_key, slot=slot, token=token, leased_until=until)
+            return ResourceLease(
+                run_id=run_id, resource_key=resource_key, slot=slot, token=token, leased_until=until
+            )
 
     def release_resource_lease(self, resource: ResourceLease) -> None:
         with self._sessions.begin() as session:
-            row = session.scalar(select(ResourceLeaseRow).where(ResourceLeaseRow.lease_token == resource.token, ResourceLeaseRow.owner_run_id == resource.run_id))
-            if row is not None: session.delete(row)
+            row = session.scalar(
+                select(ResourceLeaseRow).where(
+                    ResourceLeaseRow.lease_token == resource.token,
+                    ResourceLeaseRow.owner_run_id == resource.run_id,
+                )
+            )
+            if row is not None:
+                session.delete(row)
 
     def count_run_evidence(self, run_id: UUID) -> int:
         with self._sessions() as session:
-            return int(session.scalar(select(func.count()).select_from(EvidenceRow).where(EvidenceRow.run_id == run_id)) or 0)
+            return int(
+                session.scalar(
+                    select(func.count())
+                    .select_from(EvidenceRow)
+                    .where(EvidenceRow.run_id == run_id)
+                )
+                or 0
+            )
 
-    def finalize_partial_report(self, run_id: UUID, *, reason: str, gaps: list[str], lease_token: UUID) -> bool:
+    def finalize_partial_report(
+        self, run_id: UUID, *, reason: str, gaps: list[str], lease_token: UUID
+    ) -> bool:
         with self._sessions.begin() as session:
             self._require_lease(session, run_id, lease_token)
             row = session.get(RunRow, run_id)
-            evidence = session.scalars(select(EvidenceRow).where(EvidenceRow.run_id == run_id).order_by(EvidenceRow.captured_at).limit(20)).all()
-            if row is None or not evidence: return False
-            block = AnswerBlock(id="partial-evidence-report", markdown=f"### Partial evidence report\n\nARES stopped before a complete checked answer could be produced. Reason: {reason}.", citations=[CitationRef(evidence_id=e.id, label=i + 1) for i, e in enumerate(evidence)], claims=[])
-            row.answer_blocks = [block.model_dump(mode="json")]; row.gaps = list(dict.fromkeys([*gaps, reason]))
+            evidence = session.scalars(
+                select(EvidenceRow)
+                .where(EvidenceRow.run_id == run_id)
+                .order_by(EvidenceRow.captured_at)
+                .limit(20)
+            ).all()
+            if row is None or not evidence:
+                return False
+            block = AnswerBlock(
+                id="partial-evidence-report",
+                markdown=f"### Partial evidence report\n\nARES stopped before a complete checked answer could be produced. Reason: {reason}.",
+                citations=[
+                    CitationRef(evidence_id=e.id, label=i + 1) for i, e in enumerate(evidence)
+                ],
+                claims=[],
+            )
+            row.answer_blocks = [block.model_dump(mode="json")]
+            row.gaps = list(dict.fromkeys([*gaps, reason]))
             self._append_event(session, run_id, "answer.block", block.model_dump(mode="json"))
             return True
 
@@ -2811,7 +3343,11 @@ class Repository:
         with self._sessions() as session:
             rows = session.scalars(select(WorkerInstanceRow)).all()
             for row in rows:
-                seen = row.last_seen_at if row.last_seen_at.tzinfo is not None else row.last_seen_at.replace(tzinfo=UTC)
+                seen = (
+                    row.last_seen_at
+                    if row.last_seen_at.tzinfo is not None
+                    else row.last_seen_at.replace(tzinfo=UTC)
+                )
                 if row.state not in {"active", "draining"} or seen < cutoff:
                     continue
                 profile = row.instance_name.rsplit(":", 1)[-1]
@@ -2825,7 +3361,11 @@ class Repository:
         with self._sessions() as session:
             rows = session.scalars(select(WorkerInstanceRow)).all()
             for row in rows:
-                seen = row.last_seen_at if row.last_seen_at.tzinfo is not None else row.last_seen_at.replace(tzinfo=UTC)
+                seen = (
+                    row.last_seen_at
+                    if row.last_seen_at.tzinfo is not None
+                    else row.last_seen_at.replace(tzinfo=UTC)
+                )
                 if row.state not in {"active", "draining"} or seen < cutoff:
                     continue
                 for name, value in dict(row.capabilities_json or {}).items():
@@ -2840,7 +3380,11 @@ class Repository:
             total = len(rows)
             active = draining = stale = 0
             for row in rows:
-                seen = row.last_seen_at if row.last_seen_at.tzinfo is not None else row.last_seen_at.replace(tzinfo=UTC)
+                seen = (
+                    row.last_seen_at
+                    if row.last_seen_at.tzinfo is not None
+                    else row.last_seen_at.replace(tzinfo=UTC)
+                )
                 if row.state in {"active", "draining"} and seen < cutoff:
                     stale += 1
                 elif row.state == "draining":
@@ -2862,7 +3406,9 @@ class Repository:
             if run is None:
                 raise NotFoundError("run not found")
             claim_rows = session.scalars(select(ClaimRow).where(ClaimRow.run_id == run_id)).all()
-            evidence_rows = session.scalars(select(EvidenceRow).where(EvidenceRow.run_id == run_id)).all()
+            evidence_rows = session.scalars(
+                select(EvidenceRow).where(EvidenceRow.run_id == run_id)
+            ).all()
             source_rows = session.scalars(select(SourceRow).where(SourceRow.run_id == run_id)).all()
             facet_rows = session.scalars(
                 select(FacetCoverageRow)
@@ -2882,13 +3428,19 @@ class Repository:
                 .order_by(ClaimRow.id, ClaimEvidenceRow.id)
             ).all()
             events = session.scalars(
-                select(RunEventRow).where(RunEventRow.run_id == run_id).order_by(RunEventRow.seq.asc())
+                select(RunEventRow)
+                .where(RunEventRow.run_id == run_id)
+                .order_by(RunEventRow.seq.asc())
             ).all()
 
             support_counts: dict[str, int] = {}
             for claim in claim_rows:
-                support_counts[claim.support_status] = support_counts.get(claim.support_status, 0) + 1
-            evidence_relation_counts = {str(relation): int(count) for relation, count in relation_rows}
+                support_counts[claim.support_status] = (
+                    support_counts.get(claim.support_status, 0) + 1
+                )
+            evidence_relation_counts = {
+                str(relation): int(count) for relation, count in relation_rows
+            }
             evidence_relation_views = [
                 ClaimEvidenceRelationView(
                     claim_id=edge.claim_id,
@@ -2907,7 +3459,9 @@ class Repository:
             source_group_keys: set[str] = set()
             source_origin_by_id: dict[UUID, UUID] = {}
             for source in source_rows:
-                source_kind_counts[source.source_kind] = source_kind_counts.get(source.source_kind, 0) + 1
+                source_kind_counts[source.source_kind] = (
+                    source_kind_counts.get(source.source_kind, 0) + 1
+                )
                 provider_counts[source.provider] = provider_counts.get(source.provider, 0) + 1
                 origin = source.origin_group_id or source.id
                 source_origin_by_id[source.id] = origin
@@ -2920,20 +3474,24 @@ class Repository:
                 supporting = [UUID(value) for value in (facet.supporting_evidence_ids or [])]
                 conflicting = [UUID(value) for value in (facet.conflicting_evidence_ids or [])]
                 origins = {
-                    source_origin_by_id.get(evidence_by_id[evidence_id].source_id, evidence_by_id[evidence_id].source_id)
+                    source_origin_by_id.get(
+                        evidence_by_id[evidence_id].source_id, evidence_by_id[evidence_id].source_id
+                    )
                     for evidence_id in supporting + conflicting
                     if evidence_id in evidence_by_id
                 }
-                facet_views.append(RunFacetView(
-                    facet_key=facet.facet_key,
-                    status=facet.status,
-                    supporting_evidence_ids=supporting,
-                    conflicting_evidence_ids=conflicting,
-                    independent_origin_count=len(origins),
-                    rationale=facet.rationale,
-                    checker_method=facet.checker_method,
-                    checker_version=facet.checker_version,
-                ))
+                facet_views.append(
+                    RunFacetView(
+                        facet_key=facet.facet_key,
+                        status=facet.status,
+                        supporting_evidence_ids=supporting,
+                        conflicting_evidence_ids=conflicting,
+                        independent_origin_count=len(origins),
+                        rationale=facet.rationale,
+                        checker_method=facet.checker_method,
+                        checker_version=facet.checker_version,
+                    )
+                )
             resolved = 0
             referenced = 0
             for value in run.answer_blocks or []:
@@ -2968,7 +3526,9 @@ class Repository:
                     stage = str(event.payload.get("stage", "unknown"))
                     duration = event.payload.get("duration_ms", 0)
                     try:
-                        stage_timings[stage] = round(stage_timings.get(stage, 0.0) + float(duration), 3)
+                        stage_timings[stage] = round(
+                            stage_timings.get(stage, 0.0) + float(duration), 3
+                        )
                     except (TypeError, ValueError):
                         pass
                 elif event.event_type == "security.content_risk":
@@ -2980,15 +3540,24 @@ class Repository:
                         pass
                 if event.event_type == "job.claimed" and first_claimed_at is None:
                     first_claimed_at = event.created_at
-                if event.event_type in {"run.completed", "run.partial", "run.failed", "run.cancelled"}:
+                if event.event_type in {
+                    "run.completed",
+                    "run.partial",
+                    "run.failed",
+                    "run.cancelled",
+                }:
                     terminal_at = event.created_at
 
             queue_wait_ms = None
             if first_claimed_at is not None:
-                queue_wait_ms = round(max(0.0, (first_claimed_at - run.created_at).total_seconds() * 1000), 3)
+                queue_wait_ms = round(
+                    max(0.0, (first_claimed_at - run.created_at).total_seconds() * 1000), 3
+                )
             run_elapsed_ms = None
             if terminal_at is not None:
-                run_elapsed_ms = round(max(0.0, (terminal_at - run.created_at).total_seconds() * 1000), 3)
+                run_elapsed_ms = round(
+                    max(0.0, (terminal_at - run.created_at).total_seconds() * 1000), 3
+                )
 
             return RunQualityView(
                 run_id=run_id,
@@ -3014,7 +3583,9 @@ class Repository:
             )
 
     @staticmethod
-    def _visualization_view(row: VisualizationRow, dataset: VisualizationDatasetRow) -> VisualizationView:
+    def _visualization_view(
+        row: VisualizationRow, dataset: VisualizationDatasetRow
+    ) -> VisualizationView:
         return VisualizationView(
             id=row.id,
             run_id=row.run_id,
@@ -3025,7 +3596,10 @@ class Repository:
             schema_version=row.schema_version,
             dataset=dict(dataset.dataset_json or {}),
             approved_spec=VisualizationSpec.model_validate(row.approved_spec_json or {}),
-            data_lineage=[VisualizationLineageRef.model_validate(value) for value in (dataset.lineage_json or [])],
+            data_lineage=[
+                VisualizationLineageRef.model_validate(value)
+                for value in (dataset.lineage_json or [])
+            ],
             export_metadata=dict(row.export_metadata_json or {}),
             created_at=row.created_at,
         )
@@ -3053,7 +3627,9 @@ class Repository:
 
         lineage_json = [item.model_dump(mode="json") for item in draft.lineage]
         dataset_payload = json.dumps(
-            {"dataset": dataset_json, "lineage": lineage_json}, sort_keys=True, separators=(",", ":")
+            {"dataset": dataset_json, "lineage": lineage_json},
+            sort_keys=True,
+            separators=(",", ":"),
         )
         content_hash = hashlib.sha256(dataset_payload.encode()).hexdigest()
         spec_json = draft.spec.model_dump(mode="json")
@@ -3084,15 +3660,23 @@ class Repository:
                 ).all()
                 evidence_by_id = {row.id: row for row in evidence_rows}
                 if set(evidence_by_id) != set(lineage_by_evidence):
-                    raise ValueError("visualization lineage must resolve to evidence from the same run")
+                    raise ValueError(
+                        "visualization lineage must resolve to evidence from the same run"
+                    )
                 for evidence_id, ref in lineage_by_evidence.items():
                     evidence = evidence_by_id[evidence_id]
                     if evidence.source_id != ref.source_id:
-                        raise ValueError("visualization lineage source does not match persisted evidence")
+                        raise ValueError(
+                            "visualization lineage source does not match persisted evidence"
+                        )
                     if evidence.segment_id != ref.segment_id:
-                        raise ValueError("visualization lineage segment does not match persisted evidence")
+                        raise ValueError(
+                            "visualization lineage segment does not match persisted evidence"
+                        )
                     if evidence.locator != ref.locator:
-                        raise ValueError("visualization lineage locator does not match persisted evidence")
+                        raise ValueError(
+                            "visualization lineage locator does not match persisted evidence"
+                        )
 
             dataset = session.scalar(
                 select(VisualizationDatasetRow).where(
@@ -3144,7 +3728,10 @@ class Repository:
                 raise NotFoundError("run not found")
             rows = session.execute(
                 select(VisualizationRow, VisualizationDatasetRow)
-                .join(VisualizationDatasetRow, VisualizationDatasetRow.id == VisualizationRow.dataset_id)
+                .join(
+                    VisualizationDatasetRow,
+                    VisualizationDatasetRow.id == VisualizationRow.dataset_id,
+                )
                 .where(VisualizationRow.run_id == run_id)
                 .order_by(VisualizationRow.created_at.asc(), VisualizationRow.id.asc())
             ).all()
@@ -3162,10 +3749,16 @@ class Repository:
                 raise NotFoundError("run not found")
             records = session.execute(
                 select(EvidenceRow, DocumentTableCellRow, DocumentTableRow)
-                .join(DocumentTableCellRow, DocumentTableCellRow.segment_id == EvidenceRow.segment_id)
+                .join(
+                    DocumentTableCellRow, DocumentTableCellRow.segment_id == EvidenceRow.segment_id
+                )
                 .join(DocumentTableRow, DocumentTableRow.id == DocumentTableCellRow.table_id)
                 .where(EvidenceRow.run_id == run_id)
-                .order_by(DocumentTableRow.id, DocumentTableCellRow.row_index, DocumentTableCellRow.column_index)
+                .order_by(
+                    DocumentTableRow.id,
+                    DocumentTableCellRow.row_index,
+                    DocumentTableCellRow.column_index,
+                )
             ).all()
             if not records:
                 return []
@@ -3173,7 +3766,11 @@ class Repository:
             all_cells = session.scalars(
                 select(DocumentTableCellRow)
                 .where(DocumentTableCellRow.table_id.in_(table_ids))
-                .order_by(DocumentTableCellRow.table_id, DocumentTableCellRow.row_index, DocumentTableCellRow.column_index)
+                .order_by(
+                    DocumentTableCellRow.table_id,
+                    DocumentTableCellRow.row_index,
+                    DocumentTableCellRow.column_index,
+                )
             ).all()
             by_table: dict[UUID, list[DocumentTableCellRow]] = {}
             for cell in all_cells:
@@ -3187,47 +3784,74 @@ class Repository:
 
             def label_for(cell: DocumentTableCellRow, table: DocumentTableRow) -> str:
                 cells = by_table.get(table.id, [])
-                row_header = next((
-                    other.raw_text.strip() for other in reversed(cells)
-                    if other.row_index == cell.row_index and other.column_index < cell.column_index
-                    and other.is_header and other.raw_text.strip()
-                ), "")
+                row_header = next(
+                    (
+                        other.raw_text.strip()
+                        for other in reversed(cells)
+                        if other.row_index == cell.row_index
+                        and other.column_index < cell.column_index
+                        and other.is_header
+                        and other.raw_text.strip()
+                    ),
+                    "",
+                )
                 if not row_header:
-                    row_header = next((
-                        other.raw_text.strip() for other in cells
-                        if other.row_index == cell.row_index and other.column_index == 0
-                        and other.id != cell.id and other.raw_text.strip()
-                    ), "")
-                column_header = next((
-                    other.raw_text.strip() for other in reversed(cells)
-                    if other.column_index == cell.column_index and other.row_index < cell.row_index
-                    and other.is_header and other.raw_text.strip()
-                ), "")
+                    row_header = next(
+                        (
+                            other.raw_text.strip()
+                            for other in cells
+                            if other.row_index == cell.row_index
+                            and other.column_index == 0
+                            and other.id != cell.id
+                            and other.raw_text.strip()
+                        ),
+                        "",
+                    )
+                column_header = next(
+                    (
+                        other.raw_text.strip()
+                        for other in reversed(cells)
+                        if other.column_index == cell.column_index
+                        and other.row_index < cell.row_index
+                        and other.is_header
+                        and other.raw_text.strip()
+                    ),
+                    "",
+                )
                 parts = [part for part in (row_header, column_header) if part]
-                return " · ".join(parts) or f"{table.table_key} R{cell.row_index + 1} C{cell.column_index + 1}"
+                return (
+                    " · ".join(parts)
+                    or f"{table.table_key} R{cell.row_index + 1} C{cell.column_index + 1}"
+                )
 
             output: list[NumericTablePointCandidate] = []
             for evidence, cell, table in records:
                 value = as_number(cell.normalized_value_json)
                 if value is None or evidence.segment_id is None:
                     continue
-                output.append(NumericTablePointCandidate(
-                    evidence_id=evidence.id,
-                    source_id=evidence.source_id,
-                    segment_id=evidence.segment_id,
-                    table_id=table.id,
-                    table_key=table.table_key,
-                    row=cell.row_index,
-                    column=cell.column_index,
-                    label=label_for(cell, table),
-                    value=value,
-                    unit=cell.unit,
-                ))
+                output.append(
+                    NumericTablePointCandidate(
+                        evidence_id=evidence.id,
+                        source_id=evidence.source_id,
+                        segment_id=evidence.segment_id,
+                        table_id=table.id,
+                        table_key=table.table_key,
+                        row=cell.row_index,
+                        column=cell.column_index,
+                        label=label_for(cell, table),
+                        value=value,
+                        unit=cell.unit,
+                    )
+                )
             return output
 
     def get_evidence(self, evidence_id: UUID) -> EvidenceView:
         with self._sessions() as session:
-            stmt = (select(EvidenceRow).join(RunRow, RunRow.id == EvidenceRow.run_id).where(EvidenceRow.id == evidence_id))
+            stmt = (
+                select(EvidenceRow)
+                .join(RunRow, RunRow.id == EvidenceRow.run_id)
+                .where(EvidenceRow.id == evidence_id)
+            )
             workspace_id = self._visible_workspace_id()
             if workspace_id is not None:
                 stmt = stmt.where(RunRow.workspace_id == workspace_id)
@@ -3287,14 +3911,30 @@ class Repository:
             )
 
     def list_events(self, run_id: UUID, after: int = 0, *, limit: int = 200) -> list[EventEnvelope]:
-        if after < 0: raise ValueError("event cursor cannot be negative")
-        if not 1 <= limit <= 1000: raise ValueError("event page limit must be between 1 and 1000")
+        if after < 0:
+            raise ValueError("event cursor cannot be negative")
+        if not 1 <= limit <= 1000:
+            raise ValueError("event page limit must be between 1 and 1000")
         with self._sessions() as session:
-            if self._run_row(session, run_id) is None: raise NotFoundError("run not found")
-            rows = session.scalars(select(RunEventRow).where(
-                RunEventRow.run_id == run_id, RunEventRow.seq > after
-            ).order_by(RunEventRow.seq.asc()).limit(limit)).all()
-            return [EventEnvelope(schema_version=row.schema_version, run_id=row.run_id, seq=row.seq, event_type=row.event_type, at=row.created_at, payload=row.payload) for row in rows]
+            if self._run_row(session, run_id) is None:
+                raise NotFoundError("run not found")
+            rows = session.scalars(
+                select(RunEventRow)
+                .where(RunEventRow.run_id == run_id, RunEventRow.seq > after)
+                .order_by(RunEventRow.seq.asc())
+                .limit(limit)
+            ).all()
+            return [
+                EventEnvelope(
+                    schema_version=row.schema_version,
+                    run_id=row.run_id,
+                    seq=row.seq,
+                    event_type=row.event_type,
+                    at=row.created_at,
+                    payload=row.payload,
+                )
+                for row in rows
+            ]
 
     def _require_lease(self, session: Session, run_id: UUID, token: UUID) -> JobRow:
         row = session.scalar(select(JobRow).where(JobRow.run_id == run_id))
@@ -3315,10 +3955,27 @@ class Repository:
         self, session: Session, run_id: UUID, event_type: str, payload: dict[str, object]
     ) -> None:
         row = session.scalar(select(RunRow).where(RunRow.id == run_id).with_for_update())
-        if row is None: raise NotFoundError("run not found")
-        latest = max(int(row.last_seq or 0), int(session.scalar(select(func.max(RunEventRow.seq)).where(RunEventRow.run_id == run_id)) or 0))
+        if row is None:
+            raise NotFoundError("run not found")
+        latest = max(
+            int(row.last_seq or 0),
+            int(
+                session.scalar(
+                    select(func.max(RunEventRow.seq)).where(RunEventRow.run_id == run_id)
+                )
+                or 0
+            ),
+        )
         row.last_seq = latest + 1
-        session.add(RunEventRow(run_id=run_id, seq=row.last_seq, schema_version=2, event_type=event_type, payload=payload))
+        session.add(
+            RunEventRow(
+                run_id=run_id,
+                seq=row.last_seq,
+                schema_version=2,
+                event_type=event_type,
+                payload=payload,
+            )
+        )
 
     @staticmethod
     def _snapshot(row: RunRow) -> RunSnapshot:

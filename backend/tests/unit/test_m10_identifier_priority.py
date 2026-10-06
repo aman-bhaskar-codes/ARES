@@ -4,19 +4,30 @@ from ares.domain.models import FetchedDocument, SearchHit
 
 def _row(identifier: str, rank: int):
     hit = SearchHit(
-        title=identifier, url="https://example.com/source", rank=rank,
-        provider="test", source_kind="academic", canonical_identifier=identifier,
+        title=identifier,
+        url="https://example.com/source",
+        rank=rank,
+        provider="test",
+        source_kind="academic",
+        canonical_identifier=identifier,
     )
     doc = FetchedDocument(
-        title=identifier, url="https://example.com/source", final_url="https://example.com/source",
-        text="Evidence text " * 20, content_hash=f"hash-{rank}", extraction_method="test",
-        source_kind="academic", canonical_identifier=identifier,
+        title=identifier,
+        url="https://example.com/source",
+        final_url="https://example.com/source",
+        text="Evidence text " * 20,
+        content_hash=f"hash-{rank}",
+        extraction_method="test",
+        source_kind="academic",
+        canonical_identifier=identifier,
     )
     return hit, doc
 
 
 def test_extracts_supported_exact_identifiers():
-    identifiers = _query_identifiers("Compare DOI 10.1000/ABC.12 and arXiv:2401.01234v2 with github.com/pgvector/pgvector")
+    identifiers = _query_identifiers(
+        "Compare DOI 10.1000/ABC.12 and arXiv:2401.01234v2 with github.com/pgvector/pgvector"
+    )
     assert "doi:10.1000/abc.12" in identifiers
     assert "arxiv:2401.01234v2" in identifiers
     assert "github:pgvector/pgvector" in identifiers

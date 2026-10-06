@@ -3,6 +3,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from ares.api.app import create_app
+from ares.api.settings import Settings
 from ares.api.spa_static import SpaStaticFiles
 
 
@@ -27,10 +29,12 @@ def test_missing_assets_and_unknown_api_paths_remain_404(tmp_path: Path) -> None
     client = _client(tmp_path)
     assert client.get("/missing.js", headers={"Accept": "text/html"}).status_code == 404
     assert client.get("/api/v9/does-not-exist", headers={"Accept": "text/html"}).status_code == 404
-    assert client.get("/research/conversation-1", headers={"Accept": "application/json"}).status_code == 404
+    assert (
+        client.get("/research/conversation-1", headers={"Accept": "application/json"}).status_code
+        == 404
+    )
 
-from ares.api.app import create_app
-from ares.api.settings import Settings
+
 
 
 def test_oidc_static_shell_is_public_but_api_remains_authenticated(tmp_path: Path) -> None:

@@ -7,7 +7,8 @@ def test_academic_pdf_fetch_uses_bounded_parser_and_preserves_page_map(monkeypat
 
     fetcher = SafeHttpFetcher()
     monkeypatch.setattr(
-        fetcher, "_fetch_response",
+        fetcher,
+        "_fetch_response",
         lambda *args, **kwargs: (
             "https://example.org/paper.pdf",
             {"content-type": "application/pdf"},
@@ -15,11 +16,15 @@ def test_academic_pdf_fetch_uses_bounded_parser_and_preserves_page_map(monkeypat
         ),
     )
     monkeypatch.setattr(
-        BoundedPdfParser, "parse",
+        BoundedPdfParser,
+        "parse",
         lambda self, payload: ParsedPdf(
             text="Full paper evidence " * 20,
             page_map=[{"page": 1, "char_start": 0, "char_end": 200}],
-            page_count=1, status="ready", warnings=[], parser_version="fixture-1",
+            page_count=1,
+            status="ready",
+            warnings=[],
+            parser_version="fixture-1",
         ),
     )
     document = fetcher.fetch_pdf("https://example.org/paper.pdf")

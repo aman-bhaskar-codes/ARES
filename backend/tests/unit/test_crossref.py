@@ -29,7 +29,9 @@ def test_crossref_normalizes_doi_and_metadata() -> None:
             },
         )
 
-    client = httpx.Client(base_url="https://api.crossref.org", transport=httpx.MockTransport(handler))
+    client = httpx.Client(
+        base_url="https://api.crossref.org", transport=httpx.MockTransport(handler)
+    )
     provider = CrossrefAcademicProvider(mailto="researcher@example.com", client=client)
     results = provider.search_documents("evidence systems", limit=3)
     assert len(results) == 1
@@ -48,7 +50,9 @@ def test_crossref_applies_run_timeout_to_http_request() -> None:
         observed.append(float(request.extensions["timeout"]["read"]))
         return httpx.Response(200, request=request, json={"message": {"items": []}})
 
-    client = httpx.Client(base_url="https://api.crossref.org", transport=httpx.MockTransport(handler))
+    client = httpx.Client(
+        base_url="https://api.crossref.org", transport=httpx.MockTransport(handler)
+    )
     provider = CrossrefAcademicProvider(client=client)
     provider.search_documents("topic", timeout_seconds=2.25)
     assert observed == [2.25]
@@ -58,10 +62,16 @@ def test_crossref_pushes_explicit_publication_window_to_provider() -> None:
     from datetime import UTC, datetime
 
     observed: list[str] = []
+
     def handler(request: httpx.Request) -> httpx.Response:
         observed.append(request.url.params.get("filter", ""))
         return httpx.Response(200, request=request, json={"message": {"items": []}})
-    provider = CrossrefAcademicProvider(client=httpx.Client(transport=httpx.MockTransport(handler), base_url="https://api.crossref.org"))
+
+    provider = CrossrefAcademicProvider(
+        client=httpx.Client(
+            transport=httpx.MockTransport(handler), base_url="https://api.crossref.org"
+        )
+    )
     provider.search_documents(
         "topic",
         published_after=datetime(2024, 1, 1, tzinfo=UTC),

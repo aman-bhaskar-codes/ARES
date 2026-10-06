@@ -94,7 +94,12 @@ class GeminiLLMProvider:
         self._thinking_level = thinking_level
 
     def synthesize(
-        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None = None
+        self,
+        query: str,
+        evidence: list[EvidencePacket],
+        *,
+        max_output_tokens: int,
+        timeout_seconds: float | None = None,
     ) -> SynthesisResult:
         if not evidence:
             raise ProviderUnavailable("Gemini synthesis requires evidence")

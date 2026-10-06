@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode, urlsplit
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import httpx
 from cryptography.hazmat.primitives import hashes
@@ -65,8 +65,6 @@ def _b64url_decode(value: str) -> bytes:
     return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
 
 
-
-
 def _as_utc(value: datetime) -> datetime:
     return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
 
@@ -77,7 +75,12 @@ def safe_return_path(value: str | None) -> str:
     if "\\" in value or any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
         return "/"
     parsed = urlsplit(value)
-    if parsed.scheme or parsed.netloc or not parsed.path.startswith("/") or parsed.path.startswith("//"):
+    if (
+        parsed.scheme
+        or parsed.netloc
+        or not parsed.path.startswith("/")
+        or parsed.path.startswith("//")
+    ):
         return "/"
     path = parsed.path or "/"
     if parsed.query:
@@ -89,7 +92,9 @@ class AuthStore:
     def __init__(self, sessions: sessionmaker[Session]):
         self._sessions = sessions
 
-    def create_oidc_state(self, *, state: str, verifier: str, nonce: str, return_path: str, ttl_seconds: int) -> None:
+    def create_oidc_state(
+        self, *, state: str, verifier: str, nonce: str, return_path: str, ttl_seconds: int
+    ) -> None:
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
             session.add(
@@ -106,25 +111,40 @@ class AuthStore:
     def consume_oidc_state(self, state: str) -> PendingOidcState:
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
-            row = session.scalar(select(OidcStateRow).where(OidcStateRow.state_hash == _sha256(state)))
+            row = session.scalar(
+                select(OidcStateRow).where(OidcStateRow.state_hash == _sha256(state))
+            )
             if row is None or row.consumed_at is not None or _as_utc(row.expires_at) <= now:
                 raise AuthenticationError("OIDC state is invalid, expired, or already consumed")
             row.consumed_at = now
             return PendingOidcState(row.code_verifier, row.nonce, row.return_path)
 
-    def upsert_identity(self, *, subject: str, email: str | None, display_name: str | None) -> Principal:
+    def upsert_identity(
+        self, *, subject: str, email: str | None, display_name: str | None
+    ) -> Principal:
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
             user = session.scalar(select(UserRow).where(UserRow.subject == subject))
             if user is None:
-                user = UserRow(subject=subject, email=email, display_name=display_name, created_at=now, updated_at=now)
+                user = UserRow(
+                    subject=subject,
+                    email=email,
+                    display_name=display_name,
+                    created_at=now,
+                    updated_at=now,
+                )
                 session.add(user)
                 session.flush()
-                workspace = WorkspaceRow(name=(display_name or email or "ARES")[:120] + " workspace", created_at=now)
+                workspace = WorkspaceRow(
+                    name=(display_name or email or "ARES")[:120] + " workspace", created_at=now
+                )
                 session.add(workspace)
                 session.flush()
                 membership = WorkspaceMembershipRow(
-                    workspace_id=workspace.id, user_id=user.id, role=WorkspaceRole.OWNER.value, created_at=now
+                    workspace_id=workspace.id,
+                    user_id=user.id,
+                    role=WorkspaceRole.OWNER.value,
+                    created_at=now,
                 )
                 session.add(membership)
             else:
@@ -137,11 +157,16 @@ class AuthStore:
                     .order_by(WorkspaceMembershipRow.created_at.asc())
                 )
                 if membership is None:
-                    workspace = WorkspaceRow(name=(display_name or email or "ARES")[:120] + " workspace", created_at=now)
+                    workspace = WorkspaceRow(
+                        name=(display_name or email or "ARES")[:120] + " workspace", created_at=now
+                    )
                     session.add(workspace)
                     session.flush()
                     membership = WorkspaceMembershipRow(
-                        workspace_id=workspace.id, user_id=user.id, role=WorkspaceRole.OWNER.value, created_at=now
+                        workspace_id=workspace.id,
+                        user_id=user.id,
+                        role=WorkspaceRole.OWNER.value,
+                        created_at=now,
                     )
                     session.add(membership)
             session.flush()
@@ -154,7 +179,9 @@ class AuthStore:
                 display_name=user.display_name,
             )
 
-    def create_session(self, principal: Principal, *, token: str, csrf_token: str, ttl_hours: int) -> Principal:
+    def create_session(
+        self, principal: Principal, *, token: str, csrf_token: str, ttl_hours: int
+    ) -> Principal:
         now = datetime.now(UTC)
         with principal_scope(principal):
             with self._sessions.begin() as session:
@@ -170,8 +197,13 @@ class AuthStore:
                 session.flush()
                 self._audit_in_session(session, principal, "auth.login", "session", str(row.id), {})
                 return Principal(
-                    user_id=principal.user_id, workspace_id=principal.workspace_id, role=principal.role,
-                    subject=principal.subject, email=principal.email, display_name=principal.display_name, session_id=row.id,
+                    user_id=principal.user_id,
+                    workspace_id=principal.workspace_id,
+                    role=principal.role,
+                    subject=principal.subject,
+                    email=principal.email,
+                    display_name=principal.display_name,
+                    session_id=row.id,
                 )
 
     def resolve_session(self, token: str) -> BrowserSession | None:
@@ -181,7 +213,9 @@ class AuthStore:
         with self._sessions() as session:
             row = session.scalar(
                 select(SessionRow).where(
-                    SessionRow.token_hash == _sha256(token), SessionRow.revoked_at.is_(None), SessionRow.expires_at > now
+                    SessionRow.token_hash == _sha256(token),
+                    SessionRow.revoked_at.is_(None),
+                    SessionRow.expires_at > now,
                 )
             )
             if row is None:
@@ -197,8 +231,13 @@ class AuthStore:
                 return None
             return BrowserSession(
                 principal=Principal(
-                    user_id=user.id, workspace_id=row.workspace_id, role=WorkspaceRole(membership.role),
-                    subject=user.subject, email=user.email, display_name=user.display_name, session_id=row.id,
+                    user_id=user.id,
+                    workspace_id=row.workspace_id,
+                    role=WorkspaceRole(membership.role),
+                    subject=user.subject,
+                    email=user.email,
+                    display_name=user.display_name,
+                    session_id=row.id,
                 ),
                 csrf_hash=row.csrf_hash,
             )
@@ -210,17 +249,24 @@ class AuthStore:
             row = session.get(SessionRow, principal.session_id)
             if row is not None and row.user_id == principal.user_id:
                 row.revoked_at = datetime.now(UTC)
-                self._audit_in_session(session, principal, "auth.logout", "session", str(row.id), {})
+                self._audit_in_session(
+                    session, principal, "auth.logout", "session", str(row.id), {}
+                )
 
     def list_workspaces(self, principal: Principal) -> list[dict[str, str]]:
         with self._sessions() as session:
             rows = session.execute(
                 select(WorkspaceRow, WorkspaceMembershipRow.role)
-                .join(WorkspaceMembershipRow, WorkspaceMembershipRow.workspace_id == WorkspaceRow.id)
+                .join(
+                    WorkspaceMembershipRow, WorkspaceMembershipRow.workspace_id == WorkspaceRow.id
+                )
                 .where(WorkspaceMembershipRow.user_id == principal.user_id)
                 .order_by(WorkspaceRow.created_at.asc())
             ).all()
-            return [{"id": str(workspace.id), "name": workspace.name, "role": role} for workspace, role in rows]
+            return [
+                {"id": str(workspace.id), "name": workspace.name, "role": role}
+                for workspace, role in rows
+            ]
 
     def switch_workspace(self, principal: Principal, workspace_id: UUID) -> Principal:
         if principal.session_id is None:
@@ -239,28 +285,52 @@ class AuthStore:
                 raise AuthenticationError("session not found")
             row.workspace_id = workspace_id
             updated = Principal(
-                user_id=principal.user_id, workspace_id=workspace_id, role=WorkspaceRole(membership.role),
-                subject=principal.subject, email=principal.email, display_name=principal.display_name,
+                user_id=principal.user_id,
+                workspace_id=workspace_id,
+                role=WorkspaceRole(membership.role),
+                subject=principal.subject,
+                email=principal.email,
+                display_name=principal.display_name,
                 session_id=principal.session_id,
             )
-            self._audit_in_session(session, updated, "workspace.switch", "workspace", str(workspace_id), {})
+            self._audit_in_session(
+                session, updated, "workspace.switch", "workspace", str(workspace_id), {}
+            )
             return updated
 
     def audit(
-        self, principal: Principal | None, action: str, target_type: str | None = None,
-        target_id: str | None = None, metadata: dict[str, object] | None = None,
+        self,
+        principal: Principal | None,
+        action: str,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        metadata: dict[str, object] | None = None,
     ) -> None:
         with self._sessions.begin() as session:
-            self._audit_in_session(session, principal, action, target_type, target_id, metadata or {})
+            self._audit_in_session(
+                session, principal, action, target_type, target_id, metadata or {}
+            )
 
     @staticmethod
     def _audit_in_session(
-        session: Session, principal: Principal | None, action: str, target_type: str | None,
-        target_id: str | None, metadata: dict[str, object],
+        session: Session,
+        principal: Principal | None,
+        action: str,
+        target_type: str | None,
+        target_id: str | None,
+        metadata: dict[str, object],
     ) -> None:
         safe: dict[str, object] = {}
         for key, value in list(metadata.items())[:16]:
-            if key.lower() in {"token", "authorization", "cookie", "secret", "password", "code", "verifier"}:
+            if key.lower() in {
+                "token",
+                "authorization",
+                "cookie",
+                "secret",
+                "password",
+                "code",
+                "verifier",
+            }:
                 continue
             if isinstance(value, (str, int, float, bool)) or value is None:
                 safe[str(key)[:64]] = value[:256] if isinstance(value, str) else value
@@ -268,16 +338,27 @@ class AuthStore:
             AuditEventRow(
                 workspace_id=principal.workspace_id if principal else None,
                 user_id=principal.user_id if principal else None,
-                action=action[:96], target_type=(target_type or None), target_id=(target_id or None),
-                metadata_json=safe, created_at=datetime.now(UTC),
+                action=action[:96],
+                target_type=(target_type or None),
+                target_id=(target_id or None),
+                metadata_json=safe,
+                created_at=datetime.now(UTC),
             )
         )
 
 
 class OidcClient:
     def __init__(
-        self, *, issuer: str, client_id: str, client_secret: str, redirect_uri: str,
-        scopes: str, state_ttl_seconds: int, session_ttl_hours: int, store: AuthStore,
+        self,
+        *,
+        issuer: str,
+        client_id: str,
+        client_secret: str,
+        redirect_uri: str,
+        scopes: str,
+        state_ttl_seconds: int,
+        session_ttl_hours: int,
+        store: AuthStore,
         http: httpx.AsyncClient | None = None,
     ) -> None:
         self.issuer = issuer.rstrip("/")
@@ -288,7 +369,9 @@ class OidcClient:
         self.state_ttl_seconds = state_ttl_seconds
         self.session_ttl_hours = session_ttl_hours
         self.store = store
-        self.http = http or httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0), follow_redirects=False)
+        self.http = http or httpx.AsyncClient(
+            timeout=httpx.Timeout(10.0, connect=5.0), follow_redirects=False
+        )
         self._owns_http = http is None
         self._discovery: tuple[float, dict[str, Any]] | None = None
         self._jwks: tuple[float, dict[str, Any]] | None = None
@@ -307,13 +390,21 @@ class OidcClient:
         nonce = secrets.token_urlsafe(32)
         challenge = _b64url(hashlib.sha256(verifier.encode()).digest())
         self.store.create_oidc_state(
-            state=state, verifier=verifier, nonce=nonce, return_path=safe_return_path(return_path),
+            state=state,
+            verifier=verifier,
+            nonce=nonce,
+            return_path=safe_return_path(return_path),
             ttl_seconds=self.state_ttl_seconds,
         )
         params = {
-            "response_type": "code", "client_id": self.client_id, "redirect_uri": self.redirect_uri,
-            "scope": self.scopes, "state": state, "nonce": nonce,
-            "code_challenge": challenge, "code_challenge_method": "S256",
+            "response_type": "code",
+            "client_id": self.client_id,
+            "redirect_uri": self.redirect_uri,
+            "scope": self.scopes,
+            "state": state,
+            "nonce": nonce,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
         }
         return f"{metadata['authorization_endpoint']}?{urlencode(params)}"
 
@@ -321,30 +412,43 @@ class OidcClient:
         pending = self.store.consume_oidc_state(state)
         metadata = await self._get_discovery()
         form = {
-            "grant_type": "authorization_code", "code": code, "redirect_uri": self.redirect_uri,
-            "client_id": self.client_id, "code_verifier": pending.code_verifier,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": self.redirect_uri,
+            "client_id": self.client_id,
+            "code_verifier": pending.code_verifier,
         }
         if self.client_secret:
             form["client_secret"] = self.client_secret
-        response = await self.http.post(metadata["token_endpoint"], data=form, headers={"Accept": "application/json"})
+        response = await self.http.post(
+            metadata["token_endpoint"], data=form, headers={"Accept": "application/json"}
+        )
         if response.status_code >= 400:
             raise AuthenticationError("OIDC token exchange failed")
         tokens = response.json()
         id_token = tokens.get("id_token")
         if not isinstance(id_token, str):
             raise AuthenticationError("OIDC provider did not return an ID token")
-        claims = await self._verify_id_token(id_token, expected_nonce=pending.nonce, metadata=metadata)
+        claims = await self._verify_id_token(
+            id_token, expected_nonce=pending.nonce, metadata=metadata
+        )
         access_token = tokens.get("access_token")
         if metadata.get("userinfo_endpoint") and isinstance(access_token, str):
             userinfo = await self.http.get(
-                metadata["userinfo_endpoint"], headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
+                metadata["userinfo_endpoint"],
+                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
             )
             if userinfo.status_code >= 400:
                 raise AuthenticationError("OIDC UserInfo request failed")
             info = userinfo.json()
             if info.get("sub") != claims.get("sub"):
-                raise AuthenticationError("OIDC UserInfo subject does not match the validated ID token")
-            claims = {**claims, **{k: v for k, v in info.items() if k in {"email", "name", "preferred_username"}}}
+                raise AuthenticationError(
+                    "OIDC UserInfo subject does not match the validated ID token"
+                )
+            claims = {
+                **claims,
+                **{k: v for k, v in info.items() if k in {"email", "name", "preferred_username"}},
+            }
         subject = claims.get("sub")
         if not isinstance(subject, str) or not subject:
             raise AuthenticationError("OIDC ID token has no subject")
@@ -355,7 +459,8 @@ class OidcClient:
             subject=subject_key,
             email=claims.get("email") if isinstance(claims.get("email"), str) else None,
             display_name=(claims.get("name") or claims.get("preferred_username"))
-            if isinstance(claims.get("name") or claims.get("preferred_username"), str) else None,
+            if isinstance(claims.get("name") or claims.get("preferred_username"), str)
+            else None,
         )
         session_token = secrets.token_urlsafe(48)
         csrf_token = secrets.token_urlsafe(32)
@@ -368,7 +473,10 @@ class OidcClient:
         now = time.monotonic()
         if self._discovery and self._discovery[0] > now:
             return self._discovery[1]
-        response = await self.http.get(f"{self.issuer}/.well-known/openid-configuration", headers={"Accept": "application/json"})
+        response = await self.http.get(
+            f"{self.issuer}/.well-known/openid-configuration",
+            headers={"Accept": "application/json"},
+        )
         response.raise_for_status()
         data = response.json()
         if data.get("issuer") != self.issuer:
@@ -411,7 +519,9 @@ class OidcClient:
             raise AuthenticationError("OIDC ID token uses an unsupported signing algorithm")
         advertised_algs = metadata.get("id_token_signing_alg_values_supported")
         if isinstance(advertised_algs, list) and advertised_algs and alg not in advertised_algs:
-            raise AuthenticationError("OIDC ID token signing algorithm was not advertised by the provider")
+            raise AuthenticationError(
+                "OIDC ID token signing algorithm was not advertised by the provider"
+            )
         crit = header.get("crit")
         if crit not in (None, []):
             raise AuthenticationError("OIDC ID token contains unsupported critical headers")
@@ -429,10 +539,16 @@ class OidcClient:
             n = int.from_bytes(_b64url_decode(key["n"]), "big")
             e = int.from_bytes(_b64url_decode(key["e"]), "big")
             public_key = rsa.RSAPublicNumbers(e, n).public_key()
-            hash_alg = {"RS256": hashes.SHA256(), "RS384": hashes.SHA384(), "RS512": hashes.SHA512()}[alg]
+            hash_alg = {
+                "RS256": hashes.SHA256(),
+                "RS384": hashes.SHA384(),
+                "RS512": hashes.SHA512(),
+            }[alg]
             public_key.verify(
-                _b64url_decode(signature_b64), f"{header_b64}.{payload_b64}".encode("ascii"),
-                padding.PKCS1v15(), hash_alg,
+                _b64url_decode(signature_b64),
+                f"{header_b64}.{payload_b64}".encode("ascii"),
+                padding.PKCS1v15(),
+                hash_alg,
             )
         except Exception as exc:
             raise AuthenticationError("OIDC ID token signature validation failed") from exc
@@ -440,7 +556,13 @@ class OidcClient:
         if claims.get("iss") != self.issuer:
             raise AuthenticationError("OIDC ID token issuer mismatch")
         audience = claims.get("aud")
-        audiences = [audience] if isinstance(audience, str) else audience if isinstance(audience, list) else []
+        audiences = (
+            [audience]
+            if isinstance(audience, str)
+            else audience
+            if isinstance(audience, list)
+            else []
+        )
         if self.client_id not in audiences:
             raise AuthenticationError("OIDC ID token audience mismatch")
         authorized_party = claims.get("azp")

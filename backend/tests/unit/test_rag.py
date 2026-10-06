@@ -37,7 +37,9 @@ def test_rag_selects_relevant_exact_passage_and_preserves_offsets() -> None:
     assert result[0].source_id == docs[1].source_id
     for candidate in result:
         source = next(doc for doc in docs if doc.source_id == candidate.source_id)
-        assert source.text[candidate.char_start:candidate.char_end].strip() == candidate.text.strip()
+        assert (
+            source.text[candidate.char_start : candidate.char_end].strip() == candidate.text.strip()
+        )
 
 
 def test_rag_enforces_source_diversity() -> None:
@@ -58,6 +60,7 @@ def test_semantic_and_lexical_retrievers_fuse_by_rank_not_raw_scale():
     class FakeEmbedder:
         def embed_query(self, text):
             return [1.0, 0.0]
+
         def embed_documents(self, texts):
             # Make the second candidate semantically strongest with a very different raw scale.
             return [[0.0, 1.0], [1.0, 0.0]]
@@ -68,14 +71,32 @@ def test_semantic_and_lexical_retrievers_fuse_by_rank_not_raw_scale():
     from uuid import uuid4
 
     docs = [
-        FetchedDocument(source_id=uuid4(), title="Lexical", url="https://a.example/x", final_url="https://a.example/x",
-                        text=("alpha query term " * 40) + (" filler" * 80), content_hash="a"*64,
-                        fetched_at=datetime.now(UTC), extraction_method="test", byte_count=1000),
-        FetchedDocument(source_id=uuid4(), title="Semantic", url="https://b.example/x", final_url="https://b.example/x",
-                        text=("conceptually relevant material " * 50), content_hash="b"*64,
-                        fetched_at=datetime.now(UTC), extraction_method="test", byte_count=1000),
+        FetchedDocument(
+            source_id=uuid4(),
+            title="Lexical",
+            url="https://a.example/x",
+            final_url="https://a.example/x",
+            text=("alpha query term " * 40) + (" filler" * 80),
+            content_hash="a" * 64,
+            fetched_at=datetime.now(UTC),
+            extraction_method="test",
+            byte_count=1000,
+        ),
+        FetchedDocument(
+            source_id=uuid4(),
+            title="Semantic",
+            url="https://b.example/x",
+            final_url="https://b.example/x",
+            text=("conceptually relevant material " * 50),
+            content_hash="b" * 64,
+            fetched_at=datetime.now(UTC),
+            extraction_method="test",
+            byte_count=1000,
+        ),
     ]
-    retriever = HybridRAGRetriever(config=RAGConfig(target_chars=500, min_chunk_chars=100), embedder=FakeEmbedder())
+    retriever = HybridRAGRetriever(
+        config=RAGConfig(target_chars=500, min_chunk_chars=100), embedder=FakeEmbedder()
+    )
     results = retriever.retrieve("alpha query term", docs, limit=4)
     assert results
     assert any(item.semantic_score is not None for item in results)
@@ -86,10 +107,20 @@ def test_retrieval_trace_exposes_ablation_ranks_without_changing_retrieve_contra
     from ares.application.rag import RAGConfig
 
     docs = [
-        _doc("Alpha", "Vector databases use nearest-neighbor search for semantic retrieval. " * 8, "https://alpha.example"),
-        _doc("Beta", "PostgreSQL transactions use MVCC for concurrent workloads. " * 8, "https://beta.example"),
+        _doc(
+            "Alpha",
+            "Vector databases use nearest-neighbor search for semantic retrieval. " * 8,
+            "https://alpha.example",
+        ),
+        _doc(
+            "Beta",
+            "PostgreSQL transactions use MVCC for concurrent workloads. " * 8,
+            "https://beta.example",
+        ),
     ]
-    retriever = HybridRAGRetriever(config=RAGConfig(mode="lexical", min_chunk_chars=20, target_chars=300))
+    retriever = HybridRAGRetriever(
+        config=RAGConfig(mode="lexical", min_chunk_chars=20, target_chars=300)
+    )
     result = retriever.retrieve_with_trace("semantic nearest neighbor retrieval", docs, limit=2)
     assert result.mode == "lexical"
     assert result.semantic_used is False

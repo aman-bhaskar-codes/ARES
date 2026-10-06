@@ -6,6 +6,7 @@ the pinned FastEmbed dependency and locally provisioned model are actually avail
 indexed evaluation is reported as NOT RUN unless a dedicated test database is configured; this
 script never substitutes SQLite for the M10 indexed-performance gate.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,36 +36,54 @@ def evaluate_with_embedder(mode: str, embedder) -> dict[str, object]:
         for doc in case["documents"]:
             source_id = uuid5(NAMESPACE_URL, f"m10-retrieval:{case_index}:{doc['id']}")
             source_to_id[str(source_id)] = doc["id"]
-            docs.append(FetchedDocument(
-                source_id=source_id,
-                title=doc["title"],
-                url=f"https://fixture.example/{case_index}/{doc['id']}",
-                final_url=f"https://fixture.example/{case_index}/{doc['id']}",
-                text=doc["text"],
-                content_hash=(doc["id"].encode().hex() + "0" * 64)[:64],
-                extraction_method="fixture",
-                byte_count=len(doc["text"].encode("utf-8")),
-            ))
+            docs.append(
+                FetchedDocument(
+                    source_id=source_id,
+                    title=doc["title"],
+                    url=f"https://fixture.example/{case_index}/{doc['id']}",
+                    final_url=f"https://fixture.example/{case_index}/{doc['id']}",
+                    text=doc["text"],
+                    content_hash=(doc["id"].encode().hex() + "0" * 64)[:64],
+                    extraction_method="fixture",
+                    byte_count=len(doc["text"].encode("utf-8")),
+                )
+            )
         retriever = HybridRAGRetriever(
-            config=RAGConfig(mode=mode, target_chars=800, min_chunk_chars=80, max_chunks_per_source=1),
+            config=RAGConfig(
+                mode=mode, target_chars=800, min_chunk_chars=80, max_chunks_per_source=1
+            ),
             embedder=embedder,
         )
         result = retriever.retrieve_with_trace(case["query"], docs, limit=5)
         ranked_ids = [source_to_id[str(item.source_id)] for item in result.candidates]
         metric = retrieval_metrics(ranked_ids, set(case["relevant_ids"]), k=5)
         metrics.append(metric)
-        details.append({
-            "query": case["query"], "ranked_ids": ranked_ids, "relevant_ids": case["relevant_ids"],
-            "mode": result.mode, "semantic_used": result.semantic_used,
-        })
-    return {"status": "pass", "mode": mode, "metrics": aggregate_retrieval(metrics), "results": details}
+        details.append(
+            {
+                "query": case["query"],
+                "ranked_ids": ranked_ids,
+                "relevant_ids": case["relevant_ids"],
+                "mode": result.mode,
+                "semantic_used": result.semantic_used,
+            }
+        )
+    return {
+        "status": "pass",
+        "mode": mode,
+        "metrics": aggregate_retrieval(metrics),
+        "results": details,
+    }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default="evals/reports/m10_retrieval_ablation.json")
-    parser.add_argument("--local-model", default=os.getenv("LOCAL_EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"))
-    parser.add_argument("--local-cache", default=os.getenv("LOCAL_EMBEDDING_CACHE_DIR", ".data/models/fastembed"))
+    parser.add_argument(
+        "--local-model", default=os.getenv("LOCAL_EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
+    )
+    parser.add_argument(
+        "--local-cache", default=os.getenv("LOCAL_EMBEDDING_CACHE_DIR", ".data/models/fastembed")
+    )
     args = parser.parse_args()
 
     lexical = lexical_retrieval("lexical", "none")
@@ -72,7 +91,8 @@ def main() -> int:
         "status": "pass",
         "mode": "lexical",
         "metrics": lexical["metrics"],
-        "gate_passed": lexical["metrics"]["recall_at_k"] >= 0.80 and lexical["metrics"]["reciprocal_rank"] >= 0.75,
+        "gate_passed": lexical["metrics"]["recall_at_k"] >= 0.80
+        and lexical["metrics"]["reciprocal_rank"] >= 0.75,
     }
 
     local: dict[str, object]

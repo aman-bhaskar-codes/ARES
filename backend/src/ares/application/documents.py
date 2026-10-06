@@ -4,7 +4,7 @@ import hashlib
 from dataclasses import dataclass
 from uuid import uuid4
 
-from ares.adapters.pdf_parser import BoundedPdfParser
+from ares.adapters.pdf_parser import BoundedPdfParser, PdfParseError
 from ares.application.rag import RAGConfig, chunk_document
 from ares.domain.models import DocumentStatus, DocumentTextCreate, DocumentView, FetchedDocument
 from ares.ports.storage import BlobStore
@@ -22,7 +22,9 @@ class PreparedChunk:
     segment_index: int | None = None
 
 
-def pages_for_range(page_map: list[dict[str, int]], start: int, end: int) -> tuple[int | None, int | None]:
+def pages_for_range(
+    page_map: list[dict[str, int]], start: int, end: int
+) -> tuple[int | None, int | None]:
     pages = [
         int(item["page"])
         for item in page_map
@@ -47,7 +49,9 @@ def build_document_chunks(
         source_kind="document",
         page_map=page_map,
     )
-    candidates = chunk_document(doc, RAGConfig(target_chars=1_250, overlap_chars=160, min_chunk_chars=160))
+    candidates = chunk_document(
+        doc, RAGConfig(target_chars=1_250, overlap_chars=160, min_chunk_chars=160)
+    )
     prepared: list[PreparedChunk] = []
     for index, candidate in enumerate(candidates[:max_chunks], start=1):
         page_start, page_end = pages_for_range(page_map, candidate.char_start, candidate.char_end)
@@ -129,4 +133,10 @@ class DocumentIngestService:
             raise
 
 
-__all__ = ["BoundedPdfParser", "DocumentIngestService", "PdfParseError", "PreparedChunk", "build_document_chunks"]
+__all__ = [
+    "BoundedPdfParser",
+    "DocumentIngestService",
+    "PdfParseError",
+    "PreparedChunk",
+    "build_document_chunks",
+]

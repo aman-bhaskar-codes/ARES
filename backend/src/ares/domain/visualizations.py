@@ -126,11 +126,15 @@ def validate_visualization_dataset(
         source_ids: set[UUID] = set()
     elif kind in {VisualizationKind.BAR, VisualizationKind.LINE, VisualizationKind.SCATTER}:
         parsed = NumericChartDataset.model_validate(dataset)
-        evidence_ids = {evidence_id for point in parsed.points for evidence_id in point.evidence_ids}
+        evidence_ids = {
+            evidence_id for point in parsed.points for evidence_id in point.evidence_ids
+        }
         source_ids = set()
     elif kind is VisualizationKind.TIMELINE:
         parsed = TimelineDataset.model_validate(dataset)
-        evidence_ids = {evidence_id for event in parsed.events for evidence_id in event.evidence_ids}
+        evidence_ids = {
+            evidence_id for event in parsed.events for evidence_id in event.evidence_ids
+        }
         source_ids = {event.source_id for event in parsed.events}
     elif kind is VisualizationKind.EVIDENCE_MAP:
         parsed = EvidenceGraphDataset.model_validate(dataset)
@@ -200,7 +204,11 @@ class VisualizationDraft(BaseModel):
         item_count = 0
         if self.kind is VisualizationKind.COMPARISON_MATRIX:
             item_count = len(normalized.get("rows", []))
-        elif self.kind in {VisualizationKind.BAR, VisualizationKind.LINE, VisualizationKind.SCATTER}:
+        elif self.kind in {
+            VisualizationKind.BAR,
+            VisualizationKind.LINE,
+            VisualizationKind.SCATTER,
+        }:
             item_count = len(normalized.get("points", []))
         elif self.kind is VisualizationKind.TIMELINE:
             item_count = len(normalized.get("events", []))

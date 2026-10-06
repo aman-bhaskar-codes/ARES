@@ -12,7 +12,9 @@ from test_live_engine_contract import FakeSearch, TrackingFetcher
 
 
 class SummaryLeakLLM:
-    def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int) -> SynthesisResult:
+    def synthesize(
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int
+    ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown=(
                 "### Model draft\n\nThe first fixture supports this claim. "
@@ -20,10 +22,12 @@ class SummaryLeakLLM:
             ),
             claims=[
                 SynthesizedClaim(
-                    text="The first fixture supports this claim.", evidence_ids=[evidence[0].evidence_id]
+                    text="The first fixture supports this claim.",
+                    evidence_ids=[evidence[0].evidence_id],
                 ),
                 SynthesizedClaim(
-                    text="The fixture accuracy is 10 percent.", evidence_ids=[evidence[0].evidence_id]
+                    text="The fixture accuracy is 10 percent.",
+                    evidence_ids=[evidence[0].evidence_id],
                 ),
             ],
             gaps=[],
@@ -36,7 +40,11 @@ def test_rejected_claim_cannot_survive_visible_summary(tmp_path: Path) -> None:
     repository = Repository(sessions)
     conversation = repository.create_conversation("Answer consistency")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="What does the fixture support?", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id,
+            query="What does the fixture support?",
+            mode=RunMode.QUICK,
+        ),
         idempotency_key="m07-answer",
     )
     lease = repository.claim_next_job()

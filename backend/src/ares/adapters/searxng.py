@@ -12,7 +12,9 @@ from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
 
 class SearXNGSearchProvider(DiscoveryProvider):
-    def __init__(self, base_url: str, timeout_seconds: float = 10.0, *, client: httpx.Client | None = None):
+    def __init__(
+        self, base_url: str, timeout_seconds: float = 10.0, *, client: httpx.Client | None = None
+    ):
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout_seconds = timeout_seconds
         self._client = client or httpx.Client(timeout=timeout_seconds)
@@ -47,8 +49,6 @@ class SearXNGSearchProvider(DiscoveryProvider):
         req = SearchRequest(query=query, limit=limit, timeout_seconds=timeout_seconds)
         hits = self.search(req)
         return [(hit, None) for hit in hits]
-        self._client = client or httpx.Client(timeout=timeout_seconds)
-        self._owns_client = client is None
 
     def search(self, request: SearchRequest) -> list[SearchHit]:
         endpoint = urljoin(self.base_url, "search")
@@ -65,7 +65,9 @@ class SearXNGSearchProvider(DiscoveryProvider):
                 response = self._client.get(endpoint, params=params)
             else:
                 try:
-                    response = self._client.get(endpoint, params=params, timeout=request.timeout_seconds)
+                    response = self._client.get(
+                        endpoint, params=params, timeout=request.timeout_seconds
+                    )
                 except TypeError as exc:
                     if "timeout" not in str(exc):
                         raise

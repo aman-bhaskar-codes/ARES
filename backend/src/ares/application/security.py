@@ -5,14 +5,48 @@ import re
 from dataclasses import dataclass
 
 _INSTRUCTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("instruction_override", re.compile(r"\b(?:ignore|disregard|forget)\b.{0,48}\b(?:instruction|prompt|rule|policy)s?\b", re.I | re.S)),
-    ("role_override", re.compile(r"\b(?:you are now|act as|developer mode|system override)\b", re.I)),
-    ("prompt_exfiltration", re.compile(r"\b(?:reveal|print|show|repeat|leak|expose)\b.{0,48}\b(?:system prompt|developer message|hidden instruction|api key|secret)s?\b", re.I | re.S)),
-    ("tool_manipulation", re.compile(r"\b(?:call|invoke|run|execute|send|upload|delete|write)\b.{0,48}\b(?:tool|shell|command|request|file|database|webhook|endpoint)s?\b", re.I | re.S)),
-    ("instruction_delimiter", re.compile(r"(?:^|\n)\s*(?:system|developer|assistant|tool)\s*:\s*", re.I)),
+    (
+        "instruction_override",
+        re.compile(
+            r"\b(?:ignore|disregard|forget)\b.{0,48}\b(?:instruction|prompt|rule|policy)s?\b",
+            re.I | re.S,
+        ),
+    ),
+    (
+        "role_override",
+        re.compile(r"\b(?:you are now|act as|developer mode|system override)\b", re.I),
+    ),
+    (
+        "prompt_exfiltration",
+        re.compile(
+            r"\b(?:reveal|print|show|repeat|leak|expose)\b.{0,48}\b(?:system prompt|developer message|hidden instruction|api key|secret)s?\b",
+            re.I | re.S,
+        ),
+    ),
+    (
+        "tool_manipulation",
+        re.compile(
+            r"\b(?:call|invoke|run|execute|send|upload|delete|write)\b.{0,48}\b(?:tool|shell|command|request|file|database|webhook|endpoint)s?\b",
+            re.I | re.S,
+        ),
+    ),
+    (
+        "instruction_delimiter",
+        re.compile(r"(?:^|\n)\s*(?:system|developer|assistant|tool)\s*:\s*", re.I),
+    ),
 )
 _BASE64ISH = re.compile(r"\b[A-Za-z0-9+/]{40,}={0,2}\b")
-_INVISIBLE = {"\u200b", "\u200c", "\u200d", "\u2060", "\ufeff", "\u202a", "\u202b", "\u202d", "\u202e"}
+_INVISIBLE = {
+    "\u200b",
+    "\u200c",
+    "\u200d",
+    "\u2060",
+    "\ufeff",
+    "\u202a",
+    "\u202b",
+    "\u202d",
+    "\u202e",
+}
 
 
 @dataclass(frozen=True, slots=True)

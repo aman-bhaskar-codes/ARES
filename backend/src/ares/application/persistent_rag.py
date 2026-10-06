@@ -67,7 +67,9 @@ class PersistentDocumentRAG:
         semantic_scores: dict[UUID, float] = {}
         semantic_used = False
         degraded_reason: str | None = None
-        semantic_document_ids = [row.id for row in documents if bool(getattr(row, "semantic_ready", False))]
+        semantic_document_ids = [
+            row.id for row in documents if bool(getattr(row, "semantic_ready", False))
+        ]
         if self.embedder is not None and semantic_document_ids:
             try:
                 # Legacy Gemini query embeddings remain quota-accounted. Local ONNX/FastEmbed
@@ -93,7 +95,9 @@ class PersistentDocumentRAG:
                 semantic_scores = {chunk_id: score for chunk_id, score in semantic}
                 semantic_used = bool(semantic_scores)
             except QuotaExceededError:
-                degraded_reason = "embedding quota exhausted; indexed lexical document retrieval used"
+                degraded_reason = (
+                    "embedding quota exhausted; indexed lexical document retrieval used"
+                )
             except Exception as exc:
                 degraded_reason = (
                     f"semantic document retrieval unavailable ({type(exc).__name__}); "

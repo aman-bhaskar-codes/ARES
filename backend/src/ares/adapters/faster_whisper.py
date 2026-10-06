@@ -222,6 +222,7 @@ class FasterWhisperTranscriber:
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise TranscriptionUnavailable("ASR subprocess returned an invalid result") from exc
 
+
 class FasterWhisperSubprocessTranscriber(FasterWhisperTranscriber):
     """Configuration-shaped wrapper used by the worker runtime."""
 

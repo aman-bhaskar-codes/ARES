@@ -11,7 +11,9 @@ from typing import Iterator
 
 from ares.application.repository import JobLease, Repository
 
-_request_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("ares_request_id", default=None)
+_request_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "ares_request_id", default=None
+)
 
 
 class JsonFormatter(logging.Formatter):
@@ -46,7 +48,11 @@ def configure_logging(*, json_logs: bool = True, level: int = logging.INFO) -> N
     if getattr(root, "_ares_configured", False):
         return
     handler = logging.StreamHandler()
-    handler.setFormatter(JsonFormatter() if json_logs else logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    handler.setFormatter(
+        JsonFormatter()
+        if json_logs
+        else logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+    )
     root.handlers.clear()
     root.addHandler(handler)
     setattr(root, "_ares_configured", True)
@@ -162,14 +168,17 @@ def telemetry_export_status(endpoint: str) -> dict[str, bool]:
     try:
         ready = (
             importlib.util.find_spec("opentelemetry.sdk") is not None
-            and importlib.util.find_spec("opentelemetry.exporter.otlp.proto.http.trace_exporter") is not None
+            and importlib.util.find_spec("opentelemetry.exporter.otlp.proto.http.trace_exporter")
+            is not None
         )
     except (ImportError, ModuleNotFoundError, ValueError):
         ready = False
     return {"configured": True, "ready": ready, "degraded": not ready}
 
 
-def configure_telemetry(*, endpoint: str, service_name: str, sample_ratio: float, export_timeout_seconds: float):
+def configure_telemetry(
+    *, endpoint: str, service_name: str, sample_ratio: float, export_timeout_seconds: float
+):
     """Configure a bounded OTLP/HTTP trace exporter; returns an idempotent shutdown callable.
 
     Empty endpoint keeps tracing local/no-op. Export failure is intentionally not allowed to
@@ -207,5 +216,7 @@ def configure_telemetry(*, endpoint: str, service_name: str, sample_ratio: float
         trace.set_tracer_provider(provider)
         return provider.shutdown
     except Exception:
-        logging.getLogger("ares.telemetry").exception("OpenTelemetry exporter initialization failed; continuing without export")
+        logging.getLogger("ares.telemetry").exception(
+            "OpenTelemetry exporter initialization failed; continuing without export"
+        )
         return lambda: None

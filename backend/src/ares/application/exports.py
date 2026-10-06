@@ -82,7 +82,11 @@ class ExportService:
         if evidence:
             lines.extend(["## Evidence", ""])
             for index, item in enumerate(evidence, start=1):
-                identifier = f" · {item.source.canonical_identifier}" if item.source.canonical_identifier else ""
+                identifier = (
+                    f" · {item.source.canonical_identifier}"
+                    if item.source.canonical_identifier
+                    else ""
+                )
                 lines.append(
                     f"{index}. **{item.source.title}** ({item.source.domain}{identifier}) — "
                     f"{item.locator}. Retrieved {item.source.fetched_at.isoformat()}."

@@ -53,7 +53,8 @@ class ProviderRegistry:
 
     def get_providers_by_kind(self, source_kind: str) -> list[DiscoveryProvider]:
         return [
-            p for p in self._providers.values()
+            p
+            for p in self._providers.values()
             if p.metadata.source_kind == source_kind and p.metadata.health_state != "down"
         ]
 

@@ -8,13 +8,22 @@ from ares.domain.research import EvidencePacket
 
 def packet(text: str) -> EvidencePacket:
     return EvidencePacket(
-        evidence_id=uuid4(), source_id=uuid4(), title="source", url="https://example.com",
-        domain="example.com", text=text, locator="passage", captured_at=datetime.now(UTC), content_hash="a" * 64,
+        evidence_id=uuid4(),
+        source_id=uuid4(),
+        title="source",
+        url="https://example.com",
+        domain="example.com",
+        text=text,
+        locator="passage",
+        captured_at=datetime.now(UTC),
+        content_hash="a" * 64,
     )
 
 
 def test_document_routing_detects_explicit_user_document_intent() -> None:
-    decision = DeterministicDecisionProvider().route("Summarize the limitations in this uploaded document")
+    decision = DeterministicDecisionProvider().route(
+        "Summarize the limitations in this uploaded document"
+    )
     assert decision.task is ResearchTask.DOCUMENT
     assert decision.needs_current_web is False
 
@@ -22,7 +31,11 @@ def test_document_routing_detects_explicit_user_document_intent() -> None:
 def test_claim_fallback_can_support_high_overlap_claim() -> None:
     decision = DeterministicDecisionProvider().evaluate_claim(
         "HNSW uses more memory and has slower build times than IVFFlat.",
-        [packet("HNSW has slower build times and uses more memory than IVFFlat, while offering a better speed-recall tradeoff.")],
+        [
+            packet(
+                "HNSW has slower build times and uses more memory than IVFFlat, while offering a better speed-recall tradeoff."
+            )
+        ],
     )
     assert decision.verdict is ClaimVerdict.SUPPORTED
 
@@ -30,7 +43,11 @@ def test_claim_fallback_can_support_high_overlap_claim() -> None:
 def test_claim_fallback_rejects_unrelated_evidence() -> None:
     decision = DeterministicDecisionProvider().evaluate_claim(
         "The system reduced latency by 40 percent.",
-        [packet("The paper discusses qualitative interview coding and participant recruitment methods.")],
+        [
+            packet(
+                "The paper discusses qualitative interview coding and participant recruitment methods."
+            )
+        ],
     )
     assert decision.verdict is ClaimVerdict.INSUFFICIENT
 
@@ -69,13 +86,19 @@ def test_semantic_checker_cannot_override_exact_numeric_guard() -> None:
     class AlwaysSupports:
         def route(self, query):  # pragma: no cover - not used
             raise AssertionError
+
         def evaluate_coverage(self, query, facets, evidence):  # pragma: no cover - not used
             raise AssertionError
+
         def evaluate_claim(self, claim, evidence):
             from ares.domain.decisions import ClaimDecision
+
             return ClaimDecision(
-                verdict=ClaimVerdict.SUPPORTED, confidence=1.0, provider="unsafe-test",
-                checker_method="semantic", assessment_state="semantic_assessed",
+                verdict=ClaimVerdict.SUPPORTED,
+                confidence=1.0,
+                provider="unsafe-test",
+                checker_method="semantic",
+                assessment_state="semantic_assessed",
             )
 
     decision = ResilientDecisionProvider(AlwaysSupports()).evaluate_claim(

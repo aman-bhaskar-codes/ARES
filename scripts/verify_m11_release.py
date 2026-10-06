@@ -58,7 +58,10 @@ def _check_frontend_lock(failures: list[str]) -> None:
         failures.append("pnpm lock is missing pnpm@12.8.1 packageManagerDependencies")
     if lock.count("lockfileVersion: '9.0'") < 2:
         failures.append("pnpm 12 multi-document lock contract is incomplete")
-    for name, version in {**manifest.get("dependencies", {}), **manifest.get("devDependencies", {})}.items():
+    for name, version in {
+        **manifest.get("dependencies", {}),
+        **manifest.get("devDependencies", {}),
+    }.items():
         marker = f"      {name}:\n        specifier: {version}\n"
         quoted = f"      '{name}':\n        specifier: {version}\n"
         if marker not in lock and quoted not in lock:
@@ -93,7 +96,9 @@ def _check_actions_pinned(failures: list[str]) -> None:
                 continue
             ref = value.rsplit("@", 1)[1]
             if not FULL_SHA.fullmatch(ref):
-                failures.append(f"unpinned GitHub Action at {path.relative_to(ROOT)}:{number}: {value}")
+                failures.append(
+                    f"unpinned GitHub Action at {path.relative_to(ROOT)}:{number}: {value}"
+                )
 
 
 def _check_docs(failures: list[str]) -> None:
@@ -142,7 +147,9 @@ def _check_archive_reproducibility(failures: list[str]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify source-level M11/V2 release invariants")
-    parser.add_argument("--skip-archive", action="store_true", help="skip the two-build reproducibility check")
+    parser.add_argument(
+        "--skip-archive", action="store_true", help="skip the two-build reproducibility check"
+    )
     args = parser.parse_args()
     failures: list[str] = []
     _check_versions(failures)

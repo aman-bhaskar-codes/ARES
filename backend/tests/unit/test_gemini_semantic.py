@@ -26,8 +26,15 @@ class _Client:
 
 def packet(text: str) -> EvidencePacket:
     return EvidencePacket(
-        evidence_id=uuid4(), source_id=uuid4(), title="fixture", url="https://example.com/evidence",
-        domain="example.com", text=text, locator="passage 1", captured_at=datetime.now(UTC), content_hash="a" * 64,
+        evidence_id=uuid4(),
+        source_id=uuid4(),
+        title="fixture",
+        url="https://example.com/evidence",
+        domain="example.com",
+        text=text,
+        locator="passage 1",
+        captured_at=datetime.now(UTC),
+        content_hash="a" * 64,
     )
 
 

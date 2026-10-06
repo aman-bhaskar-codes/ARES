@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import multiprocessing as mp
-import os
 from dataclasses import dataclass
 from io import BytesIO
 from queue import Empty
@@ -83,7 +82,9 @@ def _parse_worker(
             cursor += len(page_text)
             page_map.append({"page": index, "char_start": start, "char_end": cursor})
             if cursor > max_text_chars:
-                raise PdfParseError(f"extracted PDF text exceeds the {max_text_chars:,}-character limit")
+                raise PdfParseError(
+                    f"extracted PDF text exceeds the {max_text_chars:,}-character limit"
+                )
 
         text = "".join(parts).strip()
         meaningful_pages = page_count - empty_pages
@@ -155,7 +156,9 @@ class BoundedPdfParser:
         try:
             result = result_queue.get(timeout=1)
         except Empty as exc:
-            raise PdfParseError(f"PDF parser exited without a result (exit={process.exitcode})") from exc
+            raise PdfParseError(
+                f"PDF parser exited without a result (exit={process.exitcode})"
+            ) from exc
         finally:
             result_queue.close()
         if not result.get("ok"):

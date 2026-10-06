@@ -73,7 +73,9 @@ def _normalize(values: list[float]) -> list[float]:
     return [(value - low) / (high - low) for value in values]
 
 
-def chunk_document(doc: FetchedDocument, config: RAGConfig | None = None) -> list[EvidenceCandidate]:
+def chunk_document(
+    doc: FetchedDocument, config: RAGConfig | None = None
+) -> list[EvidenceCandidate]:
     config = config or RAGConfig()
     text = doc.text.strip()
     if not text:
@@ -167,7 +169,9 @@ class HybridRAGRetriever:
     afterwards so one verbose page cannot monopolize the synthesis context.
     """
 
-    def __init__(self, *, config: RAGConfig | None = None, embedder: EmbeddingProvider | None = None):
+    def __init__(
+        self, *, config: RAGConfig | None = None, embedder: EmbeddingProvider | None = None
+    ):
         self.config = config or RAGConfig()
         self.embedder = embedder
 
@@ -179,9 +183,13 @@ class HybridRAGRetriever:
     def retrieve_with_trace(
         self, query: str, documents: list[FetchedDocument], *, limit: int
     ) -> RetrievalResult:
-        candidates = [candidate for doc in documents for candidate in chunk_document(doc, self.config)]
+        candidates = [
+            candidate for doc in documents for candidate in chunk_document(doc, self.config)
+        ]
         if not candidates:
-            return RetrievalResult(candidates=[], mode=self.config.mode, semantic_used=False, trace=[])
+            return RetrievalResult(
+                candidates=[], mode=self.config.mode, semantic_used=False, trace=[]
+            )
 
         query_terms = _tokens(query)
         query_counts = Counter(query_terms)
@@ -246,7 +254,9 @@ class HybridRAGRetriever:
             candidate.combined_score = combined[index]
 
         ranked = sorted(candidates, key=lambda item: item.combined_score, reverse=True)
-        fused_rank_by_id = {candidate.candidate_id: rank for rank, candidate in enumerate(ranked, start=1)}
+        fused_rank_by_id = {
+            candidate.candidate_id: rank for rank, candidate in enumerate(ranked, start=1)
+        }
         minimum_context = min(3, limit, len(candidates))
         selected: list[EvidenceCandidate] = []
         per_source: defaultdict[object, int] = defaultdict(int)
@@ -269,7 +279,10 @@ class HybridRAGRetriever:
                     best_index = index
             candidate = ranked.pop(best_index)
             if per_source[candidate.source_id] >= self.config.max_chunks_per_source:
-                if all(per_source[item.source_id] >= self.config.max_chunks_per_source for item in ranked):
+                if all(
+                    per_source[item.source_id] >= self.config.max_chunks_per_source
+                    for item in ranked
+                ):
                     break
                 continue
             if candidate.combined_score <= 0 and len(selected) >= minimum_context:
@@ -292,7 +305,9 @@ class HybridRAGRetriever:
         ]
         return RetrievalResult(
             candidates=selected,
-            mode=self.config.mode if semantic is not None or self.config.mode == "lexical" else "lexical_fallback",
+            mode=self.config.mode
+            if semantic is not None or self.config.mode == "lexical"
+            else "lexical_fallback",
             semantic_used=semantic is not None,
             trace=trace,
         )

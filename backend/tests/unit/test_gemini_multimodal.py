@@ -32,7 +32,9 @@ class _Client:
 
 
 def test_multimodal_adapter_preserves_only_server_supplied_region_ids() -> None:
-    client = _Client('{"observations":[{"region_id":"frame-1200","description":"A chart title is visible."}]}')
+    client = _Client(
+        '{"observations":[{"region_id":"frame-1200","description":"A chart title is visible."}]}'
+    )
     provider = GeminiMultimodalUnderstandingProvider(
         "",
         client=client,

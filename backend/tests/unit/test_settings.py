@@ -68,8 +68,8 @@ def test_request_body_limit_must_cover_upload_limit() -> None:
 def test_example_environment_allows_blank_optional_quota_values() -> None:
     from pathlib import Path
 
-    settings = Settings(_env_file=Path('.env.example'))  # type: ignore[call-arg]
-    assert settings.ares_mode == 'demo'
+    settings = Settings(_env_file=Path(".env.example"))  # type: ignore[call-arg]
+    assert settings.ares_mode == "demo"
     assert settings.gemini_rpm is None
     assert settings.gemini_tpm is None
     assert settings.gemini_rpd is None

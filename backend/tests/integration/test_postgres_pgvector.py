@@ -36,7 +36,9 @@ def test_pgvector_exact_search_uses_migrated_sidecar() -> None:
         parser_version="test",
         chunks=[
             PreparedChunk(1, memory, 0, len(memory), None, None, "passage 1"),
-            PreparedChunk(2, traffic, len(memory) + 2, len(memory) + 2 + len(traffic), None, None, "passage 2"),
+            PreparedChunk(
+                2, traffic, len(memory) + 2, len(memory) + 2 + len(traffic), None, None, "passage 2"
+            ),
         ],
     )
     chunks = repository.get_document_chunks([document.id])
@@ -62,6 +64,8 @@ def test_pgvector_exact_search_uses_migrated_sidecar() -> None:
     assert ranked[0][0] == by_text[memory]
     assert ranked[0][1] > ranked[1][1]
     with engine.connect() as connection:
-        extension = connection.scalar(text("SELECT extname FROM pg_extension WHERE extname='vector'"))
+        extension = connection.scalar(
+            text("SELECT extname FROM pg_extension WHERE extname='vector'")
+        )
         assert extension == "vector"
     engine.dispose()

@@ -121,13 +121,17 @@ class GeminiSemanticClaimChecker:
         try:
             parsed = _SemanticAssessment.model_validate_json(raw)
         except Exception as exc:
-            raise SemanticCheckerUnavailable("Gemini semantic checker returned invalid structured output") from exc
+            raise SemanticCheckerUnavailable(
+                "Gemini semantic checker returned invalid structured output"
+            ) from exc
 
         def resolve(indexes: list[int]) -> list:
             output = []
             for index in indexes:
                 if index < 0 or index >= len(evidence):
-                    raise SemanticCheckerUnavailable("Gemini semantic checker referenced unknown evidence")
+                    raise SemanticCheckerUnavailable(
+                        "Gemini semantic checker referenced unknown evidence"
+                    )
                 evidence_id = evidence[index].evidence_id
                 if evidence_id not in output:
                     output.append(evidence_id)

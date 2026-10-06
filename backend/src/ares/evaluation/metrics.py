@@ -36,9 +36,9 @@ class DetectionMetrics:
     accuracy_ci95: tuple[float, float]
 
 
-
-
-def wilson_interval(successes: int, total: int, *, z: float = 1.959963984540054) -> tuple[float, float]:
+def wilson_interval(
+    successes: int, total: int, *, z: float = 1.959963984540054
+) -> tuple[float, float]:
     """Wilson score interval for a binomial proportion.
 
     This is deterministic, dependency-free, and behaves sensibly at 0%/100%, unlike the normal
@@ -55,6 +55,7 @@ def wilson_interval(successes: int, total: int, *, z: float = 1.959963984540054)
     center = (p + z2 / (2.0 * total)) / denominator
     margin = z * math.sqrt((p * (1.0 - p) + z2 / (4.0 * total)) / total) / denominator
     return (max(0.0, center - margin), min(1.0, center + margin))
+
 
 def classification_metrics(
     expected: list[str], predicted: list[str], *, confidences: list[float] | None = None
@@ -83,7 +84,10 @@ def classification_metrics(
         # We have confidence in the selected label rather than a full probability vector. This is
         # therefore a selective-correctness Brier score, useful for regression/calibration trends
         # but not a multiclass proper-scoring-rule substitute.
-        brier = sum((float(conf) - float(truth == guess)) ** 2 for conf, truth, guess in zip(confidences, expected, predicted, strict=True)) / len(expected)
+        brier = sum(
+            (float(conf) - float(truth == guess)) ** 2
+            for conf, truth, guess in zip(confidences, expected, predicted, strict=True)
+        ) / len(expected)
 
     return ClassificationMetrics(
         total=len(expected),

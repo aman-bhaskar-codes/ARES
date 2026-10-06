@@ -13,15 +13,26 @@ def required(name: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="M11 browser/accessibility smoke over a running ARES instance")
+    parser = argparse.ArgumentParser(
+        description="M11 browser/accessibility smoke over a running ARES instance"
+    )
     parser.add_argument("--browser", choices=["chromium", "firefox", "webkit"], default="chromium")
-    parser.add_argument("--base-url", default=os.getenv("ARES_E2E_BASE_URL", "http://127.0.0.1:8000"))
-    parser.add_argument("--min-activity-events", type=int, default=200, help="minimum persisted events required by the release replay fixture")
+    parser.add_argument(
+        "--base-url", default=os.getenv("ARES_E2E_BASE_URL", "http://127.0.0.1:8000")
+    )
+    parser.add_argument(
+        "--min-activity-events",
+        type=int,
+        default=200,
+        help="minimum persisted events required by the release replay fixture",
+    )
     args = parser.parse_args()
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as exc:
-        raise SystemExit("playwright is required; run this gate in the browser-test profile") from exc
+        raise SystemExit(
+            "playwright is required; run this gate in the browser-test profile"
+        ) from exc
 
     conversation = required("ARES_E2E_CONVERSATION_ID")
     run = required("ARES_E2E_RUN_ID")
@@ -34,11 +45,15 @@ def main() -> int:
     with sync_playwright() as playwright:
         browser_type = getattr(playwright, args.browser)
         browser = browser_type.launch(headless=True)
-        context = browser.new_context(viewport={"width": 320, "height": 800}, reduced_motion="reduce")
+        context = browser.new_context(
+            viewport={"width": 320, "height": 800}, reduced_motion="reduce"
+        )
         page = context.new_page()
         response = page.goto(deep_link, wait_until="domcontentloaded", timeout=30_000)
         if response is None or response.status >= 400:
-            raise SystemExit(f"deep-link navigation failed: status={response.status if response else 'none'}")
+            raise SystemExit(
+                f"deep-link navigation failed: status={response.status if response else 'none'}"
+            )
         page.get_by_role("navigation", name="Research workspace views").wait_for(timeout=15_000)
         if page.url.split("?", 1)[0] != deep_link.split("?", 1)[0]:
             raise SystemExit("stable research deep link was not preserved")
@@ -70,17 +85,26 @@ def main() -> int:
         page.get_by_role("dialog").wait_for(timeout=10_000)
         page.keyboard.press("Escape")
         page.get_by_role("dialog").wait_for(state="detached", timeout=10_000)
-        if page.evaluate("document.activeElement && document.activeElement.getAttribute('data-evidence-id')") != evidence:
+        if (
+            page.evaluate(
+                "document.activeElement && document.activeElement.getAttribute('data-evidence-id')"
+            )
+            != evidence
+        ):
             raise SystemExit("evidence drawer did not return keyboard focus to its trigger")
 
         page.get_by_role("button", name="Compare").click()
         page.get_by_role("button", name="Activity").click()
         event_count = page.locator("[data-run-event]").count()
         if event_count < args.min_activity_events:
-            raise SystemExit(f"activity replay exposed only {event_count} events; need >= {args.min_activity_events}")
+            raise SystemExit(
+                f"activity replay exposed only {event_count} events; need >= {args.min_activity_events}"
+            )
         context.close()
         browser.close()
-    print(f"PASS browser={args.browser} viewport=320 zoom=200% reduced_motion=reduce deep_link=preserved activity_events>={args.min_activity_events}")
+    print(
+        f"PASS browser={args.browser} viewport=320 zoom=200% reduced_motion=reduce deep_link=preserved activity_events>={args.min_activity_events}"
+    )
     return 0
 
 

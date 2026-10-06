@@ -68,7 +68,9 @@ async def stream_run_events(
             last_auth = now
         try:
             items = await asyncio.to_thread(
-                lambda: scoped(lambda: repository.list_events(run_id, after=cursor, limit=page_size))
+                lambda: scoped(
+                    lambda: repository.list_events(run_id, after=cursor, limit=page_size)
+                )
             )
         except NotFoundError:
             return

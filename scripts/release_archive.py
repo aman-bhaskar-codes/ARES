@@ -11,8 +11,18 @@ from generate_sbom import render_sbom
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_PARTS = {
-    ".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".data",
-    "dist", "build", "coverage", ".coverage",
+    ".git",
+    ".venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".data",
+    "dist",
+    "build",
+    "coverage",
+    ".coverage",
 }
 EXCLUDED_NAMES = {".env", ".env.production", ".DS_Store"}
 
@@ -28,7 +38,9 @@ def include(path: Path) -> bool:
     return path.is_file()
 
 
-def _write_bytes(archive: zipfile.ZipFile, rel: PurePosixPath, payload: bytes, *, executable: bool = False) -> None:
+def _write_bytes(
+    archive: zipfile.ZipFile, rel: PurePosixPath, payload: bytes, *, executable: bool = False
+) -> None:
     info = zipfile.ZipInfo(str(rel), date_time=(2026, 10, 5, 0, 0, 0))
     perms = 0o755 if executable else 0o644
     info.external_attr = (stat.S_IFREG | perms) << 16

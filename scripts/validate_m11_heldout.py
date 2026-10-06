@@ -17,7 +17,9 @@ REQUIRED_TAGS = {
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate the independently authored M11 held-out manifest boundary")
+    parser = argparse.ArgumentParser(
+        description="Validate the independently authored M11 held-out manifest boundary"
+    )
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--minimum-cases", type=int, default=100)
     args = parser.parse_args()
@@ -25,9 +27,15 @@ def main() -> int:
     failures: list[str] = []
 
     authoring = payload.get("authoring") if isinstance(payload, dict) else None
-    if not isinstance(authoring, dict) or authoring.get("independent_from_implementation") is not True:
+    if (
+        not isinstance(authoring, dict)
+        or authoring.get("independent_from_implementation") is not True
+    ):
         failures.append("authoring.independent_from_implementation must be true")
-    if not isinstance(payload.get("license_and_rights"), str) or not payload["license_and_rights"].strip():
+    if (
+        not isinstance(payload.get("license_and_rights"), str)
+        or not payload["license_and_rights"].strip()
+    ):
         failures.append("license_and_rights must be documented")
     cases = payload.get("cases")
     if not isinstance(cases, list):
@@ -62,7 +70,11 @@ def main() -> int:
             failures.append(f"case[{index}] tags must be strings")
         else:
             tags.update(case_tags)
-        if not isinstance(facets, list) or not facets or any(not isinstance(facet, str) or not facet.strip() for facet in facets):
+        if (
+            not isinstance(facets, list)
+            or not facets
+            or any(not isinstance(facet, str) or not facet.strip() for facet in facets)
+        ):
             failures.append(f"case[{index}] required_facets must be a non-empty string list")
         if not isinstance(case.get("annotation_ref"), str) or not case["annotation_ref"].strip():
             failures.append(f"case[{index}] annotation_ref is required")

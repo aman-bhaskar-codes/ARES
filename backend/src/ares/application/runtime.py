@@ -20,7 +20,6 @@ from ares.application.rag import HybridRAGRetriever
 from ares.application.repository import Repository
 
 
-
 def build_embedding_runtime(settings: Settings):
     """Return the configured embedding provider and immutable index identity.
 
@@ -46,6 +45,7 @@ def build_embedding_runtime(settings: Settings):
         return provider, settings.gemini_embedding_model, settings.gemini_embedding_dimensions
     return None, "", settings.local_embedding_dimensions
 
+
 def build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
     """Compose external adapters once at the worker process boundary."""
     if settings.ares_mode == "demo":
@@ -68,10 +68,16 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
     )
 
     registry = ProviderRegistry()
-    registry.register(SearXNGSearchProvider(settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds))
+    registry.register(
+        SearXNGSearchProvider(
+            settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds
+        )
+    )
     registry.register(OpenAlexAcademicProvider(settings.openalex_api_key))
     registry.register(CrossrefAcademicProvider(mailto=settings.crossref_mailto))
-    registry.register(ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds))
+    registry.register(
+        ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds)
+    )
     registry.register(GitHubSoftwareProvider(settings.github_read_token))
     persistent_documents = PersistentDocumentRAG(
         repository,
@@ -85,7 +91,8 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
     semantic_checker = None
     if settings.semantic_checker_enabled:
         semantic_checker = GeminiSemanticClaimChecker(
-            settings.gemini_api_key, settings.semantic_checker_model,
+            settings.gemini_api_key,
+            settings.semantic_checker_model,
             thinking_level=settings.gemini_thinking_level,
             timeout_seconds=settings.semantic_checker_timeout_seconds,
         )
@@ -104,7 +111,9 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
 
     return ResearchEngine(
         repository,
-        SearXNGSearchProvider(settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds),
+        SearXNGSearchProvider(
+            settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds
+        ),
         source_fetcher,
         GeminiLLMProvider(
             settings.gemini_api_key,
@@ -135,7 +144,9 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         semantic_checker_model=settings.semantic_checker_model,
         semantic_checker_max_claims=settings.semantic_checker_max_claims,
         semantic_checker_timeout_seconds=settings.semantic_checker_timeout_seconds,
-        academic_full_text_fetcher=safe_source_fetcher if settings.academic_full_text_enabled else None,
+        academic_full_text_fetcher=safe_source_fetcher
+        if settings.academic_full_text_enabled
+        else None,
         academic_full_text_limit=settings.academic_full_text_limit,
         academic_full_text_timeout_seconds=settings.academic_full_text_timeout_seconds,
         academic_full_text_max_bytes=settings.academic_full_text_max_bytes,

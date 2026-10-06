@@ -50,7 +50,11 @@ async def _run_asgi(
     # the request actually crossed the middleware boundary.
     original_app = middleware.app
 
-    async def app(scope: dict[str, Any], receive: Callable[[], Awaitable[dict[str, Any]]], send: Callable[[dict[str, Any]], Awaitable[None]]) -> None:
+    async def app(
+        scope: dict[str, Any],
+        receive: Callable[[], Awaitable[dict[str, Any]]],
+        send: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> None:
         nonlocal inner_called
         inner_called = True
         while True:
@@ -69,14 +73,14 @@ async def _run_asgi(
 
 
 def _status(messages: list[dict[str, Any]]) -> int:
-    return next(message["status"] for message in messages if message["type"] == "http.response.start")
+    return next(
+        message["status"] for message in messages if message["type"] == "http.response.start"
+    )
 
 
 def _json_body(messages: list[dict[str, Any]]) -> dict[str, Any]:
     payload = b"".join(
-        message.get("body", b"")
-        for message in messages
-        if message["type"] == "http.response.body"
+        message.get("body", b"") for message in messages if message["type"] == "http.response.body"
     )
     return json.loads(payload)
 

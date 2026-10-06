@@ -28,7 +28,9 @@ class GitHubSoftwareProvider(DiscoveryProvider):
         }
         if token.strip():
             headers["Authorization"] = f"Bearer {token.strip()}"
-        self._client = client or httpx.Client(base_url="https://api.github.com", headers=headers, timeout=20.0)
+        self._client = client or httpx.Client(
+            base_url="https://api.github.com", headers=headers, timeout=20.0
+        )
         self._headers = headers
         self._owns_client = client is None
 
@@ -73,7 +75,11 @@ class GitHubSoftwareProvider(DiscoveryProvider):
         published_before: datetime | None = None,
     ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         request_timeout = {"timeout": timeout_seconds} if timeout_seconds is not None else {}
-        response = self._get("/search/repositories", params={"q": query, "per_page": min(max(limit, 1), 10)}, **request_timeout)
+        response = self._get(
+            "/search/repositories",
+            params={"q": query, "per_page": min(max(limit, 1), 10)},
+            **request_timeout,
+        )
         if response.status_code >= 400:
             raise SearchProviderError(f"GitHub search returned HTTP {response.status_code}")
         try:
@@ -94,10 +100,12 @@ class GitHubSoftwareProvider(DiscoveryProvider):
             if readme.status_code == 200:
                 try:
                     encoded = readme.json().get("content", "")
-                    readme_text = base64.b64decode(encoded).decode("utf-8", errors="replace")[:12_000]
+                    readme_text = base64.b64decode(encoded).decode("utf-8", errors="replace")[
+                        :12_000
+                    ]
                 except (ValueError, TypeError):
                     readme_text = ""
-            license_name = ((repo.get("license") or {}).get("spdx_id") or "unknown")
+            license_name = (repo.get("license") or {}).get("spdx_id") or "unknown"
             description = repo.get("description") or ""
             topics = ", ".join(repo.get("topics") or [])
             release_tag = release_data.get("tag_name") or "none published"
@@ -111,7 +119,9 @@ class GitHubSoftwareProvider(DiscoveryProvider):
             published_at = None
             if release_data.get("published_at"):
                 try:
-                    published_at = datetime.fromisoformat(str(release_data["published_at"]).replace("Z", "+00:00")).astimezone(UTC)
+                    published_at = datetime.fromisoformat(
+                        str(release_data["published_at"]).replace("Z", "+00:00")
+                    ).astimezone(UTC)
                 except ValueError:
                     published_at = None
             if published_at is not None:

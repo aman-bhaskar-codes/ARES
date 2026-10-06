@@ -29,7 +29,13 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
     carried into provenance makes that limitation inspectable downstream.
     """
 
-    def __init__(self, api_key: str = "", *, base_url: str = "https://api.openalex.org", client: httpx.Client | None = None):
+    def __init__(
+        self,
+        api_key: str = "",
+        *,
+        base_url: str = "https://api.openalex.org",
+        client: httpx.Client | None = None,
+    ):
         self.api_key = api_key.strip()
         self._client = client or httpx.Client(base_url=base_url.rstrip("/"), timeout=20.0)
         self._owns_client = client is None
@@ -74,7 +80,11 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
         if self.api_key:
             params["api_key"] = self.api_key
         try:
-            response = self._client.get("/works", params=params, timeout=timeout_seconds) if timeout_seconds is not None else self._client.get("/works", params=params)
+            response = (
+                self._client.get("/works", params=params, timeout=timeout_seconds)
+                if timeout_seconds is not None
+                else self._client.get("/works", params=params)
+            )
         except httpx.HTTPError as exc:
             raise SearchProviderError(f"OpenAlex request failed: {type(exc).__name__}") from exc
         if response.status_code == 429:
@@ -115,7 +125,11 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
                     pass
             text = f"{title}\n\nAbstract\n{abstract}"
             source_id = uuid4()
-            canonical_identifier = f"doi:{doi.removeprefix('https://doi.org/').lower()}" if doi else f"openalex:{openalex_id.rsplit('/', 1)[-1]}"
+            canonical_identifier = (
+                f"doi:{doi.removeprefix('https://doi.org/').lower()}"
+                if doi
+                else f"openalex:{openalex_id.rsplit('/', 1)[-1]}"
+            )
             hit = SearchHit(
                 title=title,
                 url=url,
@@ -126,8 +140,12 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
                 source_kind="academic",
                 canonical_identifier=canonical_identifier,
                 published_at=published_at,
-                full_text_url=full_text_url if isinstance(full_text_url, str) and full_text_url.startswith("http") else None,
-                full_text_mime_type="application/pdf" if isinstance(full_text_url, str) and full_text_url.startswith("http") else None,
+                full_text_url=full_text_url
+                if isinstance(full_text_url, str) and full_text_url.startswith("http")
+                else None,
+                full_text_mime_type="application/pdf"
+                if isinstance(full_text_url, str) and full_text_url.startswith("http")
+                else None,
             )
             document = FetchedDocument(
                 source_id=source_id,

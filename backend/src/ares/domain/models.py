@@ -120,7 +120,9 @@ class FinalizedClaim(BaseModel):
     checker_version: str = "m07-v1"
     assessment_state: AssessmentState = AssessmentState.HEURISTIC_SCREENED
     assessment_rationale: str = ""
-    evidence_relations: dict[str, Literal["supports", "contradicts", "contextualizes"]] = Field(default_factory=dict)
+    evidence_relations: dict[str, Literal["supports", "contradicts", "contextualizes"]] = Field(
+        default_factory=dict
+    )
     evidence_rationales: dict[str, str] = Field(default_factory=dict)
 
 

@@ -48,9 +48,17 @@ def _db_check(settings: Settings) -> CheckResult:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
             try:
-                revision = connection.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).scalar_one()
+                revision = connection.execute(
+                    text("SELECT version_num FROM alembic_version LIMIT 1")
+                ).scalar_one()
             except Exception:
-                return CheckResult("database/schema", True, False, "connected, but alembic_version is unavailable", (time.perf_counter() - start) * 1000)
+                return CheckResult(
+                    "database/schema",
+                    True,
+                    False,
+                    "connected, but alembic_version is unavailable",
+                    (time.perf_counter() - start) * 1000,
+                )
         expected = settings.required_schema_revision
         latency = (time.perf_counter() - start) * 1000
         return CheckResult(
@@ -61,7 +69,13 @@ def _db_check(settings: Settings) -> CheckResult:
             latency,
         )
     except Exception as exc:
-        return CheckResult("database/schema", True, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            "database/schema",
+            True,
+            False,
+            f"{type(exc).__name__}: {exc}",
+            (time.perf_counter() - start) * 1000,
+        )
     finally:
         if engine is not None:
             engine.dispose()
@@ -71,10 +85,24 @@ def _searxng_check(settings: Settings, timeout: float) -> CheckResult:
     provider = SearXNGSearchProvider(settings.searxng_url, timeout_seconds=timeout)
     start = time.perf_counter()
     try:
-        provider.search(SearchRequest(query="ARES connectivity check", limit=1, timeout_seconds=timeout))
-        return CheckResult("SearXNG", settings.ares_mode == "local_live", True, "search API responded with valid JSON", (time.perf_counter() - start) * 1000)
+        provider.search(
+            SearchRequest(query="ARES connectivity check", limit=1, timeout_seconds=timeout)
+        )
+        return CheckResult(
+            "SearXNG",
+            settings.ares_mode == "local_live",
+            True,
+            "search API responded with valid JSON",
+            (time.perf_counter() - start) * 1000,
+        )
     except Exception as exc:
-        return CheckResult("SearXNG", settings.ares_mode == "local_live", False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            "SearXNG",
+            settings.ares_mode == "local_live",
+            False,
+            f"{type(exc).__name__}: {exc}",
+            (time.perf_counter() - start) * 1000,
+        )
     finally:
         provider.close()
 
@@ -95,11 +123,23 @@ def _gemini_check(settings: Settings, timeout: float) -> CheckResult:
         try:
             model = client.models.get(model=settings.gemini_model)
             resolved = getattr(model, "name", None) or settings.gemini_model
-            return CheckResult("Gemini", required, True, f"credentials/model metadata accepted ({resolved})", (time.perf_counter() - start) * 1000)
+            return CheckResult(
+                "Gemini",
+                required,
+                True,
+                f"credentials/model metadata accepted ({resolved})",
+                (time.perf_counter() - start) * 1000,
+            )
         finally:
             client.close()
     except Exception as exc:
-        return CheckResult("Gemini", required, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            "Gemini",
+            required,
+            False,
+            f"{type(exc).__name__}: {exc}",
+            (time.perf_counter() - start) * 1000,
+        )
 
 
 def _oidc_check(settings: Settings, timeout: float) -> CheckResult:
@@ -117,24 +157,55 @@ def _oidc_check(settings: Settings, timeout: float) -> CheckResult:
         authorization_endpoint = payload.get("authorization_endpoint")
         token_endpoint = payload.get("token_endpoint")
         jwks_uri = payload.get("jwks_uri")
-        ok = all(isinstance(value, str) and value.startswith("https://") for value in [issuer, authorization_endpoint, token_endpoint, jwks_uri])
+        ok = all(
+            isinstance(value, str) and value.startswith("https://")
+            for value in [issuer, authorization_endpoint, token_endpoint, jwks_uri]
+        )
         latency = (time.perf_counter() - start) * 1000
         if not ok:
-            return CheckResult("OIDC discovery", required, False, "discovery document is missing required HTTPS endpoints", latency)
+            return CheckResult(
+                "OIDC discovery",
+                required,
+                False,
+                "discovery document is missing required HTTPS endpoints",
+                latency,
+            )
         if issuer.rstrip("/") != settings.oidc_issuer.rstrip("/"):
-            return CheckResult("OIDC discovery", required, False, "discovery issuer does not match OIDC_ISSUER", latency)
-        return CheckResult("OIDC discovery", required, True, "issuer, authorization, token and JWKS endpoints validated", latency)
+            return CheckResult(
+                "OIDC discovery",
+                required,
+                False,
+                "discovery issuer does not match OIDC_ISSUER",
+                latency,
+            )
+        return CheckResult(
+            "OIDC discovery",
+            required,
+            True,
+            "issuer, authorization, token and JWKS endpoints validated",
+            latency,
+        )
     except Exception as exc:
-        return CheckResult("OIDC discovery", required, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            "OIDC discovery",
+            required,
+            False,
+            f"{type(exc).__name__}: {exc}",
+            (time.perf_counter() - start) * 1000,
+        )
 
 
 def _academic_check(name: str, provider, timeout: float) -> CheckResult:
     start = time.perf_counter()
     try:
         provider.search_documents("evidence based research", limit=1, timeout_seconds=timeout)
-        return CheckResult(name, False, True, "read-only API responded", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            name, False, True, "read-only API responded", (time.perf_counter() - start) * 1000
+        )
     except Exception as exc:
-        return CheckResult(name, False, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            name, False, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000
+        )
     finally:
         provider.close()
 
@@ -149,14 +220,28 @@ def _github_check(settings: Settings, timeout: float) -> CheckResult:
         headers["Authorization"] = f"Bearer {settings.github_read_token.strip()}"
     start = time.perf_counter()
     try:
-        with httpx.Client(base_url="https://api.github.com", timeout=timeout, headers=headers) as client:
+        with httpx.Client(
+            base_url="https://api.github.com", timeout=timeout, headers=headers
+        ) as client:
             response = client.get("/rate_limit")
             response.raise_for_status()
             payload = response.json()
         remaining = ((payload.get("resources") or {}).get("core") or {}).get("remaining")
-        return CheckResult("GitHub REST", False, True, f"authenticated/public API accepted request; remaining={remaining}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            "GitHub REST",
+            False,
+            True,
+            f"authenticated/public API accepted request; remaining={remaining}",
+            (time.perf_counter() - start) * 1000,
+        )
     except Exception as exc:
-        return CheckResult("GitHub REST", False, False, f"{type(exc).__name__}: {exc}", (time.perf_counter() - start) * 1000)
+        return CheckResult(
+            "GitHub REST",
+            False,
+            False,
+            f"{type(exc).__name__}: {exc}",
+            (time.perf_counter() - start) * 1000,
+        )
 
 
 def _jev_check(settings: Settings, timeout: float) -> CheckResult:
@@ -166,30 +251,65 @@ def _jev_check(settings: Settings, timeout: float) -> CheckResult:
         return CheckResult("Jev", False, False, "enabled but API key is missing")
     # Jev is intentionally not called by the connectivity doctor because its endpoint is metered.
     # Configuration validation is enough here; semantic calls stay inside explicitly budgeted runs.
-    return CheckResult("Jev", False, True, f"configured endpoint={settings.jev_base_url}; no metered call performed")
+    return CheckResult(
+        "Jev",
+        False,
+        True,
+        f"configured endpoint={settings.jev_base_url}; no metered call performed",
+    )
 
 
 def _static_checks(settings: Settings) -> list[CheckResult]:
     results: list[CheckResult] = []
-    results.append(CheckResult("settings", True, True, f"mode={settings.ares_mode}; auth={settings.auth_mode}; schema={settings.required_schema_revision}"))
+    results.append(
+        CheckResult(
+            "settings",
+            True,
+            True,
+            f"mode={settings.ares_mode}; auth={settings.auth_mode}; schema={settings.required_schema_revision}",
+        )
+    )
     google_genai_available = importlib.util.find_spec("google.genai") is not None
     if settings.ares_mode == "local_live":
-        results.append(CheckResult("google-genai package", True, google_genai_available, "available" if google_genai_available else "not importable"))
+        results.append(
+            CheckResult(
+                "google-genai package",
+                True,
+                google_genai_available,
+                "available" if google_genai_available else "not importable",
+            )
+        )
     telemetry = telemetry_export_status(settings.otel_exporter_otlp_endpoint)
     if telemetry["configured"]:
-        results.append(CheckResult(
-            "optional OTLP exporter", False, telemetry["ready"],
-            "available" if telemetry["ready"] else "endpoint configured but optional exporter packages are not installed",
-        ))
+        results.append(
+            CheckResult(
+                "optional OTLP exporter",
+                False,
+                telemetry["ready"],
+                "available"
+                if telemetry["ready"]
+                else "endpoint configured but optional exporter packages are not installed",
+            )
+        )
     return results
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate ARES service/API connectivity without printing secrets.")
+    parser = argparse.ArgumentParser(
+        description="Validate ARES service/API connectivity without printing secrets."
+    )
     parser.add_argument("--env-file", default=".env", help="settings file to validate")
-    parser.add_argument("--network", action="store_true", help="perform bounded read-only network/provider checks")
-    parser.add_argument("--require-optional", action="store_true", help="treat optional provider failures as release failures")
-    parser.add_argument("--timeout", type=float, default=8.0, help="maximum timeout per connectivity request")
+    parser.add_argument(
+        "--network", action="store_true", help="perform bounded read-only network/provider checks"
+    )
+    parser.add_argument(
+        "--require-optional",
+        action="store_true",
+        help="treat optional provider failures as release failures",
+    )
+    parser.add_argument(
+        "--timeout", type=float, default=8.0, help="maximum timeout per connectivity request"
+    )
     args = parser.parse_args()
 
     env_path = Path(args.env_file)
@@ -206,19 +326,32 @@ def main() -> int:
     results = _static_checks(settings)
     if args.network:
         timeout = max(1.0, min(float(args.timeout), settings.provider_http_timeout_seconds, 30.0))
-        results.extend([
-            _db_check(settings),
-            _searxng_check(settings, timeout),
-            _gemini_check(settings, min(timeout, settings.gemini_timeout_seconds)),
-            _oidc_check(settings, timeout),
-            _academic_check("OpenAlex", OpenAlexAcademicProvider(settings.openalex_api_key), timeout),
-            _academic_check("Crossref", CrossrefAcademicProvider(mailto=settings.crossref_mailto), timeout),
-            _academic_check("arXiv", ArxivAcademicProvider(min_interval_seconds=0), timeout),
-            _github_check(settings, timeout),
-            _jev_check(settings, timeout),
-        ])
+        results.extend(
+            [
+                _db_check(settings),
+                _searxng_check(settings, timeout),
+                _gemini_check(settings, min(timeout, settings.gemini_timeout_seconds)),
+                _oidc_check(settings, timeout),
+                _academic_check(
+                    "OpenAlex", OpenAlexAcademicProvider(settings.openalex_api_key), timeout
+                ),
+                _academic_check(
+                    "Crossref", CrossrefAcademicProvider(mailto=settings.crossref_mailto), timeout
+                ),
+                _academic_check("arXiv", ArxivAcademicProvider(min_interval_seconds=0), timeout),
+                _github_check(settings, timeout),
+                _jev_check(settings, timeout),
+            ]
+        )
     else:
-        results.append(CheckResult("network checks", False, True, "not requested; pass --network in a service-enabled environment"))
+        results.append(
+            CheckResult(
+                "network checks",
+                False,
+                True,
+                "not requested; pass --network in a service-enabled environment",
+            )
+        )
 
     for result in results:
         _print(result)

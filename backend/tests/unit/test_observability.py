@@ -21,7 +21,9 @@ class _Tracer:
         return _BrokenExitSpan()
 
 
-def test_optional_span_never_turns_exporter_failure_into_application_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_optional_span_never_turns_exporter_failure_into_application_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_trace = SimpleNamespace(get_tracer=lambda name: _Tracer())
     fake_package = SimpleNamespace(trace=fake_trace)
     monkeypatch.setitem(sys.modules, "opentelemetry", fake_package)
@@ -41,13 +43,19 @@ def test_optional_span_preserves_application_exception(monkeypatch: pytest.Monke
             raise ValueError("application failure")
 
 
-def test_telemetry_export_status_distinguishes_configured_from_ready(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_telemetry_export_status_distinguishes_configured_from_ready(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from ares.application import observability
 
     assert observability.telemetry_export_status("") == {
-        "configured": False, "ready": False, "degraded": False,
+        "configured": False,
+        "ready": False,
+        "degraded": False,
     }
     monkeypatch.setattr(observability.importlib.util, "find_spec", lambda name: None)
     assert observability.telemetry_export_status("https://otel.example") == {
-        "configured": True, "ready": False, "degraded": True,
+        "configured": True,
+        "ready": False,
+        "degraded": True,
     }

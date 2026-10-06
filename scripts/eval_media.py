@@ -17,7 +17,11 @@ from ares.application.media_ingestion import FFmpegMediaProcessor
 
 def normalize_words(text: str) -> list[str]:
     normalized = unicodedata.normalize("NFKC", text).casefold()
-    return [token for token in re.findall(r"[^\W_]+(?:['’][^\W_]+)?", normalized, flags=re.UNICODE) if token]
+    return [
+        token
+        for token in re.findall(r"[^\W_]+(?:['’][^\W_]+)?", normalized, flags=re.UNICODE)
+        if token
+    ]
 
 
 def edit_distance(left: list[str], right: list[str]) -> int:
@@ -79,7 +83,9 @@ class CaseResult:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate ARES M09 local audio/video evidence processing.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate ARES M09 local audio/video evidence processing."
+    )
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--report", default="evals/reports/media_latest.json")
     parser.add_argument("--model-path", required=True)

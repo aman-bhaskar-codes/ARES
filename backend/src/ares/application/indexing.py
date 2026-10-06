@@ -53,7 +53,10 @@ class DocumentEmbeddingIndexer:
             return IndexingResult(document_id=document_id, embedded_chunks=0, semantic_ready=False)
 
         pending = self.repository.get_missing_embedding_chunks(
-            [document_id], model_id=self.model_id, dimensions=self.dimensions, limit=self.max_chunks + 1
+            [document_id],
+            model_id=self.model_id,
+            dimensions=self.dimensions,
+            limit=self.max_chunks + 1,
         )
         if len(pending) > self.max_chunks:
             raise RuntimeError("document exceeds configured background embedding chunk budget")
@@ -88,4 +91,6 @@ class DocumentEmbeddingIndexer:
         )
         ready = not remaining
         self.repository.mark_document_semantic_ready(lease, document_id, ready=ready)
-        return IndexingResult(document_id=document_id, embedded_chunks=embedded, semantic_ready=ready)
+        return IndexingResult(
+            document_id=document_id, embedded_chunks=embedded, semantic_ready=ready
+        )

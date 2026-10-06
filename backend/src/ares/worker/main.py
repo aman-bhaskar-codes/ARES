@@ -4,7 +4,6 @@ import importlib.util
 import logging
 import os
 import signal
-import shutil
 import socket
 import threading
 import time
@@ -70,13 +69,17 @@ class LeaseKeepAlive:
 
 
 class IngestionLeaseKeepAlive:
-    def __init__(self, repository: Repository, lease: IngestionLease, interval_seconds: float = 10.0):
+    def __init__(
+        self, repository: Repository, lease: IngestionLease, interval_seconds: float = 10.0
+    ):
         self.repository = repository
         self.lease = lease
         self.interval_seconds = interval_seconds
         self._stop = threading.Event()
         self._lost = threading.Event()
-        self._thread = threading.Thread(target=self._run, daemon=True, name=f"ingestion-lease-{lease.ingestion_id}")
+        self._thread = threading.Thread(
+            target=self._run, daemon=True, name=f"ingestion-lease-{lease.ingestion_id}"
+        )
 
     @property
     def lease_lost(self) -> bool:
@@ -98,11 +101,17 @@ class IngestionLeaseKeepAlive:
                 self.lease = self.repository.heartbeat_ingestion(self.lease)
                 delay = self.interval_seconds
             except StaleLeaseError:
-                logger.warning("ingestion lease lost ingestion_id=%s; publication is fenced", self.lease.ingestion_id)
+                logger.warning(
+                    "ingestion lease lost ingestion_id=%s; publication is fenced",
+                    self.lease.ingestion_id,
+                )
                 self._lost.set()
                 self._stop.set()
             except Exception:
-                logger.exception("ingestion lease heartbeat transient failure ingestion_id=%s", self.lease.ingestion_id)
+                logger.exception(
+                    "ingestion lease heartbeat transient failure ingestion_id=%s",
+                    self.lease.ingestion_id,
+                )
                 delay = retry_delay
 
 
@@ -199,7 +208,10 @@ def _media_capabilities(settings) -> dict[str, object]:
         "ingestion": media_profile,
         "rich_parser": bool(media_profile and settings.rich_parser_enabled and docling_ready),
         "ocr": bool(
-            media_profile and settings.rich_parser_enabled and settings.ocr_enabled and docling_ready
+            media_profile
+            and settings.rich_parser_enabled
+            and settings.ocr_enabled
+            and docling_ready
         ),
         "local_embeddings": bool(
             media_profile and settings.local_embeddings_enabled and fastembed_ready
@@ -218,8 +230,10 @@ def main() -> None:
     settings = get_settings()
     configure_logging(json_logs=settings.json_logs)
     telemetry_shutdown = configure_telemetry(
-        endpoint=settings.otel_exporter_otlp_endpoint, service_name=f"{settings.otel_service_name}-worker",
-        sample_ratio=settings.otel_trace_sample_ratio, export_timeout_seconds=settings.otel_export_timeout_seconds,
+        endpoint=settings.otel_exporter_otlp_endpoint,
+        service_name=f"{settings.otel_service_name}-worker",
+        sample_ratio=settings.otel_trace_sample_ratio,
+        export_timeout_seconds=settings.otel_export_timeout_seconds,
     )
     settings.validate_security_mode()
     worker_database_url = settings.worker_database_url or settings.database_url
@@ -250,9 +264,13 @@ def main() -> None:
             embedder,
             model_id=embedding_model_id,
             dimensions=embedding_dimensions,
-            batch_size=settings.local_embedding_batch_size if settings.local_embeddings_enabled else 16,
+            batch_size=settings.local_embedding_batch_size
+            if settings.local_embeddings_enabled
+            else 16,
             max_chunks=settings.max_background_embed_chunks,
-            remote_provider="gemini-embeddings" if settings.gemini_embeddings_enabled and not settings.local_embeddings_enabled else None,
+            remote_provider="gemini-embeddings"
+            if settings.gemini_embeddings_enabled and not settings.local_embeddings_enabled
+            else None,
             rpm=settings.gemini_embedding_rpm or 1,
             tpm=settings.gemini_embedding_tpm or 1,
             rpd=settings.gemini_embedding_rpd or 1,
@@ -312,7 +330,10 @@ def main() -> None:
             repository,
             FilesystemBlobStore(settings.blob_root),
             BuiltinRichExtractor(
-                pdf_parser, max_csv_rows=settings.max_csv_rows, max_table_cells=settings.max_table_cells, max_cell_chars=settings.max_cell_chars
+                pdf_parser,
+                max_csv_rows=settings.max_csv_rows,
+                max_table_cells=settings.max_table_cells,
+                max_cell_chars=settings.max_cell_chars,
             ),
             indexer,
             rich_parser=rich_parser,
@@ -376,10 +397,16 @@ def main() -> None:
                 last_cache_maintenance = now_monotonic
             # Combined workers always prefer interactive research. Dedicated media workers
             # prevent OCR/embedding CPU work from starving research admission.
-            lease = repository.claim_next_job(max_attempts=settings.max_job_attempts) if research is not None else None
+            lease = (
+                repository.claim_next_job(max_attempts=settings.max_job_attempts)
+                if research is not None
+                else None
+            )
             if lease is not None:
                 try:
-                    with LeaseKeepAlive(repository, lease, interval_seconds=settings.worker_heartbeat_seconds) as keepalive:
+                    with LeaseKeepAlive(
+                        repository, lease, interval_seconds=settings.worker_heartbeat_seconds
+                    ) as keepalive:
                         research.execute(lease)
                     if keepalive.lease_lost:
                         raise StaleLeaseError(f"lease lost while processing run {lease.run_id}")
@@ -396,7 +423,9 @@ def main() -> None:
                             # Visual artifacts are optional release UX. A completed research run
                             # remains valid if visualization derivation fails; surface the degraded
                             # state without rewriting the research result as failed.
-                            logger.exception("visualization generation failed run_id=%s", lease.run_id)
+                            logger.exception(
+                                "visualization generation failed run_id=%s", lease.run_id
+                            )
                             repository.record_event(
                                 lease.run_id,
                                 "visualization.failed",
@@ -431,11 +460,15 @@ def main() -> None:
                         f"lease lost while processing ingestion {ingestion_lease.ingestion_id}"
                     )
             except StaleLeaseError:
-                logger.warning("stale ingestion result fenced ingestion_id=%s", ingestion_lease.ingestion_id)
+                logger.warning(
+                    "stale ingestion result fenced ingestion_id=%s", ingestion_lease.ingestion_id
+                )
             except Exception:
                 # AssetIngestionExecutor records a durable failed state when it still owns
                 # the lease. A second failure here should not attempt another publication.
-                logger.exception("ingestion worker failure ingestion_id=%s", ingestion_lease.ingestion_id)
+                logger.exception(
+                    "ingestion worker failure ingestion_id=%s", ingestion_lease.ingestion_id
+                )
                 stopping.wait(1)
         logger.info("worker admission stopped; shutdown complete")
     finally:

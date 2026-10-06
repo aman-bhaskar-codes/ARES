@@ -133,7 +133,9 @@ class DoclingSubprocessParser:
             except subprocess.TimeoutExpired as exc:
                 raise DoclingParseError("Docling extraction exceeded its wall-clock limit") from exc
             if completed.returncode != 0:
-                detail = (completed.stderr or completed.stdout or "parser exited unsuccessfully").strip()
+                detail = (
+                    completed.stderr or completed.stdout or "parser exited unsuccessfully"
+                ).strip()
                 raise DoclingParseError(f"Docling extraction failed: {detail[-1200:]}")
             try:
                 size = output_path.stat().st_size
@@ -145,7 +147,9 @@ class DoclingSubprocessParser:
                 payload = json.loads(output_path.read_text(encoding="utf-8"))
                 return RichExtractionResult.model_validate(payload)
             except Exception as exc:
-                raise DoclingParseError("Docling parser returned invalid structured output") from exc
+                raise DoclingParseError(
+                    "Docling parser returned invalid structured output"
+                ) from exc
 
 
 IsolatedDoclingParser = DoclingSubprocessParser

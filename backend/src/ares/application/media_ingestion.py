@@ -153,9 +153,7 @@ class FFmpegMediaProcessor:
             probe = self._probe(source, cancelled=cancelled)
             if mime_type in AUDIO_MIME_TYPES:
                 return self._extract_audio(source, probe, origin=origin, cancelled=cancelled)
-            return self._extract_video(
-                source, probe, root=root, origin=origin, cancelled=cancelled
-            )
+            return self._extract_video(source, probe, root=root, origin=origin, cancelled=cancelled)
 
     @staticmethod
     def _kill(process: subprocess.Popen[str]) -> None:
@@ -283,11 +281,19 @@ class FFmpegMediaProcessor:
                 widths.append(width)
                 heights.append(height)
             try:
-                sample_rate = int(stream["sample_rate"]) if stream.get("sample_rate") not in {None, "", "N/A"} else None
+                sample_rate = (
+                    int(stream["sample_rate"])
+                    if stream.get("sample_rate") not in {None, "", "N/A"}
+                    else None
+                )
             except (TypeError, ValueError):
                 sample_rate = None
             try:
-                channels = int(stream["channels"]) if stream.get("channels") not in {None, "", "N/A"} else None
+                channels = (
+                    int(stream["channels"])
+                    if stream.get("channels") not in {None, "", "N/A"}
+                    else None
+                )
             except (TypeError, ValueError):
                 channels = None
             tags = stream.get("tags") or {}
@@ -487,9 +493,10 @@ class FFmpegMediaProcessor:
     ) -> MediaIngestionResult:
         if not probe.has_audio:
             raise MediaProcessingError("audio upload contains no decodable audio track")
-        if probe.duration_ms is not None and probe.duration_ms > (
-            self.max_audio_duration_seconds + 1
-        ) * 1000:
+        if (
+            probe.duration_ms is not None
+            and probe.duration_ms > (self.max_audio_duration_seconds + 1) * 1000
+        ):
             raise MediaProcessingError(
                 f"audio exceeds the {self.max_audio_duration_seconds // 60}-minute duration limit"
             )
@@ -501,9 +508,7 @@ class FFmpegMediaProcessor:
             cancelled=cancelled,
         )
         waveform_peaks = self._waveform_peaks(wav)
-        transcription = self._transcribe(
-            wav, duration_ms=duration_ms, cancelled=cancelled
-        )
+        transcription = self._transcribe(wav, duration_ms=duration_ms, cancelled=cancelled)
         warnings: list[str] = []
         extraction = self._transcript_extraction(
             transcription,
@@ -561,7 +566,10 @@ class FFmpegMediaProcessor:
             log_limit=2_000_000,
             cancelled=cancelled,
         )
-        return any(float(match.group(1)) > self.max_video_duration_seconds for match in self._PTS.finditer(result.stderr))
+        return any(
+            float(match.group(1)) > self.max_video_duration_seconds
+            for match in self._PTS.finditer(result.stderr)
+        )
 
     def _sample_frames(
         self,
@@ -722,7 +730,9 @@ class FFmpegMediaProcessor:
         for frame in ordered:
             duplicate = False
             for previous in retained:
-                close_in_time = abs(previous.presentation_time_ms - frame.presentation_time_ms) <= 500
+                close_in_time = (
+                    abs(previous.presentation_time_ms - frame.presentation_time_ms) <= 500
+                )
                 visually_same = self._hamming(previous.perceptual_hash, frame.perceptual_hash) <= 3
                 if close_in_time or (frame.source_kind == "scene" and visually_same):
                     duplicate = True
@@ -744,9 +754,10 @@ class FFmpegMediaProcessor:
             raise MediaProcessingError("video upload contains no decodable video track")
         if probe.width is None or probe.height is None:
             raise MediaProcessingError("video dimensions are unavailable")
-        if probe.duration_ms is not None and probe.duration_ms > (
-            self.max_video_duration_seconds + 1
-        ) * 1000:
+        if (
+            probe.duration_ms is not None
+            and probe.duration_ms > (self.max_video_duration_seconds + 1) * 1000
+        ):
             raise MediaProcessingError(
                 f"video exceeds the {self.max_video_duration_seconds // 60}-minute duration limit"
             )
@@ -788,9 +799,7 @@ class FFmpegMediaProcessor:
             origin_group_id=origin,
             warnings=warnings,
         )
-        coverage_warning = (
-            "Visual evidence is sampled, not exhaustive. Events between sampled frames may be missed."
-        )
+        coverage_warning = "Visual evidence is sampled, not exhaustive. Events between sampled frames may be missed."
         return MediaIngestionResult(
             extraction=extraction,
             duration_ms=max(1, duration_ms),

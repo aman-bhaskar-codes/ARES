@@ -4,6 +4,7 @@
 This is a narrow deterministic pre-publication gate, not a substitute for a dedicated secret
 scanner. It intentionally avoids entropy heuristics to keep false positives low and CI stable.
 """
+
 from __future__ import annotations
 
 import re
@@ -30,7 +31,16 @@ def candidate_files() -> list[Path]:
     if result.returncode == 0:
         return [Path(item.decode()) for item in result.stdout.split(b"\0") if item]
 
-    skipped_parts = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".data", "dist", "build"}
+    skipped_parts = {
+        ".git",
+        ".venv",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+        ".data",
+        "dist",
+        "build",
+    }
     return [
         path
         for path in Path(".").rglob("*")
@@ -55,7 +65,9 @@ def main() -> int:
         for path, name in findings:
             print(f"secret-shaped material detected: {path} ({name})")
         return 2
-    print(f"secret scan passed across {len(candidates)} candidate source paths (narrow deterministic patterns)")
+    print(
+        f"secret scan passed across {len(candidates)} candidate source paths (narrow deterministic patterns)"
+    )
     return 0
 
 

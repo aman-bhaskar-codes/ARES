@@ -43,7 +43,9 @@ class CrossrefAcademicProvider(DiscoveryProvider):
     ):
         self.mailto = mailto.strip()
         headers = {"User-Agent": "ARES-research/0.4 (+local research assistant)"}
-        self._client = client or httpx.Client(base_url=base_url.rstrip("/"), headers=headers, timeout=20.0)
+        self._client = client or httpx.Client(
+            base_url=base_url.rstrip("/"), headers=headers, timeout=20.0
+        )
         self._owns_client = client is None
 
     @property
@@ -86,7 +88,11 @@ class CrossrefAcademicProvider(DiscoveryProvider):
         if self.mailto:
             params["mailto"] = self.mailto
         try:
-            response = self._client.get("/works", params=params, timeout=timeout_seconds) if timeout_seconds is not None else self._client.get("/works", params=params)
+            response = (
+                self._client.get("/works", params=params, timeout=timeout_seconds)
+                if timeout_seconds is not None
+                else self._client.get("/works", params=params)
+            )
         except httpx.HTTPError as exc:
             raise SearchProviderError(f"Crossref request failed: {type(exc).__name__}") from exc
         if response.status_code == 429:
@@ -112,7 +118,9 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             url = f"https://doi.org/{doi}"
             authors = []
             for author in (item.get("author") or [])[:20]:
-                name = " ".join(part for part in [author.get("given", ""), author.get("family", "")] if part).strip()
+                name = " ".join(
+                    part for part in [author.get("given", ""), author.get("family", "")] if part
+                ).strip()
                 if name:
                     authors.append(name)
             containers = item.get("container-title") or []

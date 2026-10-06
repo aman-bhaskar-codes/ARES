@@ -21,14 +21,22 @@ class _UnsafePrimary:
 
 
 class _StubBrowser:
-    def __init__(self): self.called = False
+    def __init__(self):
+        self.called = False
+
     def fetch(self, url: str, *, timeout_seconds=None):
         self.called = True
         text = "Rendered evidence " * 20
         return FetchedDocument(
-            title="Rendered", url=url, final_url=url, text=text,
-            content_hash=hashlib.sha256(text.encode()).hexdigest(), fetched_at=datetime.now(UTC),
-            extraction_method="browser-rendered", mime_type="text/html", byte_count=len(text),
+            title="Rendered",
+            url=url,
+            final_url=url,
+            text=text,
+            content_hash=hashlib.sha256(text.encode()).hexdigest(),
+            fetched_at=datetime.now(UTC),
+            extraction_method="browser-rendered",
+            mime_type="text/html",
+            byte_count=len(text),
         )
 
 
@@ -50,10 +58,15 @@ def test_browser_client_rejects_invalid_sidecar_contract(monkeypatch):
     monkeypatch.setattr("ares.adapters.browser_fetch.validate_public_url", lambda value: value)
 
     class _Response:
-        def raise_for_status(self): return None
-        def json(self): return {"final_url": "https://example.com"}
+        def raise_for_status(self):
+            return None
 
-    monkeypatch.setattr("ares.adapters.browser_fetch.httpx.post", lambda *args, **kwargs: _Response())
+        def json(self):
+            return {"final_url": "https://example.com"}
+
+    monkeypatch.setattr(
+        "ares.adapters.browser_fetch.httpx.post", lambda *args, **kwargs: _Response()
+    )
     with pytest.raises(BrowserFetchError):
         BrowserFetcher("http://browser:8090", service_token="x" * 32).fetch("https://example.com")
 
@@ -63,13 +76,18 @@ def test_browser_client_sends_service_bearer_token(monkeypatch):
     captured = {}
 
     class _Response:
-        def raise_for_status(self): return None
+        def raise_for_status(self):
+            return None
+
         def json(self):
             text = "rendered evidence " * 20
             return {
-                "title": "Rendered", "final_url": "https://example.com", "text": text,
+                "title": "Rendered",
+                "final_url": "https://example.com",
+                "text": text,
                 "content_hash": hashlib.sha256(text.encode()).hexdigest(),
-                "fetched_at": datetime.now(UTC).isoformat(), "byte_count": len(text.encode()),
+                "fetched_at": datetime.now(UTC).isoformat(),
+                "byte_count": len(text.encode()),
             }
 
     def fake_post(*args, **kwargs):

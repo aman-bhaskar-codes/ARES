@@ -28,7 +28,11 @@ def repository_for(tmp_path: Path) -> tuple[Repository, object]:
 def create_leased_run(repository: Repository, *, key: str = "m07-run"):
     conversation = repository.create_conversation("M07 execution")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="verify the execution contract", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id,
+            query="verify the execution contract",
+            mode=RunMode.QUICK,
+        ),
         idempotency_key=key,
     )
     lease = repository.claim_next_job(lease_seconds=30)
@@ -65,9 +69,12 @@ def test_run_admission_persists_date_window_deadline_budget_and_cursor(tmp_path:
 def test_persisted_usage_ledger_enforces_limit_atomically(tmp_path: Path) -> None:
     repository, _ = repository_for(tmp_path)
     run, lease = create_leased_run(repository, key="m07-budget")
-    assert repository.consume_run_usage(
-        run.id, delta={"llm_calls": 1}, limits={"llm_calls": 1}, lease_token=lease.token
-    )["llm_calls"] == 1
+    assert (
+        repository.consume_run_usage(
+            run.id, delta={"llm_calls": 1}, limits={"llm_calls": 1}, lease_token=lease.token
+        )["llm_calls"]
+        == 1
+    )
     with pytest.raises(RunBudgetExceededError):
         repository.consume_run_usage(
             run.id, delta={"llm_calls": 1}, limits={"llm_calls": 1}, lease_token=lease.token
@@ -75,12 +82,17 @@ def test_persisted_usage_ledger_enforces_limit_atomically(tmp_path: Path) -> Non
     assert repository.get_run(run.id).usage_ledger["llm_calls"] == 1
 
 
-def test_completed_checkpoint_restores_after_worker_reclaim_and_stale_lease_cannot_write(tmp_path: Path) -> None:
+def test_completed_checkpoint_restores_after_worker_reclaim_and_stale_lease_cannot_write(
+    tmp_path: Path,
+) -> None:
     repository, sessions = repository_for(tmp_path)
     run, first = create_leased_run(repository, key="m07-checkpoint")
-    assert repository.start_checkpoint(
-        run.id, step_key="synthesis.final", input_hash="a" * 64, lease_token=first.token
-    ) is None
+    assert (
+        repository.start_checkpoint(
+            run.id, step_key="synthesis.final", input_hash="a" * 64, lease_token=first.token
+        )
+        is None
+    )
     repository.complete_checkpoint(
         run.id,
         step_key="synthesis.final",
@@ -120,7 +132,11 @@ def test_resource_slot_capacity_is_fleet_visible_and_releasable(tmp_path: Path) 
     )
     with pytest.raises(ResourceCapacityError):
         repository.acquire_resource_lease(
-            run.id, resource_key="provider:fixture", capacity=1, ttl_seconds=20, lease_token=lease.token
+            run.id,
+            resource_key="provider:fixture",
+            capacity=1,
+            ttl_seconds=20,
+            lease_token=lease.token,
         )
     repository.release_resource_lease(held)
     replacement = repository.acquire_resource_lease(
@@ -143,7 +159,8 @@ def test_run_context_rejects_expired_persisted_deadline(tmp_path: Path) -> None:
     repository, _ = repository_for(tmp_path)
     run, lease = create_leased_run(repository, key="m07-expired-deadline")
     expired = run.model_copy(update={"deadline_at": datetime.now(UTC) - timedelta(seconds=1)})
-    context = RunContext(repository=repository, lease=lease, run=expired, budget=BUDGETS[RunMode.QUICK])
+    context = RunContext(
+        repository=repository, lease=lease, run=expired, budget=BUDGETS[RunMode.QUICK]
+    )
     with pytest.raises(RunDeadlineExceeded):
         context.check()
-

@@ -16,7 +16,7 @@ def test_production_container_is_non_root_and_compose_splits_data_from_egress() 
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     compose = (ROOT / "infra/production/compose.yaml").read_text(encoding="utf-8")
     assert "USER ares:ares" in dockerfile
-    assert "cap_drop: [\"ALL\"]" in compose
+    assert 'cap_drop: ["ALL"]' in compose
     assert "no-new-privileges:true" in compose
     assert "data:\n    internal: true" in compose
     assert "networks: [data, egress]" in compose
@@ -33,7 +33,7 @@ def test_browser_overlay_keeps_chromium_off_app_data_and_host_ports() -> None:
     assert "env_file:" not in browser_block
     assert "volumes:" not in browser_block
     assert "ports:" not in browser_block
-    assert "cap_drop: [\"ALL\"]" in browser_block
+    assert 'cap_drop: ["ALL"]' in browser_block
     assert "no-new-privileges:true" in browser_block
     assert "seccomp=../browser/seccomp_profile.json" in browser_block
     assert "browser-control" in browser_block and "browser-egress" in browser_block

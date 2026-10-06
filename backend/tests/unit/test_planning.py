@@ -21,4 +21,3 @@ def test_explicit_date_window_suppresses_relative_recency_filter() -> None:
     window = DateWindow(start=datetime(2024, 1, 1), end=datetime(2024, 12, 31), timezone="UTC")
     plan = DeterministicResearchPlanner().plan("latest Gemini model", RunMode.QUICK, window)
     assert plan.time_range is None
-

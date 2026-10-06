@@ -5,6 +5,7 @@ The sequential control (`discovery_concurrency=1`) reproduces the M07-shaped dis
 ordering on the *same current contracts and fixture providers*. It is not a claim about live
 internet/provider latency and it is not a historical M07 binary benchmark.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,7 +23,15 @@ from uuid import uuid4
 from ares.adapters.db import Base, build_session_factory
 from ares.application.engine import ResearchEngine
 from ares.application.repository import Repository
-from ares.domain.models import FetchedDocument, RunCreate, RunMode, RunStatus, SearchHit, SynthesizedClaim, SynthesisResult
+from ares.domain.models import (
+    FetchedDocument,
+    RunCreate,
+    RunMode,
+    RunStatus,
+    SearchHit,
+    SynthesizedClaim,
+    SynthesisResult,
+)
 from ares.domain.research import EvidencePacket, ResearchPlan, SearchRequest
 
 
@@ -50,49 +59,88 @@ class DelayProbe:
 
 
 class Search:
-    def __init__(self, probe: DelayProbe): self.probe = probe
+    def __init__(self, probe: DelayProbe):
+        self.probe = probe
+
     def search(self, request: SearchRequest):
         self.probe.work()
-        return [SearchHit(title="web fixture", url="https://fixture.example/web", rank=1, provider="fixture-web")]
+        return [
+            SearchHit(
+                title="web fixture",
+                url="https://fixture.example/web",
+                rank=1,
+                provider="fixture-web",
+            )
+        ]
 
 
 class Documents:
-    def __init__(self, probe: DelayProbe, kind: str): self.probe, self.kind = probe, kind
+    def __init__(self, probe: DelayProbe, kind: str):
+        self.probe, self.kind = probe, kind
+
     def search_documents(self, query: str, **kwargs):
         self.probe.work()
         url = f"https://fixture.example/{self.kind}"
         hit = SearchHit(
-            title=f"{self.kind} fixture", url=url, rank=1, provider=f"fixture-{self.kind}",
+            title=f"{self.kind} fixture",
+            url=url,
+            rank=1,
+            provider=f"fixture-{self.kind}",
             source_kind="academic" if self.kind == "academic" else "software",
-            canonical_identifier=("doi:10.5555/fixture" if self.kind == "academic" else "github:fixture/research"),
+            canonical_identifier=(
+                "doi:10.5555/fixture" if self.kind == "academic" else "github:fixture/research"
+            ),
         )
         text = (
-            f"Fixture research latency evidence from the {self.kind} source supports bounded discovery. " * 14
+            f"Fixture research latency evidence from the {self.kind} source supports bounded discovery. "
+            * 14
         )
         doc = FetchedDocument(
-            title=hit.title, url=url, final_url=url, text=text,
-            content_hash=(self.kind[0] * 64), fetched_at=datetime.now(UTC), extraction_method="fixture",
-            source_kind=hit.source_kind, canonical_identifier=hit.canonical_identifier,
+            title=hit.title,
+            url=url,
+            final_url=url,
+            text=text,
+            content_hash=(self.kind[0] * 64),
+            fetched_at=datetime.now(UTC),
+            extraction_method="fixture",
+            source_kind=hit.source_kind,
+            canonical_identifier=hit.canonical_identifier,
         )
         return [(hit, doc)]
 
 
 class Fetcher:
     def fetch(self, url: str, **kwargs):
-        text = "Fixture research latency evidence from the web source supports bounded discovery. " * 14
+        text = (
+            "Fixture research latency evidence from the web source supports bounded discovery. "
+            * 14
+        )
         return FetchedDocument(
-            source_id=uuid4(), title="web fixture", url=url, final_url=url, text=text,
-            content_hash="w" * 64, fetched_at=datetime.now(UTC), extraction_method="fixture",
+            source_id=uuid4(),
+            title="web fixture",
+            url=url,
+            final_url=url,
+            text=text,
+            content_hash="w" * 64,
+            fetched_at=datetime.now(UTC),
+            extraction_method="fixture",
         )
 
 
 class LLM:
-    def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, **kwargs):
+    def synthesize(
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, **kwargs
+    ):
         # Use a short source-grounded statement so deterministic checking stays identical in both arms.
         packet = evidence[0]
         return SynthesisResult(
             summary_markdown="fixture",
-            claims=[SynthesizedClaim(text="Fixture research latency evidence supports bounded discovery.", evidence_ids=[packet.evidence_id])],
+            claims=[
+                SynthesizedClaim(
+                    text="Fixture research latency evidence supports bounded discovery.",
+                    evidence_ids=[packet.evidence_id],
+                )
+            ],
             gaps=[],
         )
 
@@ -110,16 +158,29 @@ def summarize(values: list[float]) -> dict[str, float]:
     }
 
 
-def run_arm(root: Path, *, runs: int, concurrency: int, delay_seconds: float) -> tuple[list[float], int]:
-    db_engine, sessions = build_session_factory(f"sqlite+pysqlite:///{root / f'arm-{concurrency}.sqlite3'}")
+def run_arm(
+    root: Path, *, runs: int, concurrency: int, delay_seconds: float
+) -> tuple[list[float], int]:
+    db_engine, sessions = build_session_factory(
+        f"sqlite+pysqlite:///{root / f'arm-{concurrency}.sqlite3'}"
+    )
     Base.metadata.create_all(db_engine)
     repository = Repository(sessions)
     probe = DelayProbe(delay_seconds)
     engine = ResearchEngine(
-        repository, Search(probe), Fetcher(), LLM(),
-        gemini_model="fixture", gemini_rpm=10_000, gemini_tpm=10_000_000, gemini_rpd=10_000,
-        planner=Planner(), academic=Documents(probe, "academic"), software=Documents(probe, "software"),
-        discovery_concurrency=concurrency, research_cache_enabled=False,
+        repository,
+        Search(probe),
+        Fetcher(),
+        LLM(),
+        gemini_model="fixture",
+        gemini_rpm=10_000,
+        gemini_tpm=10_000_000,
+        gemini_rpd=10_000,
+        planner=Planner(),
+        academic=Documents(probe, "academic"),
+        software=Documents(probe, "software"),
+        discovery_concurrency=concurrency,
+        research_cache_enabled=False,
     )
     conversation = repository.create_conversation(f"M10 perf concurrency={concurrency}")
     elapsed: list[float] = []
@@ -178,10 +239,20 @@ def main() -> int:
         "runs_per_arm": args.runs,
         "provider_delay_ms": args.provider_delay_ms,
         "environment": {
-            "platform": platform.platform(), "python": platform.python_version(), "machine": platform.machine(),
+            "platform": platform.platform(),
+            "python": platform.python_version(),
+            "machine": platform.machine(),
         },
-        "sequential_control": {"discovery_concurrency": 1, "max_observed_parallel_tracks": sequential_max, **seq},
-        "m10_concurrent": {"discovery_concurrency": 3, "max_observed_parallel_tracks": concurrent_max, **conc},
+        "sequential_control": {
+            "discovery_concurrency": 1,
+            "max_observed_parallel_tracks": sequential_max,
+            **seq,
+        },
+        "m10_concurrent": {
+            "discovery_concurrency": 3,
+            "max_observed_parallel_tracks": concurrent_max,
+            **conc,
+        },
         "p95_reduction_percent": round(reduction, 2),
         "target_percent": args.target_percent,
         "gate_passed": passed,

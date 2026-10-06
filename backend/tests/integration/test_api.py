@@ -94,22 +94,30 @@ def test_api_capacity_returns_retryable_429_and_preserves_idempotent_replay(tmp_
         "source_scope": ["web"],
         "document_ids": [],
     }
-    first = client.post("/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"})
+    first = client.post(
+        "/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"}
+    )
     assert first.status_code == 202
 
-    replay = client.post("/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"})
+    replay = client.post(
+        "/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"}
+    )
     assert replay.status_code == 202
     assert replay.headers["X-Idempotent-Replay"] == "true"
 
     second_payload = {**first_payload, "query": "second active run"}
-    rejected = client.post("/api/v1/runs", json=second_payload, headers={"Idempotency-Key": "capacity-2"})
+    rejected = client.post(
+        "/api/v1/runs", json=second_payload, headers={"Idempotency-Key": "capacity-2"}
+    )
     assert rejected.status_code == 429
     assert rejected.headers["Retry-After"] == "5"
     assert rejected.json()["detail"]["code"] == "RUN_CAPACITY_REACHED"
 
 
 def test_invalid_incoming_request_id_is_replaced(tmp_path: Path) -> None:
-    settings = Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'request-id.sqlite3'}")
+    settings = Settings(
+        ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'request-id.sqlite3'}"
+    )
     client = TestClient(create_app(settings))
     response = client.get("/health/live", headers={"X-Request-ID": "bad request id"})
     assert response.status_code == 200
@@ -141,7 +149,9 @@ def test_security_headers_and_request_size_limit(tmp_path: Path) -> None:
 
 
 def test_run_create_round_trips_date_window(tmp_path: Path) -> None:
-    settings = Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'date-window-api.sqlite3'}")
+    settings = Settings(
+        ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'date-window-api.sqlite3'}"
+    )
     client = TestClient(create_app(settings))
     conversation = client.post("/api/v1/conversations", json={"title": "Date filter"}).json()
     response = client.post(
@@ -165,4 +175,3 @@ def test_run_create_round_trips_date_window(tmp_path: Path) -> None:
     assert body["date_window"]["timezone"] == "Asia/Kolkata"
     assert body["date_window"]["start"].startswith("2026-01-01")
     assert body["deadline_at"] is not None
-

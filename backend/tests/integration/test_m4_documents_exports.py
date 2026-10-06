@@ -5,11 +5,8 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.api.app import create_app
 from ares.api.settings import Settings
-from ares.application.engine import DemoResearchEngine
-from ares.application.exports import ExportService
 from ares.application.repository import Repository
 from ares.domain.models import DocumentStatus, FetchedDocument, RunCreate, RunMode
 from ares.application.documents import PreparedChunk
@@ -63,16 +60,18 @@ def test_document_identity_is_distinct_from_run_source_and_reusable(repository: 
         packets = repository.persist_document_evidence(
             run.id,
             document=fetched,
-            candidates=[EvidenceCandidate(
-                source_id=source_id,
-                title=document.name,
-                url=f"https://local.ares.invalid/documents/{document.id}",
-                text=text,
-                locator="passage 1",
-                char_start=0,
-                char_end=len(text),
-                combined_score=1.0,
-            )],
+            candidates=[
+                EvidenceCandidate(
+                    source_id=source_id,
+                    title=document.name,
+                    url=f"https://local.ares.invalid/documents/{document.id}",
+                    text=text,
+                    locator="passage 1",
+                    char_start=0,
+                    char_end=len(text),
+                    combined_score=1.0,
+                )
+            ],
             provider="documents",
         )
         assert packets[0].source_id == source_id
