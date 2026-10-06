@@ -59,3 +59,17 @@ class PersistedEvidence(BaseModel):
     source_id: UUID
     document_version_id: UUID
     evidence_id: UUID
+
+class RetrievalProfile(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    profile_key: str
+    provider: str
+    model_id: str
+    artifact_digest: str
+    tokenizer_version: str
+    dimensions: int = Field(gt=0)
+    distance_metric: str = "cosine"
+    language_coverage: str = "en"
+    chunk_policy: str
+    extraction_revision: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)

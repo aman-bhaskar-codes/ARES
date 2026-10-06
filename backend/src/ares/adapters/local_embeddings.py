@@ -36,7 +36,8 @@ class LocalFastEmbedProvider:
             raise RuntimeError(
                 "FastEmbed is not installed; install the M08 local-ML optional dependency"
             ) from exc
-        kwargs: dict[str, object] = {"model_name": self.model, "local_files_only": False}
+        # M13-01: Load local files only. Fail closed if mismatched/missing.
+        kwargs: dict[str, object] = {"model_name": self.model, "local_files_only": True}
         if self.cache_dir:
             kwargs["cache_dir"] = self.cache_dir
         if self.threads is not None:

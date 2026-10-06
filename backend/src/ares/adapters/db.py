@@ -500,6 +500,15 @@ class DocumentChunkRow(Base):
     evidence_segment_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("evidence_segments.id", ondelete="SET NULL"), index=True, nullable=True
     )
+    parent_chunk_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("document_chunks.id", ondelete="SET NULL"), index=True, nullable=True
+    )
+    previous_chunk_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("document_chunks.id", ondelete="SET NULL"), nullable=True
+    )
+    next_chunk_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("document_chunks.id", ondelete="SET NULL"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
@@ -816,6 +825,25 @@ class EmbeddingProfileRow(Base):
     pooling: Mapped[str] = mapped_column(String(40), default="model_default")
     query_prefix: Mapped[str] = mapped_column(String(80), default="")
     passage_prefix: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+
+class RetrievalProfileRow(Base):
+    __tablename__ = "retrieval_profiles"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    profile_key: Mapped[str] = mapped_column(String(160), unique=True, index=True)
+    provider: Mapped[str] = mapped_column(String(40))
+    model_id: Mapped[str] = mapped_column(String(160))
+    artifact_digest: Mapped[str] = mapped_column(String(160))
+    tokenizer_version: Mapped[str] = mapped_column(String(80))
+    dimensions: Mapped[int] = mapped_column(Integer)
+    distance_metric: Mapped[str] = mapped_column(String(40), default="cosine")
+    language_coverage: Mapped[str] = mapped_column(String(80), default="en")
+    chunk_policy: Mapped[str] = mapped_column(String(120))
+    extraction_revision: Mapped[str] = mapped_column(String(80))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
