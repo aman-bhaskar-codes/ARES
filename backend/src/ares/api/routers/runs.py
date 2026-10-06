@@ -1,22 +1,12 @@
-from typing import Annotated, Any
+# ruff: noqa: F403, F405, E501
 from uuid import UUID
-from fastapi import APIRouter, Depends, Request, Response, HTTPException, Query, UploadFile, File, Header
-from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
+from fastapi import APIRouter, Request, Response, HTTPException, Header
 from ares.api.dependencies import *
 from ares.domain.models import *
 from ares.domain.assets import *
 from ares.domain.visualizations import *
-from ares.application.auth import AuthenticationError
 from ares.application.repository import NotFoundError, IdempotencyConflictError, RunAdmissionError
-from ares.application.asset_ingestion import AssetAdmissionError
-from ares.application.exports import ExportError
 from ares.application.visualizations import VisualizationExportError
-from ares.application.identity import Principal
-import asyncio
-import tempfile
-import os
-from pathlib import Path
-import httpx
 import logging
 logger = logging.getLogger('ares.api')
 router = APIRouter()
@@ -25,15 +15,14 @@ router = APIRouter()
 def create_run(payload: RunCreate, response: Response, idempotency_key: str=Header(..., alias='Idempotency-Key'), *, request: Request) -> RunSnapshot:
     repository = request.app.state.repository
     cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
-    visualizations = getattr(request.app.state, 'visualizations', None)
-    engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'visualizations', None)
+    getattr(request.app.state, 'db_engine', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     try:
         snapshot, created = repository.create_run(payload, idempotency_key=idempotency_key, max_active_runs=cfg.max_active_runs, max_active_runs_per_workspace=cfg.max_active_runs_per_workspace, max_active_runs_per_user=cfg.max_active_runs_per_user)
     except RunAdmissionError as exc:
@@ -49,16 +38,14 @@ def create_run(payload: RunCreate, response: Response, idempotency_key: str=Head
 @router.get('/api/v1/runs/{run_id}', response_model=RunSnapshot)
 def get_run(run_id: UUID, *, request: Request) -> RunSnapshot:
     repository = request.app.state.repository
-    cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
-    visualizations = getattr(request.app.state, 'visualizations', None)
-    engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'visualizations', None)
+    getattr(request.app.state, 'db_engine', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     try:
         return repository.get_run(run_id)
     except NotFoundError as exc:
@@ -67,16 +54,14 @@ def get_run(run_id: UUID, *, request: Request) -> RunSnapshot:
 @router.get('/api/v1/runs/{run_id}/evidence', response_model=list[EvidenceView])
 def list_run_evidence(run_id: UUID, *, request: Request) -> list[EvidenceView]:
     repository = request.app.state.repository
-    cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
-    visualizations = getattr(request.app.state, 'visualizations', None)
-    engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'visualizations', None)
+    getattr(request.app.state, 'db_engine', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     try:
         return repository.list_run_evidence(run_id)
     except NotFoundError as exc:
@@ -85,16 +70,14 @@ def list_run_evidence(run_id: UUID, *, request: Request) -> list[EvidenceView]:
 @router.get('/api/v1/runs/{run_id}/quality', response_model=RunQualityView)
 def get_run_quality(run_id: UUID, *, request: Request) -> RunQualityView:
     repository = request.app.state.repository
-    cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
-    visualizations = getattr(request.app.state, 'visualizations', None)
-    engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'visualizations', None)
+    getattr(request.app.state, 'db_engine', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     try:
         return repository.get_run_quality(run_id)
     except NotFoundError as exc:
@@ -102,17 +85,15 @@ def get_run_quality(run_id: UUID, *, request: Request) -> RunQualityView:
 
 @router.get('/api/v2/runs/{run_id}/visualizations', response_model=list[VisualizationView])
 def get_run_visualizations(run_id: UUID, *, request: Request) -> list[VisualizationView]:
-    repository = request.app.state.repository
     cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
     visualizations = getattr(request.app.state, 'visualizations', None)
     engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     if not cfg.visualizations_enabled:
         return []
     if not visualization_storage_ready(cfg, engine):
@@ -124,17 +105,15 @@ def get_run_visualizations(run_id: UUID, *, request: Request) -> list[Visualizat
 
 @router.get('/api/v2/runs/{run_id}/visualizations/{visualization_id}/export.csv', response_class=Response, responses={200: {'content': {'text/csv': {'schema': {'type': 'string'}}}, 'description': 'Lineage-bearing CSV export'}})
 def export_run_visualization_csv(run_id: UUID, visualization_id: UUID, *, request: Request) -> Response:
-    repository = request.app.state.repository
     cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
     visualizations = getattr(request.app.state, 'visualizations', None)
     engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     if not cfg.visualizations_enabled:
         raise HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': 'visualization not found'})
     if not visualization_storage_ready(cfg, engine):
@@ -150,16 +129,14 @@ def export_run_visualization_csv(run_id: UUID, visualization_id: UUID, *, reques
 @router.post('/api/v1/runs/{run_id}/cancel', response_model=RunSnapshot, status_code=202)
 def cancel_run(run_id: UUID, *, request: Request) -> RunSnapshot:
     repository = request.app.state.repository
-    cfg = request.app.state.settings
-    auth_store = getattr(request.app.state, 'auth_store', None)
-    oidc = getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    asset_admission = getattr(request.app.state, 'asset_admission', None)
-    documents = getattr(request.app.state, 'documents', None)
-    exports = getattr(request.app.state, 'exports', None)
-    visualizations = getattr(request.app.state, 'visualizations', None)
-    engine = getattr(request.app.state, 'db_engine', None)
-    local_media_runtime = getattr(request.app.state, 'local_media_runtime', None)
+    getattr(request.app.state, 'auth_store', None)
+    getattr(request.app.state, 'oidc', None)
+    getattr(request.app.state, 'asset_admission', None)
+    getattr(request.app.state, 'documents', None)
+    getattr(request.app.state, 'exports', None)
+    getattr(request.app.state, 'visualizations', None)
+    getattr(request.app.state, 'db_engine', None)
+    getattr(request.app.state, 'local_media_runtime', None)
     try:
         return repository.request_cancel(run_id)
     except NotFoundError as exc:

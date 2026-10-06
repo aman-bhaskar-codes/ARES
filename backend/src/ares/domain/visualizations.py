@@ -116,37 +116,42 @@ def validate_visualization_dataset(
     kind is parsed through a bounded ARES model before persistence, and every embedded
     evidence/source reference is surfaced so the repository can enforce same-run lineage.
     """
+    parsed: BaseModel
     if kind is VisualizationKind.COMPARISON_MATRIX:
-        parsed = ComparisonMatrixDataset.model_validate(dataset)
+        parsed_matrix = ComparisonMatrixDataset.model_validate(dataset)
         evidence_ids = {
             evidence_id
-            for row in parsed.rows
+            for row in parsed_matrix.rows
             for evidence_id in row.supporting_evidence_ids + row.conflicting_evidence_ids
         }
         source_ids: set[UUID] = set()
+        parsed = parsed_matrix
     elif kind in {VisualizationKind.BAR, VisualizationKind.LINE, VisualizationKind.SCATTER}:
-        parsed = NumericChartDataset.model_validate(dataset)
+        parsed_chart = NumericChartDataset.model_validate(dataset)
         evidence_ids = {
-            evidence_id for point in parsed.points for evidence_id in point.evidence_ids
+            evidence_id for point in parsed_chart.points for evidence_id in point.evidence_ids
         }
         source_ids = set()
+        parsed = parsed_chart
     elif kind is VisualizationKind.TIMELINE:
-        parsed = TimelineDataset.model_validate(dataset)
+        parsed_timeline = TimelineDataset.model_validate(dataset)
         evidence_ids = {
-            evidence_id for event in parsed.events for evidence_id in event.evidence_ids
+            evidence_id for event in parsed_timeline.events for evidence_id in event.evidence_ids
         }
-        source_ids = {event.source_id for event in parsed.events}
+        source_ids = {event.source_id for event in parsed_timeline.events}
+        parsed = parsed_timeline
     elif kind is VisualizationKind.EVIDENCE_MAP:
-        parsed = EvidenceGraphDataset.model_validate(dataset)
+        parsed_map = EvidenceGraphDataset.model_validate(dataset)
         evidence_ids = {
             value
             for value in (
-                [node.evidence_id for node in parsed.nodes]
-                + [edge.evidence_id for edge in parsed.edges]
+                [node.evidence_id for node in parsed_map.nodes]
+                + [edge.evidence_id for edge in parsed_map.edges]
             )
             if value is not None
         }
-        source_ids = {node.source_id for node in parsed.nodes if node.source_id is not None}
+        source_ids = {node.source_id for node in parsed_map.nodes if node.source_id is not None}
+        parsed = parsed_map
     else:  # pragma: no cover - StrEnum exhaustiveness guard
         raise ValueError(f"unsupported visualization kind: {kind}")
     return parsed.model_dump(mode="json"), evidence_ids, source_ids
@@ -203,15 +208,18 @@ class VisualizationDraft(BaseModel):
         normalized, _, _ = validate_visualization_dataset(self.kind, self.dataset)
         item_count = 0
         if self.kind is VisualizationKind.COMPARISON_MATRIX:
-            item_count = len(normalized.get("rows", []))
+            rows = normalized.get("rows")
+            item_count = len(rows) if isinstance(rows, list) else 0
         elif self.kind in {
             VisualizationKind.BAR,
             VisualizationKind.LINE,
             VisualizationKind.SCATTER,
         }:
-            item_count = len(normalized.get("points", []))
+            points = normalized.get("points")
+            item_count = len(points) if isinstance(points, list) else 0
         elif self.kind is VisualizationKind.TIMELINE:
-            item_count = len(normalized.get("events", []))
+            events = normalized.get("events")
+            item_count = len(events) if isinstance(events, list) else 0
         if item_count > self.spec.max_points:
             raise ValueError("visualization dataset exceeds approved spec max_points")
         return self

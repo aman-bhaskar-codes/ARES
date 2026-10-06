@@ -18,6 +18,8 @@ from ares.application.rag import HybridRAGRetriever
 from ares.application.research_cache import RunResearchCache
 from ares.application.providers import ProviderRegistry
 from ares.application.persistent_rag import PersistentDocumentRAG
+from ares.application.research_stages.discovery import DiscoveryStage
+from ares.application.research_stages.synthesis import SynthesisStage
 from ares.application.repository import (
     JobLease,
     QuotaExceededError,
@@ -26,7 +28,7 @@ from ares.application.repository import (
     RunAuthorizationError,
     RunBudgetExceededError,
 )
-from ares.domain.budgets import BUDGETS
+from ares.domain.budgets import BUDGETS, calculate_provider_cost
 from ares.domain.models import (
     AssessmentState,
     FetchedDocument,
@@ -201,9 +203,6 @@ def _prioritize_exact_identifiers(
     )
 
 
-from ares.application.research_stages.discovery import DiscoveryStage
-from ares.application.research_stages.synthesis import SynthesisStage
-
 
 class ResearchEngine:
     def __init__(
@@ -217,6 +216,7 @@ class ResearchEngine:
         gemini_rpm: int,
         gemini_tpm: int,
         gemini_rpd: int,
+        gemini_max_daily_spend_usd: float | None = None,
         planner: DeterministicResearchPlanner | None = None,
         retriever: HybridRAGRetriever | None = None,
         global_http_concurrency: int = 4,
@@ -251,6 +251,7 @@ class ResearchEngine:
         self.gemini_rpm = gemini_rpm
         self.gemini_tpm = gemini_tpm
         self.gemini_rpd = gemini_rpd
+        self.gemini_max_daily_spend_usd = gemini_max_daily_spend_usd
         self.planner = planner or DeterministicResearchPlanner()
         self.retriever = retriever or HybridRAGRetriever()
         self.decisions = ResilientDecisionProvider(decisions)
@@ -840,6 +841,8 @@ class ResearchEngine:
                 )
             else:
                 context.consume(llm_calls=1, model_input_tokens=estimated_input_tokens)
+                estimated_output_tokens = budget.model_output_tokens
+                cost_usd = calculate_provider_cost(self.gemini_model, estimated_input_tokens, estimated_output_tokens)
                 usage_id = self.repository.reserve_provider_usage(
                     provider="gemini",
                     model=self.gemini_model,
@@ -847,6 +850,9 @@ class ResearchEngine:
                     tpm=self.gemini_tpm,
                     rpd=self.gemini_rpd,
                     input_tokens=estimated_input_tokens,
+                    output_tokens=estimated_output_tokens,
+                    cost_usd=cost_usd,
+                    max_daily_spend_usd=self.gemini_max_daily_spend_usd,
                     run_id=run_id,
                 )
                 with self._resource_slot(

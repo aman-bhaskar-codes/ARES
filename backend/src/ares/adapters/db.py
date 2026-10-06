@@ -855,8 +855,11 @@ class ProviderUsageRow(Base):
     model: Mapped[str] = mapped_column(String(128), index=True)
     requests: Mapped[int] = mapped_column(Integer, default=1)
     input_tokens_reserved: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens_reserved: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd_reserved: Mapped[float] = mapped_column(Float, default=0.0)
     input_tokens_actual: Mapped[int | None] = mapped_column(Integer, nullable=True)
     output_tokens_actual: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cost_usd_actual: Mapped[float | None] = mapped_column(Float, nullable=True)
     reconciled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True

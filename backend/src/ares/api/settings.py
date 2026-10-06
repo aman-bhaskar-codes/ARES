@@ -40,7 +40,8 @@ class Settings(BaseSettings):
     gemini_rpd: int | None = Field(default=None, ge=1)
     gemini_concurrency: int = Field(default=1, ge=1, le=8)
     gemini_timeout_seconds: float = Field(default=45.0, ge=5.0, le=120.0)
-
+    gemini_billing_mode: Literal["free", "paid"] = "free"
+    gemini_max_daily_spend_usd: float = Field(default=0.0, ge=0.0)
     searxng_url: str = "http://127.0.0.1:8080"
     max_http_concurrency: int = Field(default=4, ge=1, le=16)
     provider_http_timeout_seconds: float = Field(default=20.0, ge=2.0, le=120.0)
@@ -183,29 +184,33 @@ class Settings(BaseSettings):
         mode="before",
     )
     @classmethod
-    def blank_optional_quota_is_none(cls, value):
+    def blank_optional_quota_is_none(cls, value: str | int | None) -> str | int | None:
         if value is None or (isinstance(value, str) and not value.strip()):
             return None
         return value
 
     def validate_live_mode(self) -> None:
         self.validate_security_mode()
-        if self.ares_mode != "local_live":
-            return
-        if not self.strict_free_mode:
-            raise ValueError("ARES local_live requires STRICT_FREE_MODE=true")
+        
+        # Legacy normalization
+        if not self.strict_free_mode and self.gemini_billing_mode == "free":
+            self.gemini_billing_mode = "paid"
+            
         if self.allow_billable_providers:
             raise ValueError("ARES strict-free mode refuses ALLOW_BILLABLE_PROVIDERS=true")
+            
+        if self.ares_mode != "local_live":
+            return
+            
         if not self.gemini_api_key:
             raise ValueError("GEMINI_API_KEY is required for local_live mode")
         if None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
             raise ValueError("GEMINI_RPM, GEMINI_TPM and GEMINI_RPD must be explicit in live mode")
-        if self.jev_enabled and not self.jev_api_key:
-            raise ValueError("JEV_API_KEY is required when JEV_ENABLED=true")
-        if self.jev_enabled and self.strict_free_mode:
+            
+        if self.jev_enabled:
             raise ValueError(
-                "Jev is a metered external service; strict-free live mode requires JEV_ENABLED=false. "
-                "Use Jev only in an explicitly authorized metered evaluation profile."
+                "Jev is a metered external service; ARES V3 policy rejects JEV_ENABLED=true. "
+                "Only Gemini paid billing is permitted."
             )
         if self.gemini_embeddings_enabled and None in {
             self.gemini_embedding_rpm,

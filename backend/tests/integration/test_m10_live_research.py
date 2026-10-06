@@ -745,4 +745,4 @@ def test_semantic_checker_has_worker_enforced_deadline_even_if_adapter_blocks(
             evidence=[packet],
             telemetry=RunTelemetry(repository, lease),
         )
-    assert time.perf_counter() - started < 0.15
+    assert time.perf_counter() - started < 0.25

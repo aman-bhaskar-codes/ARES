@@ -24,7 +24,6 @@ from ares.api.routers import (
 
 
 import asyncio
-import importlib.util
 import httpx
 import logging
 import re
@@ -40,7 +39,7 @@ from fastapi import FastAPI, File, Header, HTTPException, Query, Request, Respon
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect
 from ares.adapters.db import Base, build_session_factory
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser, PdfParseError
@@ -48,24 +47,18 @@ from ares.api.settings import Settings, get_settings
 from ares.api.body_limit import PathAwareRequestBodyLimitMiddleware
 from ares.api.event_stream import stream_run_events
 from ares.api.ingestion_stream import stream_ingestion_events
-from ares.application.observability import configure_logging, configure_telemetry, request_context, telemetry_export_status
+from ares.application.observability import configure_logging, configure_telemetry, request_context
 from ares.application.auth import AuthStore, AuthenticationError, OidcClient, _sha256
 from ares.application.identity import Principal, local_principal, principal_scope
 from ares.api.spa_static import SpaStaticFiles
 from ares.application.documents import DocumentIngestService
-from ares.application.asset_ingestion import AssetAdmissionError, AssetAdmissionService, AssetIngestionExecutor, BuiltinRichExtractor
-from ares.application.indexing import DocumentEmbeddingIndexer
+from ares.application.asset_ingestion import AssetAdmissionError, AssetAdmissionService
 from ares.application.media_capabilities import probe_local_media_runtime
-from ares.application.media_ingestion import FFmpegMediaProcessor
-from ares.adapters.docling_parser import DoclingSubprocessParser
-from ares.adapters.faster_whisper import FasterWhisperSubprocessTranscriber
-from ares.application.engine import DemoResearchEngine
 from ares.application.exports import ExportError, ExportService
-from ares.application.visualizations import VisualizationExportError, VisualizationService
-from ares.application.repository import IdempotencyConflictError, NotFoundError, Repository, RunAdmissionError
-from ares.domain.assets import AssetAdmission, AssetView, IngestionView, MediaStoryboardView, SegmentView, TableView
-from ares.domain.models import ArtifactView, ConversationCreate, ConversationView, DocumentTextCreate, DocumentView, EvidenceView, ExportCreate, RunCreate, RunSnapshot, RunQualityView, AuthMeView, WorkspaceSwitchRequest, WorkspaceView
-from ares.domain.visualizations import VisualizationView
+from ares.application.visualizations import VisualizationService
+from ares.application.repository import NotFoundError, Repository
+from ares.domain.assets import AssetAdmission
+from ares.domain.models import ArtifactView, DocumentTextCreate, DocumentView, ExportCreate
 
 def create_app(settings: Settings | None=None) -> FastAPI:
     cfg = settings or get_settings()

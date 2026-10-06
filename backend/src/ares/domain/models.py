@@ -91,7 +91,7 @@ class RunCreate(BaseModel):
     query: str = Field(min_length=2, max_length=8_000)
     mode: RunMode = RunMode.QUICK
     source_scope: list[Literal["web", "academic", "software", "documents"]] = Field(
-        default_factory=lambda: ["web"], min_length=1
+        default_factory=lambda: ["web"], min_length=1  # type: ignore[arg-type]
     )
     date_window: DateWindow | None = None
     document_ids: list[UUID] = Field(default_factory=list, max_length=20)

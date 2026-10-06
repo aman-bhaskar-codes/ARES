@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 from __future__ import annotations
 
 import hashlib
@@ -8,8 +9,20 @@ from ares.domain.models import (
     RunCreate,
 )
 
-
-from ares.ports.repositories import NotFoundError, IdempotencyConflictError, StaleLeaseError, QuotaExceededError, RunAdmissionError, RunBudgetExceededError, RunAuthorizationError, ResourceCapacityError, JobLease, ResourceLease, IngestionLease, IngestionPublication
+from ares.ports.repositories import (
+    NotFoundError,
+    IdempotencyConflictError,
+    StaleLeaseError,
+    QuotaExceededError,
+    RunAdmissionError,
+    RunBudgetExceededError,
+    RunAuthorizationError,
+    ResourceCapacityError,
+    JobLease,
+    ResourceLease,
+    IngestionLease,
+    IngestionPublication,
+) # noqa: F401
 from ares.adapters.persistence.views import SqlViewRepository
 from ares.adapters.persistence.artifacts import SqlArtifactRepository
 from ares.adapters.persistence.retrieval import SqlRetrievalRepository

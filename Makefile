@@ -78,6 +78,9 @@ eval-m11-heldout:
 lint:
 	uv run --project backend ruff check backend/src backend/tests evals scripts
 
+typecheck:
+	uv run --project backend mypy backend/src/ares/domain backend/src/ares/ports
+
 security-scan:
 	uv run --project backend python scripts/check_secrets.py
 
@@ -105,7 +108,7 @@ test-e2e:
 	uv run --project backend python scripts/e2e_m11.py --browser firefox
 	uv run --project backend python scripts/e2e_m11.py --browser webkit
 
-check: doctor lock-check lint security-scan test eval-regression test-compile verify-migrations openapi verify-m11-release
+check: doctor lock-check lint typecheck security-scan test eval-regression test-compile verify-migrations openapi verify-m11-release
 
 api:
 	PYTHONPATH=backend/src uv run --project backend uvicorn ares.api.app:app --reload

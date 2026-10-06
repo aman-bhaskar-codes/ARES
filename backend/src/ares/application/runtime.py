@@ -125,6 +125,7 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         gemini_rpm=settings.gemini_rpm or 1,
         gemini_tpm=settings.gemini_tpm or 1,
         gemini_rpd=settings.gemini_rpd or 1,
+        gemini_max_daily_spend_usd=settings.gemini_max_daily_spend_usd if settings.gemini_max_daily_spend_usd > 0 else None,
         global_http_concurrency=settings.max_http_concurrency,
         gemini_concurrency=settings.gemini_concurrency,
         provider_http_timeout_seconds=settings.provider_http_timeout_seconds,

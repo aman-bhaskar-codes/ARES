@@ -1,4 +1,5 @@
 from fastapi import Request
+from sqlalchemy import inspect
 from ares.application.repository import Repository
 from ares.api.settings import Settings
 from ares.adapters.filesystem_blob import FilesystemBlobStore
@@ -41,7 +42,6 @@ def get_db_engine(request: Request):
 def get_local_media_runtime(request: Request):
     return request.app.state.local_media_runtime
 
-from sqlalchemy import inspect
 
 def visualization_storage_ready(cfg, engine) -> bool:
     if not cfg.visualizations_enabled:

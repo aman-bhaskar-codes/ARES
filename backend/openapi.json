@@ -341,7 +341,7 @@
       "Body_create_asset_api_v2_assets_post": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -355,7 +355,7 @@
       "Body_create_pdf_document_api_v1_documents_pdf_post": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }

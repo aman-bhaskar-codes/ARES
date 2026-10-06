@@ -7,6 +7,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ares.application.run_context import RunContext, RunDeadlineExceeded
 from ares.application.observability import RunTelemetry
+from ares.domain.budgets import calculate_provider_cost
 from ares.domain.models import (
     FetchedDocument,
     SearchHit,
@@ -204,6 +205,12 @@ class SynthesisStage:
             1, (len(claim) + sum(len(packet.text) for packet in evidence) + 1200) // 4
         )
         context.consume(llm_calls=1, model_input_tokens=estimated_input_tokens)
+        estimated_output_tokens = 500
+        cost_usd = calculate_provider_cost(
+            self.engine.semantic_checker_model,
+            estimated_input_tokens,
+            estimated_output_tokens
+        )
         usage_id = self.engine.repository.reserve_provider_usage(
             provider="gemini",
             model=self.engine.semantic_checker_model,
@@ -211,6 +218,9 @@ class SynthesisStage:
             tpm=self.engine.gemini_tpm,
             rpd=self.engine.gemini_rpd,
             input_tokens=estimated_input_tokens,
+            output_tokens=estimated_output_tokens,
+            cost_usd=cost_usd,
+            max_daily_spend_usd=self.engine.gemini_max_daily_spend_usd,
             run_id=context.lease.run_id,
         )
         try:

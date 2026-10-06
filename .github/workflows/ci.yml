@@ -30,17 +30,19 @@ jobs:
       DATABASE_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
       ARES_TEST_POSTGRES_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/setup-python@0b9330426db129596324ab5296831d163fbab9ee
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@0b9330426db129596324ab5296831d163fbab9ee
       - name: Verify backend lock
         run: uv lock --project backend --check
       - name: Install backend
         run: uv sync --project backend --extra dev --frozen
       - name: Lint
         run: uv run --project backend ruff check backend/src backend/tests evals scripts
+      - name: Typecheck
+        run: uv run --project backend mypy backend/src/ares/domain backend/src/ares/ports
       - name: Secret-shaped material gate
         run: python scripts/check_secrets.py
       - name: Validate keyless integration configuration
@@ -64,8 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/setup-node@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           node-version: '22.16.0'
       - name: Require committed frontend lock
@@ -86,7 +88,7 @@ jobs:
     timeout-minutes: 25
     needs: [backend, frontend-lock-gate]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: Build production images
         run: |
           docker build --target runtime --tag ares:ci .

@@ -75,7 +75,7 @@ from ares.application.identity import (
 from ares.domain.state_machine import assert_transition
 
 
-from ares.ports.repositories import NotFoundError, IdempotencyConflictError, StaleLeaseError, QuotaExceededError, RunAdmissionError, RunBudgetExceededError, RunAuthorizationError, ResourceCapacityError, JobLease, ResourceLease, IngestionLease, IngestionPublication
+from ares.ports.repositories import NotFoundError, StaleLeaseError, QuotaExceededError, RunAuthorizationError, JobLease, IngestionLease
 
 
 def _hash_request(payload: RunCreate) -> str:
@@ -587,6 +587,9 @@ class SqlRepositoryBase:
         tpm: int,
         rpd: int,
         input_tokens: int,
+        output_tokens: int,
+        cost_usd: float,
+        max_daily_spend_usd: float | None = None,
         run_id: UUID | None = None,
     ) -> UUID:
         """Atomically reserve conservative request/token budget.
@@ -663,12 +666,28 @@ class SqlRepositoryBase:
                 raise QuotaExceededError("configured Gemini input-token-per-minute ceiling reached")
             if int(day_requests) + 1 > rpd:
                 raise QuotaExceededError("configured Gemini rolling daily request ceiling reached")
+
+            if max_daily_spend_usd is not None:
+                day_spend = (
+                    session.scalar(
+                        select(func.coalesce(func.sum(ProviderUsageRow.cost_usd_reserved), 0.0)).where(
+                            ProviderUsageRow.provider == provider,
+                            ProviderUsageRow.created_at >= day_start,
+                        )
+                    )
+                    or 0.0
+                )
+                if float(day_spend) + cost_usd > max_daily_spend_usd:
+                    raise QuotaExceededError("configured daily spend ceiling reached")
+
             usage = ProviderUsageRow(
                 provider=provider,
                 model=model,
                 run_id=run_id,
                 requests=1,
                 input_tokens_reserved=input_tokens,
+                output_tokens_reserved=output_tokens,
+                cost_usd_reserved=cost_usd,
                 created_at=now,
             )
             session.add(usage)
@@ -676,7 +695,12 @@ class SqlRepositoryBase:
             return usage.id
 
     def reconcile_provider_usage(
-        self, usage_id: UUID, *, input_tokens_actual: int | None, output_tokens_actual: int | None
+        self,
+        usage_id: UUID,
+        *,
+        input_tokens_actual: int | None,
+        output_tokens_actual: int | None,
+        cost_usd_actual: float | None = None,
     ) -> None:
         with self._sessions.begin() as session:
             row = session.get(ProviderUsageRow, usage_id)
@@ -684,6 +708,8 @@ class SqlRepositoryBase:
                 raise NotFoundError("provider usage reservation not found")
             row.input_tokens_actual = input_tokens_actual
             row.output_tokens_actual = output_tokens_actual
+            if cost_usd_actual is not None:
+                row.cost_usd_actual = cost_usd_actual
             row.reconciled_at = datetime.now(UTC)
 
     def persist_facet_coverage(

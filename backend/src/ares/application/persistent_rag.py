@@ -7,6 +7,7 @@ from uuid import UUID
 from ares.application.repository import QuotaExceededError, Repository
 from ares.domain.research import EvidenceCandidate
 from ares.application.rag import EmbeddingProvider
+from ares.domain.budgets import calculate_provider_cost
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +77,7 @@ class PersistentDocumentRAG:
                 # query embeddings do not consume a remote provider quota.
                 if self.model_id.startswith("gemini"):
                     estimated_query_tokens = max(1, len(query) // 4)
+                    cost_usd = calculate_provider_cost(self.model_id, estimated_query_tokens, 0)
                     self.repository.reserve_provider_usage(
                         provider="gemini-embeddings",
                         model=self.model_id,
@@ -83,6 +85,8 @@ class PersistentDocumentRAG:
                         tpm=self.tpm,
                         rpd=self.rpd,
                         input_tokens=estimated_query_tokens,
+                        output_tokens=0,
+                        cost_usd=cost_usd,
                     )
                 query_vector = self.embedder.embed_query(query)
                 semantic = self.repository.vector_search_document_chunks(

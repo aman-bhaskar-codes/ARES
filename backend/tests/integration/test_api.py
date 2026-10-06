@@ -25,7 +25,7 @@ def test_keyless_demo_api_end_to_end(tmp_path: Path) -> None:
     assert status["strict_free_mode"] is True
     assert status["billable_fallback_allowed"] is False
     assert status["gemini_model"] is None
-    assert status["retrieval_backend"] == "sqlite-persisted-vector-exact"
+    assert status["retrieval_backend"] == "persisted-lexical"
     assert status["tools"]["jev"]["metered"] is True
 
     conversation = client.post("/api/v1/conversations", json={"title": "Evidence demo"})

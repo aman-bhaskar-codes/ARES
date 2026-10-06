@@ -68,7 +68,8 @@ from ares.domain.visualizations import (
 )
 
 
-from ares.ports.repositories import NotFoundError, IdempotencyConflictError, StaleLeaseError, QuotaExceededError, RunAdmissionError, RunBudgetExceededError, RunAuthorizationError, ResourceCapacityError, JobLease, ResourceLease, IngestionLease, IngestionPublication
+from ares.ports.repositories import NotFoundError, RunAuthorizationError, IngestionLease
+from ares.adapters.persistence.base import SqlRepositoryBase
 
 
 def _hash_request(payload: RunCreate) -> str:
@@ -76,7 +77,6 @@ def _hash_request(payload: RunCreate) -> str:
     return hashlib.sha256(encoded.encode()).hexdigest()
 
 
-from ares.adapters.persistence.base import SqlRepositoryBase
 
 
 class SqlViewRepository(SqlRepositoryBase):
@@ -507,12 +507,103 @@ class SqlViewRepository(SqlRepositoryBase):
         with self._sessions() as session:
             if self._run_row(session, run_id) is None:
                 raise NotFoundError("run not found")
-            ids = session.scalars(
-                select(EvidenceRow.id)
+            
+            stmt = (
+                select(EvidenceRow)
+                .join(RunRow, RunRow.id == EvidenceRow.run_id)
                 .where(EvidenceRow.run_id == run_id)
                 .order_by(EvidenceRow.captured_at, EvidenceRow.id)
-            ).all()
-        return [self.get_evidence(evidence_id) for evidence_id in ids]
+            )
+            workspace_id = self._visible_workspace_id()
+            if workspace_id is not None:
+                stmt = stmt.where(RunRow.workspace_id == workspace_id)
+                
+            evidence_rows = session.scalars(stmt).all()
+            if not evidence_rows:
+                return []
+                
+            segment_ids = {row.segment_id for row in evidence_rows if row.segment_id is not None}
+            
+            segments_by_id = {}
+            extractions_by_id = {}
+            assets_by_id = {}
+            
+            if segment_ids:
+                segments = session.scalars(
+                    select(EvidenceSegmentRow).where(EvidenceSegmentRow.id.in_(segment_ids))
+                ).all()
+                segments_by_id = {s.id: s for s in segments}
+                
+                extraction_ids = {s.extraction_version_id for s in segments if s.extraction_version_id}
+                if extraction_ids:
+                    extractions = session.scalars(
+                        select(ExtractionVersionRow).where(ExtractionVersionRow.id.in_(extraction_ids))
+                    ).all()
+                    extractions_by_id = {e.id: e for e in extractions}
+                    
+                    asset_ids = {e.asset_version_id for e in extractions if e.asset_version_id}
+                    if asset_ids:
+                        assets = session.scalars(
+                            select(AssetVersionRow).where(AssetVersionRow.id.in_(asset_ids))
+                        ).all()
+                        assets_by_id = {a.id: a for a in assets}
+
+            views = []
+            for row in evidence_rows:
+                source = row.source
+                asset_id = None
+                asset_name = None
+                asset_mime_type = None
+                locator_data = None
+                asset_content_url = None
+                
+                if row.segment_id and row.segment_id in segments_by_id:
+                    segment = segments_by_id[row.segment_id]
+                    if segment.extraction_version_id in extractions_by_id:
+                        extraction = extractions_by_id[segment.extraction_version_id]
+                        asset_id = extraction.asset_version_id
+                        if asset_id in assets_by_id:
+                            asset = assets_by_id[asset_id]
+                            asset_name = asset.original_name
+                            asset_mime_type = asset.mime_type
+                        
+                        locator_data = dict(segment.locator_json or {})
+                        asset_content_url = f"/api/v2/assets/{asset_id}/content"
+                        
+                views.append(EvidenceView(
+                    id=row.id,
+                    source=SourceView(
+                        id=source.id,
+                        title=source.title,
+                        url=source.url,
+                        domain=source.domain,
+                        fetched_at=source.fetched_at,
+                        extraction_method=source.extraction_method,
+                        provider=source.provider,
+                        source_kind=source.source_kind,
+                        canonical_identifier=source.canonical_identifier,
+                        published_at=source.published_at,
+                        discovery_rank=source.discovery_rank,
+                        snippet=source.snippet,
+                    ),
+                    document_version_id=row.document_version_id,
+                    segment_id=row.segment_id,
+                    asset_id=asset_id,
+                    asset_name=asset_name,
+                    asset_mime_type=asset_mime_type,
+                    locator_data=locator_data,
+                    asset_content_url=asset_content_url,
+                    text=row.text,
+                    char_start=row.char_start,
+                    char_end=row.char_end,
+                    page_start=row.page_start,
+                    page_end=row.page_end,
+                    locator=row.locator,
+                    support_status=SupportStatus(row.support_status),
+                    captured_at=row.captured_at,
+                    content_hash=source.content_hash,
+                ))
+            return views
 
     def get_artifact_record(self, artifact_id: UUID) -> ArtifactRow:
         with self._sessions() as session:

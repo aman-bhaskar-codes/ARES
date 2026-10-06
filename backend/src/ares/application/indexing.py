@@ -5,6 +5,7 @@ from uuid import UUID
 
 from ares.application.rag import EmbeddingProvider
 from ares.application.repository import IngestionLease, Repository
+from ares.domain.budgets import calculate_provider_cost
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,13 +67,17 @@ class DocumentEmbeddingIndexer:
             rows = pending[start : start + self.batch_size]
             texts = [row.text for row in rows]
             if self.remote_provider is not None:
+                estimated_input_tokens = max(1, sum(max(1, len(text) // 4) for text in texts))
+                cost_usd = calculate_provider_cost(self.model_id, estimated_input_tokens, 0)
                 self.repository.reserve_provider_usage(
                     provider=self.remote_provider,
                     model=self.model_id,
                     rpm=self.rpm,
                     tpm=self.tpm,
                     rpd=self.rpd,
-                    input_tokens=max(1, sum(max(1, len(text) // 4) for text in texts)),
+                    input_tokens=estimated_input_tokens,
+                    output_tokens=0,
+                    cost_usd=cost_usd,
                 )
             vectors = self.embedder.embed_documents(texts)
             if len(vectors) != len(rows):
