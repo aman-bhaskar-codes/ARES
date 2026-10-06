@@ -103,6 +103,23 @@ def optional_span(name: str, **attributes: object) -> Iterator[None]:
         except Exception:
             pass
 
+_stage_duration_histogram = None
+
+def _get_stage_duration_histogram() -> object | None:
+    global _stage_duration_histogram
+    if _stage_duration_histogram is None:
+        try:
+            from opentelemetry import metrics
+            meter = metrics.get_meter("ares")
+            _stage_duration_histogram = meter.create_histogram(
+                "ares.run.stage.duration",
+                unit="ms",
+                description="Duration of research stages",
+            )
+        except Exception:
+            _stage_duration_histogram = False
+    return None if _stage_duration_histogram is False else _stage_duration_histogram
+
 
 class RunTelemetry:
     """Run-local timing/event helper that cannot make research fail if telemetry fails."""
@@ -124,6 +141,12 @@ class RunTelemetry:
             raise
         finally:
             duration_ms = round((time.perf_counter() - started) * 1000, 3)
+            histogram = _get_stage_duration_histogram()
+            if histogram is not None:
+                try:
+                    histogram.record(duration_ms, {"stage": name, "outcome": outcome})
+                except Exception:
+                    pass
             payload: dict[str, object] = {
                 "stage": name,
                 "duration_ms": duration_ms,
@@ -187,18 +210,23 @@ def configure_telemetry(
     if not endpoint:
         return lambda: None
     try:
-        from opentelemetry import trace
+        from opentelemetry import trace, metrics
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
         from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
         current = trace.get_tracer_provider()
         if isinstance(current, TracerProvider):
             return lambda: None
+            
+        resource = Resource.create({"service.name": service_name})
         provider = TracerProvider(
-            resource=Resource.create({"service.name": service_name}),
+            resource=resource,
             sampler=ParentBased(TraceIdRatioBased(sample_ratio)),
         )
         exporter = OTLPSpanExporter(
@@ -214,7 +242,27 @@ def configure_telemetry(
         )
         provider.add_span_processor(processor)
         trace.set_tracer_provider(provider)
-        return provider.shutdown
+        
+        metric_exporter = OTLPMetricExporter(
+            endpoint=endpoint.rstrip("/") + "/v1/metrics",
+            timeout=export_timeout_seconds,
+        )
+        metric_reader = PeriodicExportingMetricReader(
+            exporter=metric_exporter,
+            export_interval_millis=10000,
+            export_timeout_millis=int(export_timeout_seconds * 1000),
+        )
+        meter_provider = MeterProvider(
+            resource=resource,
+            metric_readers=[metric_reader],
+        )
+        metrics.set_meter_provider(meter_provider)
+        
+        def shutdown():
+            provider.shutdown()
+            meter_provider.shutdown()
+            
+        return shutdown
     except Exception:
         logging.getLogger("ares.telemetry").exception(
             "OpenTelemetry exporter initialization failed; continuing without export"
