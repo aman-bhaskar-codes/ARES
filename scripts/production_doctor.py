@@ -40,8 +40,8 @@ def main() -> int:
         warnings.append(
             "READINESS_REQUIRES_WORKER=false; API may be ready while no worker can process research"
         )
-    if settings.required_schema_revision != "0012":
-        failures.append("REQUIRED_SCHEMA_REVISION must be 0012 for the M10 development candidate")
+    if settings.required_schema_revision != "0013":
+        failures.append("REQUIRED_SCHEMA_REVISION must be 0013 for the M12 development candidate")
     if urlsplit(settings.database_url).username == urlsplit(settings.worker_database_url).username:
         failures.append("API and worker database URLs resolve to the same login role")
     if settings.otel_exporter_otlp_endpoint == "":

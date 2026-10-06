@@ -11,8 +11,8 @@ from generate_sbom import build_sbom
 from release_archive import build as build_archive
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_VERSION = "0.11.0"
-EXPECTED_SCHEMA = "0012_visual_artifacts"
+EXPECTED_VERSION = "0.12.0"
+EXPECTED_SCHEMA = "0013_provider_budgets"
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -25,19 +25,19 @@ def _check_versions(failures: list[str]) -> None:
     match = re.search(r'^version\s*=\s*"([^"]+)"', backend, re.MULTILINE)
     web = _read_json(ROOT / "apps" / "web" / "package.json")
     if not match or match.group(1) != EXPECTED_VERSION:
-        failures.append("backend version is not 0.11.0")
+        failures.append(f"backend version is not {EXPECTED_VERSION}")
     if web.get("version") != EXPECTED_VERSION:
-        failures.append("frontend version is not 0.11.0")
+        failures.append(f"frontend version is not {EXPECTED_VERSION}")
 
 
 def _check_schema(failures: list[str]) -> None:
-    migration = ROOT / "backend" / "migrations" / "versions" / "0012_visual_artifacts.py"
+    migration = ROOT / "backend" / "migrations" / "versions" / f"{EXPECTED_SCHEMA}.py"
     if not migration.is_file():
-        failures.append("0012_visual_artifacts migration is missing")
+        failures.append(f"{EXPECTED_SCHEMA} migration is missing")
     for path in (ROOT / ".env.example", ROOT / ".env.production.example"):
         text = path.read_text(encoding="utf-8")
-        if "REQUIRED_SCHEMA_REVISION=0012" not in text:
-            failures.append(f"{path.name} does not require schema revision 0012")
+        if f"REQUIRED_SCHEMA_REVISION={EXPECTED_SCHEMA[:4]}" not in text:
+            failures.append(f"{path.name} does not require schema revision {EXPECTED_SCHEMA[:4]}")
 
 
 def _check_frontend_lock(failures: list[str]) -> None:

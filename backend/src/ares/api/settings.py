@@ -172,7 +172,7 @@ class Settings(BaseSettings):
     event_max_replay: int = Field(default=1000, ge=100, le=10_000)
     event_heartbeat_seconds: float = Field(default=15.0, ge=5.0, le=60.0)
     stream_authorization_recheck_seconds: float = Field(default=10.0, ge=2.0, le=15.0)
-    required_schema_revision: str = "0012"
+    required_schema_revision: str = "0013"
 
     @field_validator(
         "gemini_rpm",

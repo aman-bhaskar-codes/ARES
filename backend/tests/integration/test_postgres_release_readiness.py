@@ -25,7 +25,7 @@ def test_production_readiness_requires_expected_schema_and_trusted_host() -> Non
         session_cookie_secure=True,
         database_url=POSTGRES_URL,
         worker_database_url=POSTGRES_URL + "?application_name=ares-worker-test",
-        required_schema_revision="0011",
+        required_schema_revision="0013",
         readiness_requires_worker=False,
     )
     client = TestClient(create_app(settings), base_url="https://testserver")
