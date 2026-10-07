@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Protocol
 
 from ares.domain.models import DateWindow, RunMode
 from ares.domain.research import ResearchPlan
@@ -8,7 +9,6 @@ from ares.domain.research import ResearchPlan
 _YEAR = re.compile(r"\b(19|20)\d{2}\b")
 
 
-from typing import Protocol
 
 class ResearchPlanner(Protocol):
     def plan(self, query: str, mode: RunMode, date_window: DateWindow | None = None) -> ResearchPlan:

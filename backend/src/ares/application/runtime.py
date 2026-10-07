@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from ares.adapters.local_reranker import LocalCrossEncoderReranker
+from ares.adapters.ollama_synthesis import OllamaLLMProvider
+from ares.application.planning import DeterministicResearchPlanner
 from ares.adapters.arxiv import ArxivAcademicProvider
 from ares.adapters.crossref import CrossrefAcademicProvider
 from ares.adapters.gemini import GeminiLLMProvider
@@ -45,8 +48,6 @@ def build_embedding_runtime(settings: Settings):
         return provider, settings.gemini_embedding_model, settings.gemini_embedding_dimensions
     return None, "", settings.local_embedding_dimensions
 
-
-from ares.adapters.local_reranker import LocalCrossEncoderReranker
 
 def _build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
     """Compose external adapters once at the worker process boundary."""
@@ -119,8 +120,6 @@ def _build_research_runtime(settings: Settings, repository: Repository, *, embed
             ),
         )
 
-    from ares.application.planning import DeterministicResearchPlanner
-    from ares.adapters.ollama_synthesis import OllamaLLMProvider
     planner = DeterministicResearchPlanner()
     writer = (
         OllamaLLMProvider(settings.local_llm_url, settings.local_llm_model)

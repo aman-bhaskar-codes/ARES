@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
-import tempfile
 from pathlib import Path
 import subprocess
 import logging
 
 try:
-    from generate_sbom import build_sbom
-    from release_archive import build as build_archive
+    from generate_sbom import build_sbom  # noqa: F401
+    from release_archive import build as build_archive  # noqa: F401
 except ImportError:
     pass
 
