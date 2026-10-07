@@ -11,10 +11,28 @@ import logging
 logger = logging.getLogger('ares.api')
 router = APIRouter()
 
+@router.get('/api/v1/models')
+def available_models(request: Request):
+    cfg = request.app.state.settings
+    return {
+        "default": "qwen" if cfg.local_llm_enabled else "gemini",
+        "models": [
+            {"id": "gemini", "label": "Gemini", "model": cfg.gemini_model,
+             "available": bool(cfg.gemini_api_key), "location": "cloud"},
+            {"id": "qwen", "label": "Qwen", "model": cfg.local_llm_model,
+             "available": cfg.local_llm_enabled, "location": "local"},
+        ],
+    }
+
 @router.post('/api/v1/runs', response_model=RunSnapshot, status_code=202)
 def create_run(payload: RunCreate, response: Response, idempotency_key: str=Header(..., alias='Idempotency-Key'), *, request: Request) -> RunSnapshot:
     repository = request.app.state.repository
     cfg = request.app.state.settings
+    provider = payload.model_provider or ("qwen" if cfg.local_llm_enabled else "gemini")
+    if cfg.ares_mode != "demo" and ((provider == "gemini" and not cfg.gemini_api_key) or
+                                    (provider == "qwen" and not cfg.local_llm_enabled)):
+        raise HTTPException(status_code=503, detail={"code": "MODEL_UNAVAILABLE", "message": f"{provider.title()} is not configured on this server."})
+    payload = payload.model_copy(update={"model_provider": provider})
     getattr(request.app.state, 'auth_store', None)
     getattr(request.app.state, 'oidc', None)
     getattr(request.app.state, 'asset_admission', None)

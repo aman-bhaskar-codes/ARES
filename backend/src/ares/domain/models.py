@@ -88,6 +88,7 @@ class DateWindow(BaseModel):
 
 
 class RunCreate(BaseModel):
+    model_provider: Literal["gemini", "qwen"] | None = None
     conversation_id: UUID
     query: str = Field(min_length=2, max_length=8_000)
     mode: RunMode = RunMode.QUICK
@@ -173,6 +174,7 @@ class EvidenceView(BaseModel):
 
 
 class RunSnapshot(BaseModel):
+    model_provider: Literal["gemini", "qwen"] | None = None
     id: UUID
     conversation_id: UUID
     query: str

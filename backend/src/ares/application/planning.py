@@ -65,11 +65,17 @@ class DeterministicResearchPlanner:
             intent = "multi-hop"
 
         subqueries = [cleaned]
+        if intent != "exact":
+            stopwords = set("what is are a an the and why does do how in of to with explain clearly cited sources source cite please matter me tell use".split())
+            terms = [word for word in re.findall(r"[\w-]+", lower) if word not in stopwords]
+            compact = " ".join(dict.fromkeys(terms))
+            if terms and compact != lower:
+                subqueries = [compact, cleaned]
         if mode is RunMode.RESEARCH and intent == "comparison":
             parts = re.split(r'\b(?:versus|vs|compare(?:d to)?|difference between)\b', lower)
             if len(parts) == 2:
                 subqueries = [parts[0].strip(), parts[1].strip(), cleaned]
-        elif mode is RunMode.RESEARCH and len(unique) > 1:
+        elif mode is RunMode.RESEARCH and len(unique) > 1 and subqueries == [cleaned]:
             subqueries = [unique[0], unique[1]]
 
         subqueries = subqueries[:3]

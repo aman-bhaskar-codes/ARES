@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import threading
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
@@ -866,9 +867,20 @@ class SqlRepositoryBase:
             ).all()
             if row is None or not evidence:
                 return False
+            def literal(value: str) -> str:
+                return re.sub(r"([\\`*_{}\[\]()#+.!<>|~-])", r"\\\1", value)
+
+            passages = []
+            for index, item in enumerate(evidence, 1):
+                excerpt = " ".join(item.text.split())[:700]
+                passages.append(f"#### Evidence passage [{index}]\n\n> {literal(excerpt)}")
             block = AnswerBlock(
                 id="partial-evidence-report",
-                markdown=f"### Partial evidence report\n\nARES stopped before a complete checked answer could be produced. Reason: {reason}.",
+                markdown=(
+                    f"### Retrieved evidence\n\nA generated answer is unavailable: {literal(reason)}. "
+                    "These are excerpts from retrieved sources, not independently verified conclusions.\n\n"
+                    + "\n\n".join(passages)
+                ),
                 citations=[
                     CitationRef(evidence_id=e.id, label=i + 1) for i, e in enumerate(evidence)
                 ],
@@ -945,6 +957,7 @@ class SqlRepositoryBase:
     @staticmethod
     def _snapshot(row: RunRow) -> RunSnapshot:
         return RunSnapshot(
+            model_provider=row.model_provider,
             id=row.id,
             conversation_id=row.conversation_id,
             query=row.query,

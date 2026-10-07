@@ -53,3 +53,10 @@ M08 upload, ingestion readiness, table evidence and PDF/image evidence previews 
 
 ## Do's and Don'ts
 Do preserve keyboard focus, reduced-motion behavior, visible scrollbars, semantic buttons/links and status text. Do keep original-source navigation prominent. Do not hide extraction uncertainty, present OCR confidence as truth probability, use browser alert/confirm/prompt, inject untrusted HTML, or execute model-produced chart/parser code.
+
+### Research reading corrections
+Claim-exception passages retain explicit support labels and theme-appropriate surfaces. Inline status labels use the shared muted text token with separate block spacing. The follow-up composer stays in normal document flow so it does not cover answer content on short viewports; Composer remains its canonical owner.
+
+Model selection uses one native select in the shared Composer beside research depth. Both home and follow-up forms use it. The API catalog controls enabled options; each run header displays its persisted provider. Local storage remembers the next-query choice.
+
+Run diagnostics are an opt-in Diagnostics tab immediately before Activity. Answer views show the answer, sources, gaps, export controls and composer without the diagnostic panel. The selected diagnostics view is deep-linkable.

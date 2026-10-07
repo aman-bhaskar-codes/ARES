@@ -51,6 +51,20 @@ class SqlJobRepository(SqlRepositoryBase):
             session.flush()
             return ConversationView.model_validate(row)
 
+    def delete_conversation(self, conversation_id: UUID) -> None:
+        principal = self._request_principal()
+        with self._sessions.begin() as session:
+            # SQLite connections must enable FK enforcement for database cascades.
+            if session.get_bind().dialect.name == "sqlite":
+                session.execute(text("PRAGMA foreign_keys=ON"))
+            row = session.scalar(select(ConversationRow).where(
+                ConversationRow.id == conversation_id,
+                ConversationRow.workspace_id == principal.workspace_id,
+            ))
+            if row is None:
+                raise NotFoundError("conversation not found")
+            session.delete(row)
+
     def create_run(
         self,
         request: RunCreate,
@@ -171,6 +185,7 @@ class SqlJobRepository(SqlRepositoryBase):
             now = datetime.now(UTC)
             budget = BUDGETS[request.mode]
             run = RunRow(
+                model_provider=request.model_provider,
                 conversation_id=request.conversation_id,
                 workspace_id=principal.workspace_id,
                 created_by_user_id=principal.user_id,

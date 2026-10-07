@@ -17,6 +17,12 @@ depends_on = None
 
 
 def upgrade() -> None:
+    inspector = sa.inspect(op.get_bind())
+    if inspector.has_table("retrieval_traces"):
+        expected = {"id", "workspace_id", "query_hash", "profile_id", "filters", "candidate_ids", "candidate_ranks", "selected_packet_ids", "stage_times", "cache_freshness", "coverage_gaps", "policy_revision", "created_at"}
+        if not expected <= {column["name"] for column in inspector.get_columns("retrieval_traces")}:
+            raise RuntimeError("Existing retrieval_traces table is missing required columns")
+        return
     op.create_table(
         "retrieval_traces",
         sa.Column("id", sa.Uuid(), nullable=False),

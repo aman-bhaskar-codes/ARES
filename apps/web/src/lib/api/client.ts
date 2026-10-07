@@ -1,3 +1,4 @@
+import type { ModelCatalog, ModelProvider } from './types'
 import type {
   ArtifactView,
   AssetAdmission,
@@ -72,6 +73,8 @@ async function request<T>(url: string, init: RequestInit = {}, validate?: (value
 }
 
 export interface RunInput {
+  modelProvider?: ModelProvider
+
   conversationId: string
   query: string
   mode: RunMode
@@ -101,7 +104,15 @@ export const api = {
     })
     if (!response.ok) await parse<never>(response)
   },
+  models: () => request<ModelCatalog>('/api/v1/models'),
   systemStatus: () => request<SystemStatus>('/api/v1/system/status'),
+  deleteConversation: async (id: string) => {
+    const headers = new Headers()
+    const token = cookie(csrfCookieName)
+    if (token) headers.set('X-CSRF-Token', decodeURIComponent(token))
+    const response = await fetch(`/api/v1/conversations/${id}`, { method: 'DELETE', headers, credentials: 'same-origin' })
+    if (!response.ok) await parse<never>(response)
+  },
   listConversations: () => request<Conversation[]>('/api/v1/conversations'),
   createConversation: (title?: string) =>
     request<Conversation>('/api/v1/conversations', {
@@ -111,11 +122,12 @@ export const api = {
     const values = await request<unknown[]>(`/api/v1/conversations/${conversationId}/runs`)
     return values.map(parseRunSnapshot)
   },
-  createRun: ({ conversationId, query, mode, sourceScope, documentIds, dateWindow, idempotencyKey }: RunInput) =>
+  createRun: ({ conversationId, query, modelProvider, mode, sourceScope, documentIds, dateWindow, idempotencyKey }: RunInput) =>
     request<RunSnapshot>('/api/v1/runs', {
       method: 'POST',
       headers: { ...jsonHeaders, 'Idempotency-Key': idempotencyKey },
       body: JSON.stringify({
+        model_provider: modelProvider,
         conversation_id: conversationId,
         query,
         mode,

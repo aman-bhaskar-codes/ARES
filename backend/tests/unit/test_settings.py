@@ -9,7 +9,7 @@ def test_demo_needs_no_key() -> None:
 
 def test_live_mode_requires_explicit_quota_and_key() -> None:
     with pytest.raises(ValueError, match="GEMINI_API_KEY"):
-        Settings(ares_mode="local_live", gemini_api_key="").validate_live_mode()
+        Settings(ares_mode="local_live", gemini_api_key="", local_llm_enabled=False).validate_live_mode()
 
     with pytest.raises(ValueError, match="GEMINI_RPM"):
         Settings(ares_mode="local_live", gemini_api_key="x", gemini_rpm=None).validate_live_mode()
@@ -95,3 +95,8 @@ def test_browser_service_url_must_be_origin_only() -> None:
             browser_service_url="http://browser:8090/v1/render",
             browser_service_token="b" * 40,
         ).validate_security_mode()
+
+
+def test_qwen_only_mode_does_not_require_cloud_credentials_or_quotas():
+    Settings(ares_mode="local_live", local_llm_enabled=True, gemini_api_key="",
+             gemini_rpm=None, gemini_tpm=None, gemini_rpd=None).validate_live_mode()

@@ -124,6 +124,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/conversations/{conversation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Conversation */
+        delete: operations["delete_conversation_api_v1_conversations__conversation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/conversations/{conversation_id}/runs": {
         parameters: {
             query?: never;
@@ -218,6 +235,23 @@ export interface paths {
         };
         /** Get Evidence */
         get: operations["get_evidence_api_v1_evidence__evidence_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Available Models */
+        get: operations["available_models_api_v1_models_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -736,7 +770,7 @@ export interface components {
              * Format
              * @enum {string}
              */
-            format: "markdown" | "json";
+            format: "markdown" | "json" | "html" | "pdf";
             /**
              * Id
              * Format: uuid
@@ -825,18 +859,12 @@ export interface components {
         };
         /** Body_create_asset_api_v2_assets_post */
         Body_create_asset_api_v2_assets_post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
         };
         /** Body_create_pdf_document_api_v1_documents_pdf_post */
         Body_create_pdf_document_api_v1_documents_pdf_post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
         };
         /** CitationRef */
@@ -1031,7 +1059,7 @@ export interface components {
              * Format
              * @enum {string}
              */
-            format: "markdown" | "json";
+            format: "markdown" | "json" | "html" | "pdf";
         };
         /** FrameRegionLocator */
         FrameRegionLocator: {
@@ -1285,6 +1313,8 @@ export interface components {
             document_ids?: string[];
             /** @default quick */
             mode: components["schemas"]["RunMode"];
+            /** Model Provider */
+            model_provider?: ("gemini" | "qwen") | null;
             /** Query */
             query: string;
             /** Source Scope */
@@ -1337,6 +1367,12 @@ export interface components {
             claim_citation_rate: number;
             /** Claim Count */
             claim_count: number;
+            /** Confidence Extraction */
+            confidence_extraction?: number | null;
+            /** Confidence Relevance */
+            confidence_relevance?: number | null;
+            /** Confidence Support */
+            confidence_support?: number | null;
             /** Distinct Source Group Count */
             distinct_source_group_count: number;
             /**
@@ -1440,6 +1476,8 @@ export interface components {
              */
             last_seq: number;
             mode: components["schemas"]["RunMode"];
+            /** Model Provider */
+            model_provider?: ("gemini" | "qwen") | null;
             /** Query */
             query: string;
             /** Source Scope */
@@ -2027,6 +2065,35 @@ export interface operations {
             };
         };
     };
+    delete_conversation_api_v1_conversations__conversation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_conversation_runs_api_v1_conversations__conversation_id__runs_get: {
         parameters: {
             query?: never;
@@ -2200,6 +2267,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    available_models_api_v1_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

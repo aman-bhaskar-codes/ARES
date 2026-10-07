@@ -11,6 +11,7 @@ export function RunHeader({ run }: RunHeaderProps) {
       <h1>{run.query}</h1>
       <div className="run-meta">
         <span>{run.mode}</span>
+        {run.model_provider && <span>{run.model_provider === "qwen" ? "Qwen · Local" : "Gemini · Cloud"}</span>}
         {run.source_scope.map((scope) => (
           <span key={scope}>{scope}</span>
         ))}

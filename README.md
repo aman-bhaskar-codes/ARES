@@ -180,3 +180,14 @@ Do not promote the RC to a public production release until the PostgreSQL/RLS ga
 ## Engineering stance
 
 ARES is Perplexity-inspired in workflow, not a claim of proprietary parity or benchmark superiority. Exact source passages, known gaps and conflicts are preferred over polished unsupported prose. M11 adds validated visual projections over the same evidence store: a chart point, comparison cell, timeline item or graph edge cannot bypass evidence authorization or provenance. Source code is not equivalent to a proven public deployment: PostgreSQL/RLS, production containers, browser/network isolation, model provisioning, live providers, independent held-out evaluation and external testing still require target-environment verification before public promotion.
+
+### Choosing an answer model
+
+The composer’s **Answer model** selector chooses **Gemini · Cloud** or **Qwen · Local** for each query and follow-up. The run header shows the saved choice. Switching does not change an existing answer. The frontend remembers your next-query preference.
+
+- Gemini requires `GEMINI_API_KEY`, `GEMINI_MODEL`, and explicit provider quota settings.
+- Qwen requires `LOCAL_LLM_ENABLED=true`, a running Ollama service at `LOCAL_LLM_URL`, and the installed model named by `LOCAL_LLM_MODEL` (for example `qwen3:4b`).
+- `GET /api/v1/models` lists configured models. `POST /api/v1/runs` accepts `model_provider: "gemini" | "qwen"`; omitted values use the deployment default (Qwen when local writing is enabled). Configuration availability does not guarantee remaining cloud quota or a healthy local service. Failures preserve retrieved evidence and identify the writing error; the server does not silently switch providers.
+- Apply database migration `0020` before deploying this change. Older runs with no saved provider use the deployment default when resumed.
+
+Answer depth is controlled by the writing adapters: explanatory questions target connected paragraphs covering definition, mechanism, a supported example, significance and caveats. Qwen uses up to 1,600 generated tokens and 1,100 characters per retrieved passage in a 6,144-token context. The entire visible answer is produced in the cited paragraphs, rather than an unused summary. Targets yield to evidence limitations and explicit brevity requests. This is prompt/context tuning, not weight training. Semantic-verification status is shown once above the answer; detailed heuristic checks remain in Diagnostics.

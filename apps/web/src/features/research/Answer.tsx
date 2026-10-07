@@ -2,6 +2,7 @@ import { Copy } from 'lucide-react'
 import type { AnswerBlock, Evidence } from '../../lib/api/types'
 import { SafeMarkdown } from './SafeMarkdown'
 import { answerPresentationMode, buildCitedAnswerText } from './answerPresentation'
+import { CitationChip } from './CitationChip'
 import { ClaimNarrative } from './ClaimNarrative'
 import { AnswerEvidenceSummary } from './AnswerEvidenceSummary'
 
@@ -30,7 +31,11 @@ export function Answer({
         </button>
       </div>
 
-      {mode === 'empty' && (
+      {block.claims?.some((claim) => claim.assessment_state !== 'semantic_assessed') && (
+        <p className="answer-verification-note">Based on retrieved sources. AI semantic verification has not been performed; review the citations for important details.</p>
+      )}
+
+      {mode === 'empty'  && (
         <div className="answer-prose">
           <p className="claim-status">No claims or answer content available.</p>
         </div>
@@ -51,6 +56,10 @@ export function Answer({
       {mode === 'claim_narrative' && (
         <ClaimNarrative block={block} onEvidence={onEvidence} />
       )}
+
+      {!block.claims?.length && block.citations.length > 0 && <div className="citation-row" aria-label="Retrieved evidence citations">
+        {block.citations.map((citation) => <CitationChip key={citation.evidence_id} label={citation.label} evidenceId={citation.evidence_id} onOpen={onEvidence} />)}
+      </div>}
 
       <AnswerEvidenceSummary 
         block={block} 

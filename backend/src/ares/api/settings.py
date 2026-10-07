@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     gemini_tpm: int | None = Field(default=None, ge=1)
     gemini_rpd: int | None = Field(default=None, ge=1)
     gemini_concurrency: int = Field(default=1, ge=1, le=8)
+    local_llm_enabled: bool = False
+    local_llm_url: str = "http://127.0.0.1:11434"
+    local_llm_model: str = "qwen3:4b"
+    local_llm_timeout_seconds: float = Field(default=120.0, ge=5.0, le=120.0)
     gemini_timeout_seconds: float = Field(default=45.0, ge=5.0, le=120.0)
     gemini_billing_mode: Literal["free", "paid"] = "free"
     gemini_max_daily_spend_usd: float = Field(default=0.0, ge=0.0)
@@ -202,9 +206,9 @@ class Settings(BaseSettings):
         if self.ares_mode != "local_live":
             return
             
-        if not self.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY is required for local_live mode")
-        if None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
+        if not self.gemini_api_key and not self.local_llm_enabled:
+            raise ValueError("Configure GEMINI_API_KEY or enable LOCAL_LLM_ENABLED for local_live mode")
+        if self.gemini_api_key and None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
             raise ValueError("GEMINI_RPM, GEMINI_TPM and GEMINI_RPD must be explicit in live mode")
             
         if self.jev_enabled:

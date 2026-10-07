@@ -1,4 +1,4 @@
-export const researchViews = ['answer', 'sources', 'compare', 'activity'] as const
+export const researchViews = ['answer', 'sources', 'compare', 'diagnostics', 'activity'] as const
 export type ResearchView = (typeof researchViews)[number]
 
 const researchViewSet = new Set<string>(researchViews)

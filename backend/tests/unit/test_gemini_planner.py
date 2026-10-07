@@ -24,3 +24,17 @@ def test_gemini_planner_injection_cannot_invent_tools_or_documents():
     assert plan.intent == "narrow"
     assert len(plan.subqueries) == 2
     assert plan.subqueries == ["sub 1", "sub 2"]
+
+
+def test_planner_does_not_pass_language_names_to_search():
+    import json
+    from types import SimpleNamespace
+
+    response = SimpleNamespace(text=json.dumps({
+        'language': 'English', 'intent': 'comparison',
+        'subqueries': ['RAG vs fine-tuning'], 'query_variants': ['RAG vs fine-tuning'], 'facets': [],
+    }))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=lambda **kwargs: response))
+    plan = GeminiResearchPlanner('', client=client).plan('Compare RAG and fine-tuning', RunMode.QUICK)
+    assert plan.language == 'all'
+    assert plan.subqueries == ['RAG vs fine-tuning']

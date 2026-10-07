@@ -191,7 +191,7 @@ class SynthesisStage:
         except TimeoutError as exc:
             future.cancel()
             raise RunDeadlineExceeded(
-                "Gemini synthesis exceeded the remaining run deadline"
+                "Answer synthesis exceeded the remaining run deadline"
             ) from exc
         finally:
             pool.shutdown(wait=False, cancel_futures=True)

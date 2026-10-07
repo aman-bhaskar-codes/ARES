@@ -17,8 +17,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("runs", sa.Column("outline", sa.JSON(), nullable=True))
-    op.add_column("runs", sa.Column("assessment", sa.JSON(), nullable=True))
+    columns = {column["name"] for column in sa.inspect(op.get_bind()).get_columns("runs")}
+    for name in ("outline", "assessment"):
+        if name not in columns:
+            op.add_column("runs", sa.Column(name, sa.JSON(), nullable=True))
 
 def downgrade() -> None:
     op.drop_column("runs", "assessment")

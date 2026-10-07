@@ -1,0 +1,266 @@
+{
+  "findings": [
+    {
+      "category": "unresolved",
+      "file": ".kilo/worktrees/bustling-spoon/apps/web/src/features/research/EvidenceIndex.tsx",
+      "line": 42,
+      "message": "Native date/time input is used without an explicit ownership decision.",
+      "remediation": "Record Date as native or reuse the typed/authored canonical owner.",
+      "ruleId": "ownership.native-date-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": ".kilo/worktrees/puddle-timpani/apps/web/src/features/research/EvidenceIndex.tsx",
+      "line": 42,
+      "message": "Native date/time input is used without an explicit ownership decision.",
+      "remediation": "Record Date as native or reuse the typed/authored canonical owner.",
+      "ruleId": "ownership.native-date-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": "apps/web/src/features/research/EvidenceIndex.tsx",
+      "line": 45,
+      "message": "Native date/time input is used without an explicit ownership decision.",
+      "remediation": "Record Date as native or reuse the typed/authored canonical owner.",
+      "ruleId": "ownership.native-date-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": ".kilo/worktrees/bustling-spoon/apps/web/src/app/App.tsx",
+      "line": 452,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": ".kilo/worktrees/bustling-spoon/apps/web/src/features/research/EvidenceIndex.tsx",
+      "line": 40,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": ".kilo/worktrees/puddle-timpani/apps/web/src/app/App.tsx",
+      "line": 452,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": ".kilo/worktrees/puddle-timpani/apps/web/src/features/research/EvidenceIndex.tsx",
+      "line": 40,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": "apps/web/src/features/research/EvidenceIndex.tsx",
+      "line": 43,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": "apps/web/src/features/workspace/WorkspaceShell.tsx",
+      "line": 428,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/bustling-spoon/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/bustling-spoon/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/bustling-spoon/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/bustling-spoon/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 64,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/puddle-timpani/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/puddle-timpani/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/puddle-timpani/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/puddle-timpani/docs/architecture/ARES_Master_Blueprint.html",
+      "line": 64,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/architecture/ARES_Master_Blueprint.html",
+      "line": 5,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/architecture/ARES_Master_Blueprint.html",
+      "line": 64,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/bustling-spoon/apps/web/src/features/research/Composer.tsx",
+      "line": 33,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/puddle-timpani/apps/web/src/features/research/Composer.tsx",
+      "line": 33,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/web/src/features/research/Composer.tsx",
+      "line": 34,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/bustling-spoon/apps/web/src/features/research/Composer.tsx",
+      "line": 35,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": ".kilo/worktrees/puddle-timpani/apps/web/src/features/research/Composer.tsx",
+      "line": 35,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/web/src/features/research/Composer.tsx",
+      "line": 36,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/web/src/styles/base.css",
+      "line": 36,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    }
+  ],
+  "mode": "strict",
+  "projectRoot": "/Users/amanbhaskar/Downloads/ARES",
+  "schemaVersion": 1,
+  "summary": {
+    "errors": 28,
+    "total": 28,
+    "unresolved": 9,
+    "violations": 19,
+    "warnings": 0
+  }
+}

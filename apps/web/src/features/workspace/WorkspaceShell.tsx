@@ -1,3 +1,4 @@
+import type { ModelProvider } from '../../lib/api/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Info,
@@ -16,6 +17,7 @@ import {
   Sun,
   LogOut,
   UserRound,
+  Trash2,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -52,6 +54,13 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
   const activeView = researchLocation.view
   const [conversationId, setConversationId] = useState<string>()
   const [run, setRun] = useState<RunSnapshot>()
+  const [modelProvider, setModelProvider] = useState<ModelProvider>(() => window.localStorage.getItem('ares-model') === 'gemini' ? 'gemini' : 'qwen')
+  const modelCatalog = useQuery({ queryKey: ['models'], queryFn: api.models })
+  useEffect(() => {
+    const catalog = modelCatalog.data
+    if (catalog && !catalog.models.some((item) => item.id === modelProvider && item.available)) setModelProvider(catalog.default)
+  }, [modelCatalog.data, modelProvider])
+  useEffect(() => { window.localStorage.setItem('ares-model', modelProvider) }, [modelProvider])
   const [mode, setMode] = useState<RunMode>('quick')
   const [sourceScope, setSourceScope] = useState<SourceScope[]>(['web'])
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
@@ -139,6 +148,20 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
     mutationFn: api.logout,
     onSuccess: () => { queryClient.clear(); window.location.assign('/') },
     onError: (error) => setUiError(error instanceof Error ? error.message : 'Could not sign out'),
+  })
+  const deleteChat = useMutation({
+    mutationFn: api.deleteConversation,
+    onSuccess: async (_, id) => {
+      if (id === conversationId || id === routeConversationId) {
+        setConversationId(undefined)
+        setRun(undefined)
+        setEvidence(undefined)
+        navigate('/', { replace: true })
+      }
+      setUiError(undefined)
+      await queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+    onError: (error) => setUiError(error instanceof Error ? error.message : 'Could not delete chat'),
   })
   const busy = Boolean(run && !terminal.has(run.status))
 
@@ -249,6 +272,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
       const snapshot = await api.createRun({
         conversationId: activeConversation,
         query: text,
+        modelProvider,
         mode,
         sourceScope,
         documentIds: sourceScope.includes('documents') ? selectedDocuments : [],
@@ -268,6 +292,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
       const snapshot = await api.createRun({
         conversationId: run.conversation_id,
         query: run.query,
+        modelProvider,
         mode: run.mode,
         sourceScope: run.source_scope,
         documentIds: run.document_ids,
@@ -391,8 +416,8 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
         <div className="nav-section-label">Recent</div>
         <nav className="thread-list" aria-label="Conversation history">
           {conversations.data?.map((conversation) => (
+            <div className="thread-row" key={conversation.id}>
             <button
-              key={conversation.id}
               className={conversation.id === conversationId ? 'active' : ''}
               onClick={() => {
                 setConversationId(conversation.id)
@@ -404,6 +429,14 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
             >
               <span>{conversation.title}</span><small>{new Date(conversation.updated_at).toLocaleDateString()}</small>
             </button>
+            {canWrite && <button
+              className="thread-delete"
+              aria-label={`Delete chat: ${conversation.title}`}
+              title="Delete chat"
+              disabled={deleteChat.isPending}
+              onClick={() => deleteChat.mutate(conversation.id)}
+            ><Trash2 size={16} aria-hidden="true" /></button>}
+            </div>
           ))}
           {!conversations.data?.length && <div className="empty-nav">Your research threads will appear here.</div>}
         </nav>
@@ -442,6 +475,9 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
             <Composer
               busy={false}
               readOnly={!canWrite}
+              modelProvider={modelProvider}
+              onModelProvider={setModelProvider}
+              models={modelCatalog.data}
               mode={mode}
               onMode={setMode}
               sourceScope={sourceScope}
@@ -479,7 +515,6 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
                   <button disabled={!canWrite || Boolean(exporting)} onClick={() => void exportRun('json')}>{exporting === 'json' ? 'Preparing…' : 'JSON manifest'}</button>
                 </div>
               )}
-              {terminal.has(run.status) && quality.data && <RunQualityPanel quality={quality.data} onEvidence={openEvidence} />}
               <ResearchGaps gaps={run.gaps} runStatus={run.status} />
               {run.status === 'failed' && <section className="failure-card"><div><AlertTriangle size={18} /><strong>{run.error_code ?? 'Research failed'}</strong><p>{run.error_message}</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry as new run</button></section>}
               {run.status === 'cancelled' && <section className="failure-card calm"><div><strong>Research stopped</strong><p>Completed work was preserved. Retry starts a new run with the same source policy.</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry</button></section>}
@@ -487,6 +522,9 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
                 <FollowUpComposer
                   busy={busy}
                   readOnly={!canWrite}
+                  modelProvider={modelProvider}
+                  onModelProvider={setModelProvider}
+                  models={modelCatalog.data}
                   mode={mode}
                   onMode={setMode}
                   sourceScope={sourceScope}
@@ -499,6 +537,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
             </>}
             {activeView === 'sources' && (runEvidence.isError ? <div className="workspace-empty">Could not load run evidence: {runEvidence.error instanceof Error ? runEvidence.error.message : 'unknown error'}</div> : <EvidenceIndex evidence={runEvidence.data ?? []} onEvidence={openEvidence}/>)}
             {activeView === 'compare' && (system.data?.visualizations?.ready ? <VisualizationWorkspace visualizations={visualizations.data ?? []} loading={visualizations.isLoading} error={visualizations.error instanceof Error ? visualizations.error.message : undefined} onEvidence={openEvidence}/> : <div className="workspace-empty"><GitCompareArrows size={20}/><strong>Evidence-linked visualizations are unavailable on this profile.</strong><span>The answer and evidence remain usable; enable the M11 visualization capability only when migration 0012 is ready.</span></div>)}
+            {activeView === 'diagnostics' && (quality.data ? <RunQualityPanel quality={quality.data} onEvidence={openEvidence} /> : <div className="workspace-empty">{quality.isError ? 'Could not load run diagnostics.' : terminal.has(run.status) ? 'Loading run diagnostics…' : 'Diagnostics will be available when this research finishes.'}</div>)}
             {activeView === 'activity' && <ResearchActivity status={run.status} events={events} detailed/>}
           </div>
         )}

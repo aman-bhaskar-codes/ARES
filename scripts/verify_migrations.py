@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 
 ROOT = Path(__file__).resolve().parents[1]
 ALEMBIC = ROOT / "backend" / "alembic.ini"
-EXPECTED_HEAD = "0019"
+EXPECTED_HEAD = "0020"
 
 
 def run_upgrade(database_url: str, revision: str) -> None:

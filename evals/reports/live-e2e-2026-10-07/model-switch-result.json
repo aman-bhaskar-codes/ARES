@@ -1,0 +1,299 @@
+{
+  "catalog": {
+    "default": "qwen",
+    "models": [
+      {
+        "id": "gemini",
+        "label": "Gemini",
+        "model": "gemini-3.5-flash-lite",
+        "available": true,
+        "location": "cloud"
+      },
+      {
+        "id": "qwen",
+        "label": "Qwen",
+        "model": "qwen3:4b",
+        "available": true,
+        "location": "local"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "id": "56b8129d-8800-4716-8383-caf48b92eac9",
+      "provider": "qwen",
+      "status": "completed",
+      "claims": 3,
+      "citations": 3,
+      "exports": [
+        "markdown",
+        "json"
+      ],
+      "quality": {
+        "run_id": "56b8129d-8800-4716-8383-caf48b92eac9",
+        "claim_count": 3,
+        "evidence_count": 8,
+        "source_count": 4,
+        "distinct_source_group_count": 4,
+        "citation_resolution_rate": 1.0,
+        "claim_citation_rate": 1.0,
+        "supported_claim_rate": 0.3333333333333333,
+        "support_counts": {
+          "partially_supported": 2,
+          "supported": 1
+        },
+        "evidence_relation_counts": {
+          "supports": 3
+        },
+        "evidence_relations": [
+          {
+            "claim_id": "9e4b9f8b-4af6-4df9-8ed5-e212532cfd6e",
+            "claim_text": "Decoherence matters in quantum computing because it causes qubits to lose quantum coherence, leading to computational errors and the inability to maintain entangled states necessary for quantum algorithms.",
+            "evidence_id": "da9e1e92-15f3-4eef-a468-a78e7016b087",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "a8d36232-49ce-4e08-b7e1-469e95eaa6bf",
+            "claim_text": "Quantum decoherence is a fundamental challenge in quantum computing that directly impacts qubit stability, requiring solutions like isolation, cryogenic cooling, and error correction to maintain computational reliability.",
+            "evidence_id": "563794c9-aab7-4fc9-8e1d-ab110fd6794a",
+            "relation": "supports",
+            "rationale": "evidence overlap is partial",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c9f8c979-72df-4962-b169-b80419154324",
+            "claim_text": "A qubit is a two-state quantum system that encodes information as a '0' or '1', but is highly sensitive to environmental interference, causing it to lose quantum information through decoherence.",
+            "evidence_id": "9c5cee15-b46c-4ee9-b15e-d7b85fd93bc8",
+            "relation": "supports",
+            "rationale": "evidence overlap is partial",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          }
+        ],
+        "facets": [],
+        "source_kind_counts": {
+          "web": 4
+        },
+        "provider_counts": {
+          "searxng": 4
+        },
+        "risky_source_events": 0,
+        "duplicate_sources_removed": 0,
+        "stage_timings_ms": {
+          "discovery.web.complete": 7.081,
+          "reading.web": 1263.378,
+          "retrieval.network": 70.847,
+          "evaluation.coverage": 0.102,
+          "synthesis": 40660.324,
+          "evaluation.claims": 35.487
+        },
+        "queue_wait_ms": 101.577,
+        "run_elapsed_ms": 43060.762,
+        "gaps_count": 0,
+        "confidence_extraction": 1.0,
+        "confidence_relevance": 1.0,
+        "confidence_support": 1.0
+      }
+    },
+    {
+      "id": "c9bf9737-361d-46b4-9b84-851394532971",
+      "provider": "gemini",
+      "status": "completed",
+      "claims": 6,
+      "citations": 7,
+      "exports": [
+        "markdown",
+        "json"
+      ],
+      "quality": {
+        "run_id": "c9bf9737-361d-46b4-9b84-851394532971",
+        "claim_count": 6,
+        "evidence_count": 8,
+        "source_count": 4,
+        "distinct_source_group_count": 4,
+        "citation_resolution_rate": 1.0,
+        "claim_citation_rate": 1.0,
+        "supported_claim_rate": 0.6666666666666666,
+        "support_counts": {
+          "supported": 4,
+          "conflicting": 2
+        },
+        "evidence_relation_counts": {
+          "contextualizes": 7,
+          "supports": 6
+        },
+        "evidence_relations": [
+          {
+            "claim_id": "120934bf-e92d-4907-8365-d743d80be2b2",
+            "claim_text": "Qubits can exist in a superposition of states, allowing them to represent both 0 and 1 simultaneously.",
+            "evidence_id": "4f8f8a02-b967-42d7-a99f-60c2fefdbc82",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "a2449c1f-812b-4294-96e2-91fdf8081860",
+            "claim_text": "Decoherence is driven by environmental factors such as thermal fluctuations, quantum noise, and electromagnetic radiation, making it a critical hurdle for scalable quantum computing.",
+            "evidence_id": "8ed23121-3bc0-4f12-a497-b0e6b1109ef8",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "a2449c1f-812b-4294-96e2-91fdf8081860",
+            "claim_text": "Decoherence is driven by environmental factors such as thermal fluctuations, quantum noise, and electromagnetic radiation, making it a critical hurdle for scalable quantum computing.",
+            "evidence_id": "d65c6461-a527-49e0-8359-36025629cfd9",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "a2449c1f-812b-4294-96e2-91fdf8081860",
+            "claim_text": "Decoherence is driven by environmental factors such as thermal fluctuations, quantum noise, and electromagnetic radiation, making it a critical hurdle for scalable quantum computing.",
+            "evidence_id": "4f8f8a02-b967-42d7-a99f-60c2fefdbc82",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c0e160f2-0e48-46c5-9800-5d615c99ff60",
+            "claim_text": "Decoherence leads to the loss of quantum information, computational errors, and a breakdown of quantum superposition and entanglement.",
+            "evidence_id": "449bca63-e042-44f5-83ad-1384b7205cf6",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c0e160f2-0e48-46c5-9800-5d615c99ff60",
+            "claim_text": "Decoherence leads to the loss of quantum information, computational errors, and a breakdown of quantum superposition and entanglement.",
+            "evidence_id": "4f8f8a02-b967-42d7-a99f-60c2fefdbc82",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c0e160f2-0e48-46c5-9800-5d615c99ff60",
+            "claim_text": "Decoherence leads to the loss of quantum information, computational errors, and a breakdown of quantum superposition and entanglement.",
+            "evidence_id": "4aac3f47-cb4a-4859-9f47-a717de381063",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c0e160f2-0e48-46c5-9800-5d615c99ff60",
+            "claim_text": "Decoherence leads to the loss of quantum information, computational errors, and a breakdown of quantum superposition and entanglement.",
+            "evidence_id": "9f2b8213-d005-4b1a-9a0e-99d77d05c544",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c1231afd-0d7b-495a-b710-7ce90776af26",
+            "claim_text": "Quantum coherence allows qubit wave functions to maintain well-defined phase relationships, enabling interference, entanglement, and superposition.",
+            "evidence_id": "449bca63-e042-44f5-83ad-1384b7205cf6",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c41bc115-bc1c-4d02-b2c7-ea0aea2dccf8",
+            "claim_text": "Quantum decoherence occurs when a quantum system loses its coherence and quantum behavior due to unintentional interaction or entanglement with its environment.",
+            "evidence_id": "4f8f8a02-b967-42d7-a99f-60c2fefdbc82",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c41bc115-bc1c-4d02-b2c7-ea0aea2dccf8",
+            "claim_text": "Quantum decoherence occurs when a quantum system loses its coherence and quantum behavior due to unintentional interaction or entanglement with its environment.",
+            "evidence_id": "4aac3f47-cb4a-4859-9f47-a717de381063",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "c41bc115-bc1c-4d02-b2c7-ea0aea2dccf8",
+            "claim_text": "Quantum decoherence occurs when a quantum system loses its coherence and quantum behavior due to unintentional interaction or entanglement with its environment.",
+            "evidence_id": "449bca63-e042-44f5-83ad-1384b7205cf6",
+            "relation": "contextualizes",
+            "rationale": "supporting and polarity-conflicting evidence are both present",
+            "checker_method": "deterministic_polarity_guard",
+            "checker_version": "m07-v1"
+          },
+          {
+            "claim_id": "d595097e-ffef-447d-984b-0a5cae3b2815",
+            "claim_text": "A qubit (quantum bit) is akin to a computational bit represented by a two-state quantum system, encoding a \u201c0\u201d or a \u201c1\u201d.",
+            "evidence_id": "7341e0a7-b487-40a9-b9be-dc575a261f1b",
+            "relation": "supports",
+            "rationale": "material overlap and explicit quantities are compatible",
+            "checker_method": "deterministic_heuristic",
+            "checker_version": "m07-v1"
+          }
+        ],
+        "facets": [],
+        "source_kind_counts": {
+          "web": 4
+        },
+        "provider_counts": {
+          "searxng": 4
+        },
+        "risky_source_events": 0,
+        "duplicate_sources_removed": 0,
+        "stage_timings_ms": {
+          "discovery.web.complete": 29.306,
+          "reading.web": 1281.075,
+          "retrieval.network": 110.671,
+          "evaluation.coverage": 21.516,
+          "synthesis": 6194.824,
+          "evaluation.claims": 27.477
+        },
+        "queue_wait_ms": 168.728,
+        "run_elapsed_ms": 13168.827,
+        "gaps_count": 1,
+        "confidence_extraction": 1.0,
+        "confidence_relevance": 1.0,
+        "confidence_support": 1.0
+      }
+    }
+  ],
+  "verification": {
+    "backend_passed": 218,
+    "backend_skipped": 8,
+    "frontend_passed": 20,
+    "typecheck": "passed",
+    "build": "passed",
+    "migrations": "empty and predecessor upgrades to 0020 passed; existing development bootstrap upgrade passed"
+  },
+  "browser_checks": {
+    "qwen_selection_and_answer": true,
+    "gemini_selection_and_answer": true,
+    "saved_answers_reload": true,
+    "selection_persistence": true,
+    "home_and_followup_selector": true
+  },
+  "tested_models": {
+    "gemini": "gemini-3.5-flash-lite",
+    "qwen": "qwen3:4b"
+  },
+  "observed_seconds": {
+    "gemini": 13.169,
+    "qwen": 43.061
+  },
+  "source_cache_used": true,
+  "semantic_verification": "disabled; visibly marked unassessed"
+}

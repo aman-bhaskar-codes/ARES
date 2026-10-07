@@ -48,7 +48,7 @@ def build_embedding_runtime(settings: Settings):
 
 from ares.adapters.local_reranker import LocalCrossEncoderReranker
 
-def build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
+def _build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
     """Compose external adapters once at the worker process boundary."""
     if settings.ares_mode == "demo":
         return DemoResearchEngine(repository)
@@ -119,8 +119,17 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
             ),
         )
 
-    from ares.application.gemini_planner import GeminiResearchPlanner
-    planner = GeminiResearchPlanner(settings.gemini_api_key, settings.gemini_model)
+    from ares.application.planning import DeterministicResearchPlanner
+    from ares.adapters.ollama_synthesis import OllamaLLMProvider
+    planner = DeterministicResearchPlanner()
+    writer = (
+        OllamaLLMProvider(settings.local_llm_url, settings.local_llm_model)
+        if settings.local_llm_enabled else GeminiLLMProvider(
+            settings.gemini_api_key, settings.gemini_model,
+            thinking_level=settings.gemini_thinking_level,
+            timeout_seconds=settings.gemini_timeout_seconds,
+        )
+    )
 
     return ResearchEngine(
         repository,
@@ -128,24 +137,19 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
             settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds
         ),
         source_fetcher,
-        GeminiLLMProvider(
-            settings.gemini_api_key,
-            settings.gemini_model,
-            thinking_level=settings.gemini_thinking_level,
-            timeout_seconds=settings.gemini_timeout_seconds,
-        ),
+        writer,
         planner=planner,
         candidate_reranker=LocalCrossEncoderReranker(),
-        gemini_model=settings.gemini_model,
-        gemini_rpm=settings.gemini_rpm or 1,
-        gemini_tpm=settings.gemini_tpm or 1,
-        gemini_rpd=settings.gemini_rpd or 1,
+        gemini_model=settings.local_llm_model if settings.local_llm_enabled else settings.gemini_model,
+        gemini_rpm=60 if settings.local_llm_enabled else settings.gemini_rpm or 1,
+        gemini_tpm=100_000 if settings.local_llm_enabled else settings.gemini_tpm or 1,
+        gemini_rpd=10_000 if settings.local_llm_enabled else settings.gemini_rpd or 1,
         gemini_max_daily_spend_usd=settings.gemini_max_daily_spend_usd if settings.gemini_max_daily_spend_usd > 0 else None,
         global_http_concurrency=settings.max_http_concurrency,
         gemini_concurrency=settings.gemini_concurrency,
         provider_http_timeout_seconds=settings.provider_http_timeout_seconds,
         source_fetch_timeout_seconds=settings.source_fetch_timeout_seconds,
-        gemini_timeout_seconds=settings.gemini_timeout_seconds,
+        gemini_timeout_seconds=settings.local_llm_timeout_seconds if settings.local_llm_enabled else settings.gemini_timeout_seconds,
         decisions=decisions,
         retriever=HybridRAGRetriever(embedder=embedder),
         registry=registry,
@@ -168,3 +172,17 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         academic_full_text_max_bytes=settings.academic_full_text_max_bytes,
         academic_full_text_max_pages=settings.academic_full_text_max_pages,
     )
+
+
+def build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
+    if settings.ares_mode == "demo":
+        return DemoResearchEngine(repository)
+    from ares.application.model_routing import ModelRoutingEngine
+    engines = {}
+    if settings.gemini_api_key:
+        engines["gemini"] = _build_research_runtime(
+            settings.model_copy(update={"local_llm_enabled": False}), repository,
+            embedding_runtime=embedding_runtime)
+    if settings.local_llm_enabled:
+        engines["qwen"] = _build_research_runtime(settings, repository, embedding_runtime=embedding_runtime)
+    return ModelRoutingEngine(repository, engines, default="qwen" if settings.local_llm_enabled else "gemini")

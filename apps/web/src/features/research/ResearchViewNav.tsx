@@ -1,4 +1,4 @@
-import { BookOpenText, ListTree, GitCompareArrows, Sparkles } from 'lucide-react'
+import { BookOpenText, ListTree, GitCompareArrows, Sparkles, ChartNoAxesCombined } from 'lucide-react'
 import type { ResearchView } from '../../lib/researchRoutes'
 
 interface ResearchViewNavProps {
@@ -22,6 +22,9 @@ export function ResearchViewNav({
       </button>
       <button className={activeView === 'compare' ? 'active' : ''} onClick={() => onSelectView('compare')}>
         <GitCompareArrows size={15} /> Compare
+      </button>
+      <button className={activeView === 'diagnostics' ? 'active' : ''} onClick={() => onSelectView('diagnostics')}>
+        <ChartNoAxesCombined size={15} /> Diagnostics
       </button>
       <button className={activeView === 'activity' ? 'active' : ''} onClick={() => onSelectView('activity')}>
         <Sparkles size={15} /> Activity

@@ -1,0 +1,16 @@
+{
+  "run_id": "7c5c01fb-ce60-4b14-a2e4-c84b653289c2",
+  "status": "partial",
+  "provider_failure_recovery": "passed",
+  "evidence_passages": 8,
+  "citations": 8,
+  "browser_reload": "passed",
+  "browser_citation_drawer": "passed",
+  "export": "passed",
+  "backend_tests_passed": 209,
+  "backend_tests_skipped": 8,
+  "frontend_tests_passed": 19,
+  "typecheck": "passed",
+  "build": "passed",
+  "generation_limit": "Gemini daily free quota exhausted; generated answers require available provider quota"
+}

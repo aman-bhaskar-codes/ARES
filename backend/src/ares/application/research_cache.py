@@ -75,6 +75,9 @@ class RunResearchCache:
         )
         if row is None:
             return None
+        # An empty search may reflect a temporary upstream suspension, not a lasting absence.
+        if namespace == "web.search" and not row["payload"].get("hits"):
+            return None
         return CacheLookup(
             payload=dict(row["payload"]),
             created_at=row["created_at"],

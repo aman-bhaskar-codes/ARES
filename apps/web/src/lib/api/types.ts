@@ -7,6 +7,9 @@ export type RunMode = Schema<'RunMode'>
 export type SupportStatus = Schema<'SupportStatus'>
 export type DocumentStatus = Schema<'DocumentStatus'>
 export type AssessmentState = Schema<'AssessmentState'>
+export type ModelProvider = 'gemini' | 'qwen'
+export interface ModelCatalog { default: ModelProvider; models: {id: ModelProvider; label: string; model: string; available: boolean; location: string}[] }
+
 export type SourceScope = 'web' | 'academic' | 'software' | 'documents'
 
 export type Conversation = Schema<'ConversationView'>
@@ -25,6 +28,7 @@ export interface AnswerBlock extends Omit<Schema<'AnswerBlock'>, 'citations' | '
 }
 export interface DateWindow { start: string | null; end: string | null; timezone: string }
 export interface RunSnapshot extends Omit<Schema<'RunSnapshot'>, 'source_scope' | 'document_ids' | 'date_window' | 'answer_blocks' | 'gaps' | 'cancellation_requested' | 'budget_version' | 'usage_ledger' | 'last_seq'> {
+  model_provider?: ModelProvider | null
   source_scope: SourceScope[]
   document_ids: string[]
   date_window: DateWindow | null

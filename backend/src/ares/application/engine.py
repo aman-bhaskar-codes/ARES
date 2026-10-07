@@ -864,9 +864,10 @@ class ResearchEngine:
             else:
                 context.consume(llm_calls=1, model_input_tokens=estimated_input_tokens)
                 estimated_output_tokens = budget.model_output_tokens
-                cost_usd = calculate_provider_cost(self.gemini_model, estimated_input_tokens, estimated_output_tokens)
+                local_writer = hasattr(self.llm, "manifest") and self.llm.manifest().get("adapter") == "ollama"
+                cost_usd = 0.0 if local_writer else calculate_provider_cost(self.gemini_model, estimated_input_tokens, estimated_output_tokens)
                 usage_id = self.repository.reserve_provider_usage(
-                    provider="gemini",
+                    provider="ollama" if local_writer else "gemini",
                     model=self.gemini_model,
                     rpm=self.gemini_rpm,
                     tpm=self.gemini_tpm,
@@ -900,6 +901,7 @@ class ResearchEngine:
             available = set(packet_by_id)
             semantic_calls = 0
             semantic_budget_exhausted = False
+            semantic_unavailable = False
             with telemetry.stage("evaluation.claims", claims=len(result.claims)):
                 for claim in result.claims:
                     ids = list(dict.fromkeys(claim.evidence_ids))
@@ -914,6 +916,7 @@ class ResearchEngine:
                         and decision.assessment_state is AssessmentState.HEURISTIC_SCREENED
                         and semantic_calls < self.semantic_checker_max_claims
                         and not semantic_budget_exhausted
+                        and not semantic_unavailable
                     ):
                         try:
                             semantic = self.synthesis._semantic_assess_claim(
@@ -934,6 +937,7 @@ class ResearchEngine:
                                 lease_token=lease.token,
                             )
                         except Exception as exc:
+                            semantic_unavailable = True
                             self.repository.record_event(
                                 run_id,
                                 "semantic_checker.degraded",
@@ -1061,7 +1065,7 @@ class ResearchEngine:
                 run_id, "SEARCH_UNAVAILABLE", str(exc), lease_token=lease.token
             )
         except LLMProviderError as exc:
-            self.repository.fail_run(run_id, "MODEL_UNAVAILABLE", str(exc), lease_token=lease.token)
+            self._partial_or_fail(lease, code="MODEL_UNAVAILABLE", message=str(exc))
         except Exception as exc:
             self.repository.fail_run(run_id, "UNEXPECTED_ERROR", str(exc), lease_token=lease.token)
 

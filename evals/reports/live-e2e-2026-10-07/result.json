@@ -1,0 +1,46 @@
+{
+  "result": "passed",
+  "run_id": "d8f234bb-ceba-4f1a-bb1e-0205a56dcd14",
+  "conversation_id": "fe79219d-7cfd-4ffd-8b59-d61a26a3c40b",
+  "query": "What is retrieval-augmented generation (RAG), and how does it differ from fine-tuning? Use cited sources.",
+  "status": "completed",
+  "claims": 4,
+  "citations": 6,
+  "evidence_passages": 8,
+  "sources": 5,
+  "checks": {
+    "live_query": true,
+    "citation_resolution": true,
+    "evidence_endpoints": true,
+    "saved_history": true,
+    "json_export_download": true,
+    "browser_markdown_download": true
+  },
+  "markdown_bytes": 16350,
+  "json_export_sha256": "f999b747118b194d3dcec968df9e8acf51f9d74bab2c8d8ded5ed2cd5961e370",
+  "follow_up": {
+    "run_id": "0b8459e9-ccef-4335-a624-7278d10e2b8f",
+    "query": "When should I combine RAG with fine-tuning? Cite the sources.",
+    "status": "completed",
+    "claims": 4,
+    "citations": 6,
+    "elapsed_seconds": 32.82,
+    "browser_reload_restored": true,
+    "citation_drawer_verified": true,
+    "semantic_claims_assessed": 1,
+    "optional_checker_degraded_events": 1
+  },
+  "configuration": {
+    "synthesis_model": "gemini-3.5-flash",
+    "checker_model": "gemini-3.5-flash"
+  },
+  "verification": {
+    "backend_tests_passed": 203,
+    "postgres_tests_skipped": 8,
+    "frontend_tests_passed": 19,
+    "frontend_typecheck": "passed",
+    "frontend_build": "passed",
+    "migration_upgrade_paths": "6 passed to 0019",
+    "strict_ui_audit": "28 findings including legacy worktree copies; broader UI compliance remains unverified"
+  }
+}

@@ -39,6 +39,13 @@ describe('API runtime validators', () => {
     expect(run.source_scope).toEqual([])
   })
 
+  it('preserves the selected provider and rejects unknown model IDs', () => {
+    const value = { id: 'run-1', conversation_id: 'conversation-1', query: 'question', mode: 'quick', status: 'queued', created_at: '2026-10-03T00:00:00Z', updated_at: '2026-10-03T00:00:00Z' }
+    expect(parseRunSnapshot({...value, model_provider: 'gemini'}).model_provider).toBe('gemini')
+    expect(parseRunSnapshot({...value, model_provider: 'qwen'}).model_provider).toBe('qwen')
+    expect(() => parseRunSnapshot({...value, model_provider: 'unknown'})).toThrow()
+  })
+
   it('rejects invalid run enums and malformed auth responses', () => {
     expect(() => parseRunSnapshot({
       id: 'run-1', conversation_id: 'conversation-1', query: 'question', mode: 'unknown', status: 'queued',

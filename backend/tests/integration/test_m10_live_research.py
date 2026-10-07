@@ -746,3 +746,41 @@ def test_semantic_checker_has_worker_enforced_deadline_even_if_adapter_blocks(
             telemetry=RunTelemetry(repository, lease),
         )
     assert time.perf_counter() - started < 0.25
+
+
+def test_semantic_outage_is_not_repeated_for_each_claim(tmp_path: Path) -> None:
+    class TwoClaimLLM(FixtureLLM):
+        def synthesize(self, query, evidence, **kwargs):
+            result = super().synthesize(query, evidence, **kwargs)
+            result.claims.append(SynthesizedClaim(text='The web fixture supports another claim.', evidence_ids=[evidence[0].evidence_id]))
+            return result
+
+    repository = repository_for(tmp_path)
+    chat = repository.create_conversation('Checker outage')
+    run, _ = repository.create_run(RunCreate(conversation_id=chat.id, query='web fixture supports claim', mode=RunMode.QUICK, source_scope=['web']), 'checker-outage-once')
+    lease = repository.claim_next_job()
+    assert lease is not None
+    engine = ResearchEngine(repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), TwoClaimLLM(), gemini_model='fixture', gemini_rpm=100, gemini_tpm=100_000, gemini_rpd=100, planner=OneVariantPlanner(), research_cache_enabled=False, semantic_checker=FailingSemanticChecker(), semantic_checker_model='fixture-semantic', semantic_checker_max_claims=6)
+    engine.execute(lease)
+    repository.finish_job(lease)
+    assert repository.get_run(run.id).status is RunStatus.COMPLETED
+    assert len([e for e in repository.list_events(run.id) if e.event_type == 'semantic_checker.degraded']) == 1
+    assert len(repository.get_run(run.id).answer_blocks[0].claims) == 2
+
+
+def test_failed_search_track_is_not_reported_as_no_results(tmp_path: Path):
+    from ares.ports.errors import SearchProviderError
+
+    class UnavailableSearch(SlowWebSearch):
+        def search(self, request):
+            raise SearchProviderError('Search engines are rate-limited')
+
+    repository = repository_for(tmp_path)
+    conversation = repository.create_conversation('Search outage regression')
+    run, _ = repository.create_run(RunCreate(conversation_id=conversation.id,
+        query='what is RSI ?', mode=RunMode.QUICK, source_scope=['web']),
+        idempotency_key='search-outage-regression')
+    lease = repository.claim_next_job()
+    engine = make_engine(repository, UnavailableSearch(ConcurrencyProbe()), FixtureFetcher())
+    engine.execute(lease)
+    assert repository.get_run(run.id).error_code == 'SEARCH_UNAVAILABLE'

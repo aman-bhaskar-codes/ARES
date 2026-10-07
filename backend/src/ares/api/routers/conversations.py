@@ -51,3 +51,10 @@ def list_conversation_runs(conversation_id: UUID, *, request: Request) -> list[R
         return repository.list_runs_for_conversation(conversation_id)
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': str(exc)}) from exc
+
+@router.delete("/api/v1/conversations/{conversation_id}", status_code=204)
+def delete_conversation(conversation_id: UUID, *, request: Request) -> None:
+    try:
+        request.app.state.repository.delete_conversation(conversation_id)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}) from exc

@@ -88,6 +88,9 @@ class SearXNGSearchProvider(DiscoveryProvider):
         if not isinstance(results, list):
             raise SearchProviderError("SearXNG returned an invalid results payload")
 
+        if not results and payload.get("unresponsive_engines"):
+            raise SearchProviderError("Search engines are temporarily unavailable or rate-limited. Please retry shortly.")
+
         hits: list[SearchHit] = []
         for index, item in enumerate(results, start=1):
             if len(hits) >= request.limit:

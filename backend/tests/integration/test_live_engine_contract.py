@@ -371,3 +371,27 @@ def test_rejected_claim_cannot_survive_visible_summary(tmp_path: Path) -> None:
     assert "10 percent" in block.markdown
     assert len(block.claims) == 1
     assert block.claims[0].checker_version == "m07-v1"
+
+
+def test_provider_failure_preserves_readable_cited_evidence(tmp_path: Path) -> None:
+    from ares.ports.errors import LLMProviderError
+
+    class UnavailableLLM:
+        def synthesize(self, *args, **kwargs):
+            raise LLMProviderError('Gemini quota exhausted')
+
+    _, sessions = build_session_factory(f"sqlite+pysqlite:///{tmp_path / 'unavailable.sqlite3'}")
+    Base.metadata.create_all(sessions.kw['bind'])
+    repository = Repository(sessions)
+    conversation = repository.create_conversation('Provider failure')
+    run, _ = repository.create_run(RunCreate(conversation_id=conversation.id, query='What does the fixture say?', mode=RunMode.QUICK, source_scope=['web']), 'unavailable-1')
+    lease = repository.claim_next_job()
+    assert lease is not None
+    ResearchEngine(repository, FakeSearch(), TrackingFetcher(), UnavailableLLM(), gemini_model="fixture", gemini_rpm=10, gemini_tpm=100_000, gemini_rpd=100).execute(lease)
+    repository.finish_job(lease)
+    snapshot = repository.get_run(run.id)
+    assert snapshot.status is RunStatus.PARTIAL
+    assert 'Gemini quota exhausted' in snapshot.answer_blocks[0].markdown
+    assert 'Evidence passage for a bounded' in snapshot.answer_blocks[0].markdown
+    assert snapshot.answer_blocks[0].citations
+    assert not snapshot.answer_blocks[0].claims

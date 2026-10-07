@@ -8,13 +8,12 @@ export function ClaimNarrative({ block, onEvidence }: { block: AnswerBlock; onEv
   return (
     <div className="answer-prose claim-narrative">
       {block.claims.map((claim, index) => {
-        const isSupported = claim.support_status === 'supported' && claim.assessment_state === 'semantic_assessed'
+        const hasSemanticException = claim.assessment_state === 'semantic_assessed' && claim.support_status !== 'supported'
         return (
-          <p key={`${claim.text}-${index}`} className={isSupported ? '' : `claim-exception claim-${claim.support_status}`}>
-            {!isSupported && (
+          <p key={`${claim.text}-${index}`} className={hasSemanticException ? `claim-exception claim-${claim.support_status}` : ''}>
+            {hasSemanticException && (
                <span className="claim-status-inline">
-                 {claim.assessment_state !== 'semantic_assessed' ? 'SEMANTIC SUPPORT UNASSESSED' : 
-                  claim.support_status === 'partially_supported' ? 'PARTLY SUPPORTED' :
+                 {claim.support_status === 'partially_supported' ? 'PARTLY SUPPORTED' :
                   claim.support_status === 'conflicting' ? 'SOURCES DISAGREE' : 'EVIDENCE INCOMPLETE'}
                </span>
             )}

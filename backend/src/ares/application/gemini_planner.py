@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Literal
 import time
 
@@ -17,6 +18,7 @@ OUTPUT SCHEMA:
 Return a JSON object matching the ResearchPlan schema.
 intent options: "exact", "narrow", "comparison", "multi-hop", "temporal", "analysis"
 time_range options: "day", "week", "month", "year", or null
+language: "all" or an ISO language code such as "en"; never a language name.
 subqueries: up to 3 focused search queries for finding evidence.
 query_variants: up to 8 variations.
 facets: up to 12 strings describing facets to cover.
@@ -67,6 +69,10 @@ class GeminiResearchPlanner:
                 )
             )
             data = json.loads(response.text)
+            language = data.get("language", "all")
+            # Model output is untrusted: SearXNG rejects names such as "English".
+            if not isinstance(language, str) or not re.fullmatch(r"all|[a-z]{2}(?:-[A-Za-z]{2})?", language):
+                data["language"] = "all"
             return ResearchPlan.model_validate(data)
         except Exception:
             return self._fallback.plan(query, mode, date_window)

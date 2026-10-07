@@ -1596,3 +1596,38 @@
   padding-left: 24px;
   line-height: 1.7;
 }
+
+/* Keep claim exceptions readable in both themes; status is also expressed in text. */
+.claim-narrative .claim-exception {
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.claim-status-inline {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+}
+
+html[data-theme="dark"] .claim-partially_supported {
+  background: #2a2418;
+  border-color: #5f5132;
+}
+
+html[data-theme="dark"] .claim-conflicting,
+html[data-theme="dark"] .claim-insufficient_evidence {
+  background: #2b1c1c;
+  border-color: #68423e;
+}
+
+.thread-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.thread-row > button:first-child { flex: 1; min-width: 0; }
+.thread-list .thread-delete { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 8px; color: var(--muted); }
+.thread-list .thread-delete:hover { color: #c74747; }
+.thread-list .thread-delete:focus-visible { outline: 2px solid var(--muted); outline-offset: -2px; }
+.thread-list .thread-delete:disabled { opacity: .4; cursor: wait; }
+
+.answer-verification-note { font-size: 0.8rem; line-height: 1.6; color: var(--muted); margin: 0 0 20px; }

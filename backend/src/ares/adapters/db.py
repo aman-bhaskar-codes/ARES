@@ -157,6 +157,7 @@ class ConversationRow(Base):
 
 class RunRow(Base):
     __tablename__ = "runs"
+    model_provider: Mapped[str | None] = mapped_column(String(24), nullable=True)
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     conversation_id: Mapped[UUID] = mapped_column(
         ForeignKey("conversations.id", ondelete="CASCADE"), index=True

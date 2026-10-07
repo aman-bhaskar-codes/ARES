@@ -18,7 +18,7 @@ from ares.domain.models import (
     SearchHit,
 )
 from ares.domain.research import ResearchPlan, SearchRequest
-from ares.ports.errors import ProviderRateLimitError
+from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
 
 class CancelledRun(RuntimeError):
@@ -725,6 +725,7 @@ class DiscoveryStage:
             return results["web"], results["academic"], results["software"], plan
         pool = ThreadPoolExecutor(max_workers=min(self.engine.discovery_concurrency, len(tasks)))
         futures = {}
+        failures: list[Exception] = []
         try:
             for name, task in tasks.items():
                 futures[pool.submit(task)] = name
@@ -744,6 +745,7 @@ class DiscoveryStage:
                     except (RunDeadlineExceeded, RunBudgetExceededError):
                         raise
                     except ProviderRateLimitError as exc:
+                        failures.append(exc)
                         self.engine.repository.record_event(
                             lease.run_id,
                             "provider.backoff",
@@ -762,12 +764,15 @@ class DiscoveryStage:
                             lease_token=lease.token,
                         )
                     except Exception as exc:
+                        failures.append(exc)
                         self.engine.repository.record_event(
                             lease.run_id,
                             "discovery.track_failed",
                             {"track": name, "error": type(exc).__name__, "message": str(exc)[:300]},
                             lease_token=lease.token,
                         )
+            if failures and not any(results.values()):
+                raise SearchProviderError("Source discovery is temporarily unavailable: " + str(failures[0])[:300]) from failures[0]
             return results["web"], results["academic"], results["software"], plan
         finally:
             pool.shutdown(wait=False, cancel_futures=True)

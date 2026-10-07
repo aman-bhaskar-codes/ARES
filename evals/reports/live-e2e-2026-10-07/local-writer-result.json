@@ -1,0 +1,201 @@
+{
+  "writer": "local Ollama qwen3:4b",
+  "semantic_verification": false,
+  "retrieval": "lexical; local embedding bottleneck disabled",
+  "runs": [
+    {
+      "run_id": "4aadd53a-0a9f-4f5f-aeef-da0d5cc6e281",
+      "status": "completed",
+      "answer_blocks": [
+        {
+          "id": "answer-1",
+          "markdown": "### Evidence-checked answer\n\nA qubit is a two-state quantum system that encodes information as a superposition of 0 and 1.\n\nDecoherence is a critical challenge in quantum computing because it directly undermines the stability of quantum states, leading to computational errors.\n\nDecoherence is primarily caused by quantum noise, thermal fluctuations, and charge/flux noise in qubit systems.",
+          "citations": [
+            {
+              "evidence_id": "53ead316-c6e1-4712-9eda-032495b2172a",
+              "label": 1
+            },
+            {
+              "evidence_id": "1e6e9967-f8ab-462f-8f8e-e6e6720fe236",
+              "label": 2
+            },
+            {
+              "evidence_id": "13ca2574-7c2b-4be4-bb87-f441c3140226",
+              "label": 3
+            }
+          ],
+          "claims": [
+            {
+              "text": "A qubit is a two-state quantum system that encodes information as a superposition of 0 and 1.",
+              "citation_labels": [
+                1
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            },
+            {
+              "text": "Decoherence is a critical challenge in quantum computing because it directly undermines the stability of quantum states, leading to computational errors.",
+              "citation_labels": [
+                2
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            },
+            {
+              "text": "Decoherence is primarily caused by quantum noise, thermal fluctuations, and charge/flux noise in qubit systems.",
+              "citation_labels": [
+                3
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            }
+          ],
+          "finalized": true
+        }
+      ],
+      "evidence_count": 8
+    },
+    {
+      "run_id": "a49b418f-a3ad-4c0a-ab17-76b8493b52b2",
+      "status": "completed",
+      "answer_blocks": [
+        {
+          "id": "answer-1",
+          "markdown": "### Evidence-checked answer\n\nPhotonic qubits are less susceptible to decoherence compared to matter qubits, as photons do not appreciably interact with the environment unless lost.\n\nCorrelated errors from environmental interactions can affect multiple qubits simultaneously, challenging error-correction schemes designed for independent qubit errors.",
+          "citations": [
+            {
+              "evidence_id": "889238e5-5ecf-4290-9a49-ab6142f8c680",
+              "label": 1
+            },
+            {
+              "evidence_id": "96e63a36-9d9d-4653-bdfc-9286339429bb",
+              "label": 2
+            },
+            {
+              "evidence_id": "0bd70c75-d11b-48ee-9444-04bea4c56e14",
+              "label": 3
+            }
+          ],
+          "claims": [
+            {
+              "text": "Photonic qubits are less susceptible to decoherence compared to matter qubits, as photons do not appreciably interact with the environment unless lost.",
+              "citation_labels": [
+                1,
+                2
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            },
+            {
+              "text": "Correlated errors from environmental interactions can affect multiple qubits simultaneously, challenging error-correction schemes designed for independent qubit errors.",
+              "citation_labels": [
+                3
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            }
+          ],
+          "finalized": true
+        }
+      ],
+      "evidence_count": 8
+    },
+    {
+      "run_id": "daf0195c-3e12-4568-9cda-189a6d0bd8f9",
+      "status": "completed",
+      "answer_blocks": [
+        {
+          "id": "answer-1",
+          "markdown": "### Evidence-checked answer\n\nA qubit is a two-state quantum system that encodes '0' or '1' and serves as the fundamental unit of quantum information.\n\nDecoherence occurs when a qubit interacts with its environment, causing loss of quantum information and computational errors.\n\nDecoherence undermines quantum computing by destabilizing qubits, making it a critical barrier to scalable and reliable quantum systems.",
+          "citations": [
+            {
+              "evidence_id": "513e0e4b-4bac-4d19-9ab3-7288ee7e7401",
+              "label": 1
+            },
+            {
+              "evidence_id": "5ad7fb83-905c-4e47-9962-6ec77ff41f04",
+              "label": 2
+            },
+            {
+              "evidence_id": "63ce50f6-3ed5-4c20-ab4f-d7b5b7667d8b",
+              "label": 3
+            }
+          ],
+          "claims": [
+            {
+              "text": "A qubit is a two-state quantum system that encodes '0' or '1' and serves as the fundamental unit of quantum information.",
+              "citation_labels": [
+                1
+              ],
+              "support_status": "partially_supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "evidence overlap is partial"
+            },
+            {
+              "text": "Decoherence occurs when a qubit interacts with its environment, causing loss of quantum information and computational errors.",
+              "citation_labels": [
+                2
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            },
+            {
+              "text": "Decoherence undermines quantum computing by destabilizing qubits, making it a critical barrier to scalable and reliable quantum systems.",
+              "citation_labels": [
+                3
+              ],
+              "support_status": "supported",
+              "checker_method": "deterministic_heuristic",
+              "checker_version": "m07-v1",
+              "assessment_state": "heuristic_screened",
+              "assessment_rationale": "material overlap and explicit quantities are compatible"
+            }
+          ],
+          "finalized": true
+        }
+      ],
+      "evidence_count": 8
+    }
+  ],
+  "markdown_export_passed": true,
+  "final_run_seconds": 24.311,
+  "final_synthesis_seconds": 21.99,
+  "final_retrieval_seconds": 0.061,
+  "browser_checks": {
+    "answer_rendered": true,
+    "citation_drawer": true,
+    "reload": true
+  },
+  "verification": {
+    "backend_passed": 214,
+    "backend_skipped": 8,
+    "frontend_passed": 19,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "limitations": [
+    "Semantic model verification disabled; claims visibly labelled unassessed.",
+    "Third-party search engines may still be unavailable or rate-limited.",
+    "Live timing uses cached source discovery and pages."
+  ]
+}

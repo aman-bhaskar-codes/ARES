@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any, Literal
 
@@ -59,9 +60,13 @@ class GeminiSemanticClaimChecker:
                 raise SemanticCheckerUnavailable("google-genai is not installed") from exc
             client = genai.Client(
                 api_key=api_key,
-                http_options=types.HttpOptions(timeout=max(1, int(float(timeout_seconds) * 1000))),
+                http_options=types.HttpOptions(
+                    timeout=max(1, int(float(timeout_seconds) * 1000)),
+                    retry_options=types.HttpRetryOptions(attempts=0),
+                ),
             )
         self._client = client
+        self._runner = asyncio.Runner()
         self._owns_client = owns_client
         self._model = model
         self._thinking_level = thinking_level
@@ -152,9 +157,8 @@ class GeminiSemanticClaimChecker:
             )
             
         if timeout_seconds is not None and getattr(self._client, "aio", None):
-            import asyncio
             try:
-                return asyncio.run(
+                return self._runner.run(
                     asyncio.wait_for(
                         self._async_assess_claim(claim, evidence),
                         timeout=timeout_seconds,
@@ -201,8 +205,13 @@ class GeminiSemanticClaimChecker:
         return self._parse_assessment(interaction, evidence)
 
     def close(self) -> None:
-        if not self._owns_client:
-            return
-        close = getattr(self._client, "close", None)
-        if callable(close):
-            close()
+        try:
+            if self._owns_client:
+                aio_close = getattr(getattr(self._client, "aio", None), "aclose", None)
+                if callable(aio_close):
+                    self._runner.run(aio_close())
+                close = getattr(self._client, "close", None)
+                if callable(close):
+                    close()
+        finally:
+            self._runner.close()
