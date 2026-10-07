@@ -45,13 +45,14 @@ def test_m12_backup_and_restore_rehearsal() -> None:
             idempotency_key="abc",
         ))
         session.flush()
+        from datetime import datetime, UTC
         session.add(SourceRow(
             id=doc_id,
             run_id=run_id,
             title="Doc",
             url="http://test.local",
             domain="test.local",
-            fetched_at=uuid.uuid1().time / 10000000,
+            fetched_at=datetime.now(UTC),
             extraction_method="web",
             content_hash="xyz"
         ))
