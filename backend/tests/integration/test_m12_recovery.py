@@ -64,9 +64,10 @@ def test_m12_backup_and_restore_rehearsal() -> None:
         env = os.environ.copy()
         
         # pg_dump
+        pg_dump_url = POSTGRES_URL.replace("postgresql+psycopg://", "postgresql://").replace("postgresql+psycopg2://", "postgresql://")
         try:
             subprocess.run(
-                ["pg_dump", "--format=custom", "--no-owner", "--no-acl", "--file", str(dump_path), POSTGRES_URL],
+                ["pg_dump", "--format=custom", "--no-owner", "--no-acl", "--file", str(dump_path), pg_dump_url],
                 env=env,
                 check=True,
                 capture_output=True,
@@ -85,7 +86,7 @@ def test_m12_backup_and_restore_rehearsal() -> None:
         
         # 4. Restore
         subprocess.run(
-            ["pg_restore", "--clean", "--if-exists", "--no-owner", "--no-acl", "--dbname", POSTGRES_URL, str(dump_path)],
+            ["pg_restore", "--clean", "--if-exists", "--no-owner", "--no-acl", "--dbname", pg_dump_url, str(dump_path)],
             env=env,
             check=True
         )
