@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, UTC
-from typing import Literal
+from typing import Literal, Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 
 class SearchRequest(BaseModel):
@@ -26,7 +26,6 @@ class ResearchPlan(BaseModel):
     intent: Literal["exact", "narrow", "comparison", "multi-hop", "temporal", "analysis"] = "narrow"
     subqueries: list[str] = Field(default_factory=list, max_length=3)
 
-    from pydantic import model_validator
     @model_validator(mode="after")
     def _default_subqueries(self) -> ResearchPlan:
         if not self.subqueries:
@@ -87,7 +86,7 @@ class RetrievalTrace(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     query_hash: str
     profile_id: UUID
-    filters: dict
+    filters: dict[str, Any]
     candidate_ids: list[UUID]
     candidate_ranks: list[float]
     selected_packet_ids: list[UUID]
