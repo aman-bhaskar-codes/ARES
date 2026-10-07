@@ -912,12 +912,12 @@ class RetrievalTraceRow(Base):
         sa.ForeignKey("retrieval_profiles.id", ondelete="CASCADE"), index=True
     )
     filters: Mapped[dict] = mapped_column(sa.JSON)
-    candidate_ids: Mapped[list[UUID]] = mapped_column(sa.ARRAY(sa.Uuid))
-    candidate_ranks: Mapped[list[float]] = mapped_column(sa.ARRAY(sa.Float))
-    selected_packet_ids: Mapped[list[UUID]] = mapped_column(sa.ARRAY(sa.Uuid))
+    candidate_ids: Mapped[list[UUID]] = mapped_column(sa.JSON)
+    candidate_ranks: Mapped[list[float]] = mapped_column(sa.JSON)
+    selected_packet_ids: Mapped[list[UUID]] = mapped_column(sa.JSON)
     stage_times: Mapped[dict] = mapped_column(sa.JSON)
     cache_freshness: Mapped[str]
-    coverage_gaps: Mapped[list[str]] = mapped_column(sa.ARRAY(sa.String))
+    coverage_gaps: Mapped[list[str]] = mapped_column(sa.JSON)
     policy_revision: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)

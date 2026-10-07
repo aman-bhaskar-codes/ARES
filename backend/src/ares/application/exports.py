@@ -64,7 +64,7 @@ class ExportService:
     @staticmethod
     def _manifest(run, evidence) -> dict[str, object]:
         return {
-            "schema_version": 2,
+            "schema_version": 1,
             "run": run.model_dump(mode="json"),
             "evidence": [item.model_dump(mode="json") for item in evidence],
             "export_provenance": {
@@ -124,19 +124,21 @@ class ExportService:
         return f"<!DOCTYPE html><html><head><title>Export {run.id}</title></head><body><pre>{escaped_md}</pre></body></html>"
         
     def _pdf(self, run, evidence) -> bytes:
-        # Stub for local isolated playwright print process
         html_str = self._html(run, evidence)
         try:
             from playwright.sync_api import sync_playwright
-            with sync_playwright() as p:
-                browser = p.chromium.launch()
-                # Network disabled context
-                context = browser.new_context(offline=True)
-                page = context.new_page()
-                page.set_content(html_str)
-                pdf_bytes = page.pdf()
-                browser.close()
-                return pdf_bytes
-        except ImportError:
-            logger.warning("Playwright not installed, returning plain text PDF stub")
-            return html_str.encode('utf-8')
+        except ImportError as exc:
+            raise ExportError("PDF renderer is unavailable. Export Markdown or HTML instead.") from exc
+        try:
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch(timeout=15_000)
+                try:
+                    context = browser.new_context(offline=True, java_script_enabled=False)
+                    page = context.new_page()
+                    page.set_content(html_str, timeout=15_000)
+                    return page.pdf()
+                finally:
+                    browser.close()
+        except Exception as exc:
+            logger.exception("PDF rendering failed")
+            raise ExportError("PDF renderer failed. Export Markdown or HTML instead.") from exc

@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+from ares.domain.research import AnswerOutline, RunAssessment
 
 
 class RunMode(StrEnum):

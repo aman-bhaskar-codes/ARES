@@ -544,7 +544,7 @@ class ResearchEngine:
                         run.query, network_documents, limit=pool_size
                     )
                 for trace in network_result.trace:
-                    self.repository.store_retrieval_trace(trace)
+                    pass #self.repository.store_retrieval_trace(trace)
                 network_ranked = network_result.candidates
                 self.repository.record_event(
                     run_id,
@@ -763,7 +763,7 @@ class ResearchEngine:
                             targeted_query, [doc for _, doc in extra_fetched], limit=8
                         )
                     for trace in extra_result.trace:
-                        self.repository.store_retrieval_trace(trace)
+                        pass #self.repository.store_retrieval_trace(trace)
                     extra_ranked = extra_result.candidates
                     self.repository.record_event(
                         run_id,

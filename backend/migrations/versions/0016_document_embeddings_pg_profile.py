@@ -16,6 +16,8 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
+    if op.get_bind().dialect.name != "postgresql":
+        return
     # We must alter the document_embeddings_pg table and add profile_id
     op.execute("ALTER TABLE document_embeddings_pg ADD COLUMN profile_id UUID NULL;")
     op.execute("ALTER TABLE document_embeddings_pg ADD CONSTRAINT fk_doc_embed_pg_profile FOREIGN KEY (profile_id) REFERENCES retrieval_profiles (id) ON DELETE CASCADE;")
@@ -28,6 +30,8 @@ def upgrade() -> None:
     # No, the unique constraint is already chunk_id, model_id, dimensions. We just added profile_id.
 
 def downgrade() -> None:
+    if op.get_bind().dialect.name != "postgresql":
+        return
     op.execute("DROP INDEX ix_document_embeddings_pg_profile_id;")
     op.execute("ALTER TABLE document_embeddings_pg DROP CONSTRAINT fk_doc_embed_pg_profile;")
     op.execute("ALTER TABLE document_embeddings_pg DROP COLUMN profile_id;")

@@ -419,10 +419,6 @@ def create_app(settings: Settings | None=None) -> FastAPI:
             return bool(resolved is not None and resolved.principal.session_id == principal.session_id and (resolved.principal.user_id == principal.user_id) and (resolved.principal.workspace_id == principal.workspace_id))
         generator = stream_run_events(repository=repository, run_id=run_id, request=request, principal=principal, after=cursor, revalidate=revalidate, page_size=cfg.event_page_size, max_replay=cfg.event_max_replay, heartbeat_seconds=cfg.event_heartbeat_seconds, authorization_recheck_seconds=cfg.stream_authorization_recheck_seconds)
         return StreamingResponse(generator, media_type='text/event-stream', headers={'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no'})
-    if cfg.web_dist_dir:
-        web_root = Path(cfg.web_dist_dir)
-        if web_root.is_dir():
-            app.mount('/', SpaStaticFiles(directory=web_root, html=True), name='web')
     app.include_router(auth_router.router)
     app.include_router(system_router.router)
     app.include_router(conversations_router.router)
@@ -434,5 +430,9 @@ def create_app(settings: Settings | None=None) -> FastAPI:
     app.include_router(evidence_router.router)
     app.include_router(artifacts_router.router)
     app.include_router(internal_router.router)
+    if cfg.web_dist_dir:
+        web_root = Path(cfg.web_dist_dir)
+        if web_root.is_dir():
+            app.mount('/', SpaStaticFiles(directory=web_root, html=True), name='web')
     return app
 app = create_app()
