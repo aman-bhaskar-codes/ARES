@@ -1,97 +1,148 @@
-# ARES: AI Research and Engineering System
+<div align="center">
+  <img src="https://raw.githubusercontent.com/amanbhaskar/ARES/main/ares_banner.jpg" alt="ARES Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px;" />
 
-ARES is an autonomous, scalable, and highly capable AI research and engineering system. It provides a full-stack platform for running deep research tasks, retrieving multi-modal evidence, extracting semantic content, and producing high-quality generated reports. 
+  # ✦ ARES ✦
+  **Autonomous AI Research and Engineering System**
 
-## Capabilities
+  <p align="center">
+    A world-class, multi-agent platform for deep research, hybrid retrieval-augmented generation (RAG), and intelligent multi-modal content extraction.
+  </p>
 
-- **Autonomous Research Engine:** Operates deep, multi-wave research cycles to answer complex queries.
-- **Hybrid Retrieval-Augmented Generation (RAG):** Combines lexical search and semantic vector similarity (using Qdrant) for highly accurate context retrieval.
-- **Multi-Modal Support:** Capable of processing documents, web content, PDFs, and structuring data into rich formats.
-- **Interactive Web Interface:** A highly polished Next.js/React frontend with real-time streaming updates, fluid animations, and a rich, responsive user experience.
-- **Local & Cloud LLM Support:** Works seamlessly with cloud providers (OpenAI, Anthropic, Gemini) and local models via Ollama.
-- **Export & Portability:** Generates polished, formatted PDF and Markdown exports of research sessions.
+  <p align="center">
+    <img src="https://img.shields.io/badge/Python-3.12+-blue.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/TypeScript-Ready-blue.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Next.js-14-black.svg?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/FastAPI-Modern-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/Qdrant-Vector_DB-FF5252.svg?style=for-the-badge&logo=qdrant&logoColor=white" alt="Qdrant" />
+  </p>
+</div>
 
-## Tech Stack
+<br />
 
-### Backend
-- **Python 3.12+**
-- **FastAPI:** High-performance async API server.
-- **SQLAlchemy & Alembic:** Robust ORM and database migrations.
-- **PostgreSQL / SQLite:** Persistent state storage (SQLite for local dev, PostgreSQL for production).
-- **Qdrant:** Vector database for semantic search and embeddings.
-- **Playwright:** Headless browser automation for PDF exports.
+## 🚀 Vision & Capabilities
 
-### Frontend
-- **TypeScript & React 18+**
-- **Next.js:** Server-side rendering and API routes.
-- **Tailwind CSS & Framer Motion:** Fluid, modern, and responsive UI components.
-- **PNPM:** Fast, disk-space efficient package manager.
+ARES is engineered from the ground up to be the ultimate **AI-driven research companion**. By blending deterministic data extraction pipelines with state-of-the-art Generative AI, ARES executes complex, multi-wave research processes completely autonomously. 
 
-## Getting Started
+Whether you are performing deep literature reviews, generating bounded financial summaries, or creating polished Markdown/PDF reports, ARES handles the entire lifecycle securely and deterministically.
 
-### Prerequisites
+### 🌟 Key Features
+- **🧠 Autonomous Research Engine**: Spawns concurrent AI workers to conduct deep, iterative web and document searches.
+- **⚡ Hybrid RAG Pipeline**: Merges dense semantic vector similarity (via **Qdrant**) with precise lexical token matching for unparalleled retrieval accuracy.
+- **🖥️ Cinematic Web Interface**: A stunning, ultra-responsive **Next.js & React** interface, styled with **Tailwind CSS** and **Framer Motion** for a fluid, real-time streaming experience.
+- **🛡️ Secure & Sandboxed Execution**: Data bounded strictly to authorized workspaces, backed by **PostgreSQL** or **SQLite**.
+- **🌐 Omni-Model Architecture**: Seamlessly plug-and-play with cloud giants (OpenAI, Anthropic, Gemini) or run 100% locally with offline models via **Ollama**.
 
-Ensure you have the following installed on your machine (Mac, Windows, or Linux):
-1. **Python 3.12+** (We recommend using [uv](https://github.com/astral-sh/uv) for fast Python package management)
-2. **Node.js 20+** & **pnpm** (For the frontend)
-3. **Ollama** (Optional, if you want to run models locally)
+---
 
-### Installation & Setup
+## 🏗️ Technology Stack
 
-**1. Clone the repository**
+ARES is built utilizing a hardened, production-grade enterprise stack divided into distinct, scalable domains:
+
+### 🐍 The Backend Control Plane
+The nervous system of ARES, providing real-time data streaming and asynchronous job execution.
+* **Core**: Python 3.12+, asynchronous event loops.
+* **API Framework**: **FastAPI** with robust Pydantic schemas.
+* **Database & ORM**: **SQLAlchemy** (async), **Alembic** for migrations, **PostgreSQL** (production) / **SQLite** (local).
+* **Vector Store**: **Qdrant** for high-dimensional semantic search.
+* **Tooling**: **uv** (lightning-fast Python package manager), **Playwright** (headless Chromium for PDF generation).
+
+### ⚛️ The Frontend Interface
+A beautiful, highly interactive SPA built for raw speed and aesthetics.
+* **Core**: TypeScript, React 18+.
+* **Framework**: **Next.js** (App Router).
+* **Styling & Animation**: **Tailwind CSS**, **Framer Motion**.
+* **State Management**: React Query / Context API.
+* **Tooling**: **pnpm** (fast, disk-space efficient package manager).
+
+---
+
+## 🛠️ Quick Start & Installation
+
+You can get ARES up and running on any machine (Mac, Windows, Linux) in minutes.
+
+### 1. Prerequisites
+Ensure you have the following installed on your system:
+* **[uv](https://docs.astral.sh/uv/)** - An extremely fast Python package and project manager.
+* **Node.js (v20+)** & **[pnpm](https://pnpm.io/)** - For the frontend.
+* *(Optional)* **Ollama** - If you intend to run AI models entirely locally on your hardware.
+
+### 2. Clone the Repository
 ```bash
-git clone <your-repo-url>
-cd ares
+git clone https://github.com/your-username/ARES.git
+cd ARES
 ```
 
-**2. Backend Setup**
+### 3. Backend Setup
+We use `uv` to guarantee fast, deterministic Python environments.
 ```bash
-# Navigate to the backend directory
+# Move to the backend directory
 cd backend
 
-# Install dependencies using uv
+# Install dependencies instantly via uv
 uv sync
 
-# Set up environment variables
+# Setup your environment variables
 cp ../.env.example ../.env
+# -> Edit ../.env with your specific API keys if not using local models
 
-# Install Playwright dependencies (required for PDF exports)
+# Install Playwright browser binaries (Required for PDF export capabilities)
 uv run playwright install chromium
 ```
 
-**3. Frontend Setup**
+### 4. Frontend Setup
 ```bash
-# Navigate back to the root directory
+# Return to the root directory
 cd ..
 
-# Install frontend dependencies
+# Install all node packages via pnpm
 pnpm install
 ```
 
-### Running the Application
+---
 
-You need to start two processes (in separate terminal windows) to run ARES locally.
+## 🚦 Running ARES
 
-**Terminal 1: Start the Backend API & Background Worker**
+To run the full suite locally, you will need to open **two separate terminal windows**.
+
+### Terminal 1: Backend Services (API & Worker)
+Start the primary FastAPI server and the background job worker.
 ```bash
-# Start the FastAPI server
+# 1. Start the API Server (runs on port 8000)
 uv run --project backend uvicorn ares.api.app:app --app-dir backend/src --reload
 
-# In another tab, start the background worker (processes research jobs)
+# 2. In a NEW tab, start the Background Job Worker
 PYTHONPATH=backend/src uv run --project backend python -m ares.worker.main
 ```
 
-**Terminal 2: Start the Web Frontend**
+### Terminal 2: Web Frontend
+Start the stunning Next.js interface.
 ```bash
-# Start the Next.js frontend
+# Start the web UI (runs on port 3000)
 pnpm --filter @ares/web dev
 ```
 
-Once both are running, open your browser and navigate to `http://localhost:3000`.
+🎯 **That's it!** Open your browser and navigate to **[http://localhost:3000](http://localhost:3000)** to experience ARES.
 
-### Using Local Models (Optional)
-To run ARES completely locally without relying on external APIs, you can use Ollama:
-1. Ensure Ollama is running (`ollama serve`).
-2. Download your preferred model (e.g., `ollama pull qwen2.5:3b`).
-3. Set `LOCAL_LLM_ENABLED=true` and `LOCAL_LLM_MODEL=qwen2.5:3b` in your `.env` file.
+---
 
+## 🔋 Running 100% Locally (Offline AI)
+
+ARES is fully compatible with local, offline LLMs via **Ollama** for maximum privacy and zero API costs.
+
+1. Install and start [Ollama](https://ollama.com/).
+2. Pull your preferred model (e.g., `qwen2.5:3b` or `llama3`):
+   ```bash
+   ollama pull qwen2.5:3b
+   ```
+3. Update your `.env` file at the root of the project:
+   ```env
+   LOCAL_LLM_ENABLED=true
+   LOCAL_LLM_URL=http://127.0.0.1:11434
+   LOCAL_LLM_MODEL=qwen2.5:3b
+   ```
+4. Restart your backend services. ARES will now route all autonomous research through your local GPU/CPU!
+
+---
+<div align="center">
+  <i>Engineered for the future of Autonomous Intelligence.</i>
+</div>
