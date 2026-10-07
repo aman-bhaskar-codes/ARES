@@ -543,6 +543,8 @@ class ResearchEngine:
                     network_result = self.retriever.retrieve_with_trace(
                         run.query, network_documents, limit=pool_size
                     )
+                for trace in network_result.trace:
+                    self.repository.store_retrieval_trace(trace)
                 network_ranked = network_result.candidates
                 self.repository.record_event(
                     run_id,
@@ -760,6 +762,8 @@ class ResearchEngine:
                         extra_result = self.retriever.retrieve_with_trace(
                             targeted_query, [doc for _, doc in extra_fetched], limit=8
                         )
+                    for trace in extra_result.trace:
+                        self.repository.store_retrieval_trace(trace)
                     extra_ranked = extra_result.candidates
                     self.repository.record_event(
                         run_id,
@@ -1001,9 +1005,41 @@ class ResearchEngine:
                     message="Synthesis produced no claim that passed the current evidence checks.",
                 )
                 return
+
+            run_supports = []
+            run_contradicts = []
+            for claim in persisted_claims:
+                for eid, rel in claim.evidence_relations.items():
+                    if rel == "supports":
+                        run_supports.append(UUID(eid))
+                    elif rel == "contradicts":
+                        run_contradicts.append(UUID(eid))
+
+            avg_confidence = 1.0 # Or compute from decisions if needed
+            from ares.domain.research import RunAssessment
+            run_assessment = RunAssessment(
+                method="semantic" if semantic_calls > 0 else "heuristic",
+                version="v1",
+                rationale="Aggregated claim assessments",
+                relations={
+                    "supports": list(set(run_supports)),
+                    "contradicts": list(set(run_contradicts)),
+                    "contextualizes": [],
+                },
+                confidence_extraction=avg_confidence,
+                confidence_relevance=avg_confidence,
+                confidence_support=avg_confidence,
+            )
+
             checked_markdown = compose_checked_markdown(persisted_claims)
             self.repository.finalize_answer(
-                run_id, checked_markdown, persisted_claims, result.gaps, lease_token=lease.token
+                run_id,
+                checked_markdown,
+                persisted_claims,
+                result.gaps,
+                outline=result.outline,
+                assessment=run_assessment,
+                lease_token=lease.token,
             )
             self.repository.set_status(run_id, RunStatus.COMPLETED, lease_token=lease.token)
         except CancelledRun:

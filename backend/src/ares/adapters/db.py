@@ -4,6 +4,7 @@ import os
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+import sqlalchemy as sa
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -182,6 +183,8 @@ class RunRow(Base):
     gaps: Mapped[list[str]] = mapped_column(JSON, default=list)
     error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    outline: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    assessment: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     cancellation_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     idempotency_key: Mapped[str] = mapped_column(String(128), unique=True, index=True)
     request_hash: Mapped[str] = mapped_column(String(64))
@@ -896,6 +899,29 @@ class ProviderUsageRow(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
     )
 
+
+class RetrievalTraceRow(Base):
+    __tablename__ = "retrieval_traces"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    workspace_id: Mapped[UUID] = mapped_column(
+        sa.ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    query_hash: Mapped[str]
+    profile_id: Mapped[UUID] = mapped_column(
+        sa.ForeignKey("retrieval_profiles.id", ondelete="CASCADE"), index=True
+    )
+    filters: Mapped[dict] = mapped_column(sa.JSON)
+    candidate_ids: Mapped[list[UUID]] = mapped_column(sa.ARRAY(sa.Uuid))
+    candidate_ranks: Mapped[list[float]] = mapped_column(sa.ARRAY(sa.Float))
+    selected_packet_ids: Mapped[list[UUID]] = mapped_column(sa.ARRAY(sa.Uuid))
+    stage_times: Mapped[dict] = mapped_column(sa.JSON)
+    cache_freshness: Mapped[str]
+    coverage_gaps: Mapped[list[str]] = mapped_column(sa.ARRAY(sa.String))
+    policy_revision: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
 
 def default_database_url() -> str:
     return os.getenv("DATABASE_URL", "sqlite+pysqlite:///./.data/ares-dev.sqlite3")

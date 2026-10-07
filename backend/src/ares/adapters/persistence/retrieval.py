@@ -9,6 +9,7 @@ from sqlalchemy import delete, func, select, text
 
 from ares.adapters.db import (
     RetrievalProfileRow,
+    RetrievalTraceRow,
     AssetRenditionRow,
     AssetVersionRow,
     DocumentChunkRow,
@@ -30,7 +31,7 @@ from ares.domain.models import (
     RunCreate,
     SupportStatus,
 )
-from ares.domain.research import EvidenceCandidate, EvidencePacket
+from ares.domain.research import EvidenceCandidate, EvidencePacket, RetrievalTrace
 from ares.application.documents import PreparedChunk
 from ares.application.source_identity import source_origin_group
 
@@ -47,6 +48,27 @@ def _hash_request(payload: RunCreate) -> str:
 
 
 class SqlRetrievalRepository(SqlRepositoryBase):
+    def store_retrieval_trace(self, trace: RetrievalTrace) -> None:
+        principal = self._request_principal()
+        with self._sessions.begin() as session:
+            self._ensure_local_identity(session, principal)
+            row = RetrievalTraceRow(
+                id=trace.id,
+                workspace_id=principal.workspace_id,
+                query_hash=trace.query_hash,
+                profile_id=trace.profile_id,
+                filters=trace.filters,
+                candidate_ids=trace.candidate_ids,
+                candidate_ranks=trace.candidate_ranks,
+                selected_packet_ids=trace.selected_packet_ids,
+                stage_times=trace.stage_times,
+                cache_freshness=trace.cache_freshness,
+                coverage_gaps=trace.coverage_gaps,
+                policy_revision=trace.policy_revision,
+                created_at=trace.created_at,
+            )
+            session.add(row)
+
     def mark_document_semantic_ready(
         self, lease: IngestionLease, document_id: UUID, *, ready: bool
     ) -> None:

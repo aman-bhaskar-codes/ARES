@@ -6,20 +6,15 @@ ARES is an evidence-first research application built as a React/Vite client, Fas
 
 ## Current milestone
 
-**Milestone 11 — visual research workspace and V2 release proof** is implemented in source as ARES `0.11.0`, schema `0012`. It extends the supplied M10 release candidate in place; no framework, evidence-store, database, or worker rewrite was introduced.
+**Milestone 15 — Professional workspace, documents and V3 release proof** is implemented in source as ARES `0.15.0`. It advances the V2 release by introducing robust agentic workflows, deterministic reporting, and immutable artifact generation.
 
-M11 completes the V2 product surface around the evidence contracts built in M07–M10:
+M15 completes the V3 product surface around the evidence contracts:
 
-- stable conversation/run/evidence deep links with SPA fallback, answer/sources/comparison/activity workspace views, safe Markdown/GFM rendering, source/date/read-state filters, semantic light/dark tokens, reduced-motion handling, and keyboard/focus-aware evidence inspection;
-- additive migration `0012_visual_artifacts` for workspace-owned visualization datasets, approved non-executable specs, lineage, and export metadata;
-- deterministic worker-side visualization publication after finalized research, with `visualization.ready` / `visualization.failed` durable events and no model-controlled JavaScript, HTML, SQL, Python, or chart expressions;
-- evidence-linked comparison matrices, validated numeric charts, honest source-publication timelines, and capped claim/evidence/source relationship maps with text/table alternatives;
-- server-authorized lineage-bearing CSV exports with private/no-store headers and spreadsheet-formula escaping;
-- release proof tooling for migration compatibility, deterministic SBOM/archive generation, pinned GitHub Actions, browser E2E, accessibility/responsive checks, and explicit external held-out evaluation boundaries.
-
-Milestones 1–10 remain integrated: durable execution and replay, strict-free provider policy, OIDC/workspaces/RLS, asynchronous document/image/table ingestion, local indexing, audio/video timestamp evidence, bounded concurrent live research, source-origin grouping, facets, semantic assessment, and isolated browser fallback.
-
-The checked-in regression fixtures are **not an independent benchmark**. Source completion is also distinct from production promotion: PostgreSQL/FORCE-RLS target-role tests, the three-browser E2E matrix, backup/restore and M06→M11 rehearsal, live OIDC/provider/media/browser checks, and the separately authored >=100-question held-out evaluation/external tester round still require the operator's provisioned environment. See `docs/development/MILESTONE_11_RELEASE_REPORT.md`.
+- **Immutable Reports:** Generated `ReportDocument` artifacts securely combining generated summaries, evaluated claims, and extracted evidence in Markdown, JSON, HTML, and optional PDF.
+- **Workflow Executor:** Enforced, bounded research agents with DAG states, retry bounds, scope restrictions, and transparent UX via `AgentPlanPanel`.
+- **Verified Free Tools:** Extensible adapter integrations including Wikimedia, Europe PMC, RSS feeds, deterministic table operations, alongside legacy SearXNG and arXiv sources.
+- **Watchlists & Subscriptions:** Change-detection monitoring, assessing only deltas via background PostgreSQL scheduler.
+- **E2E & Resilience Verification:** Integrated `verify_v3_release.py` gating contract tests, schema constraints, and browser E2E workflows.
 
 ## Research flow
 
@@ -148,13 +143,13 @@ PYTHONPATH=backend/src python scripts/verify_migrations.py
 python scripts/production_doctor.py --env-file .env.production
 python scripts/check_secrets.py
 make perf-baseline
-make verify-m11-release
+python scripts/verify_v3_release.py
 make sbom
 # Builds the deterministic source archive under dist/ after source-level gates pass:
-make release-m11
+make release-v3
 ```
 
-For the M11 browser gate, prepare a provisioned run with at least 200 persisted user-safe activity events and export its IDs, then run `make test-e2e`; the target executes Chromium, Firefox and WebKit at the 320 px/reduced-motion/deep-link/focus-return boundary. For independent release evaluation, point `ARES_M11_HELDOUT_MANIFEST` at the separately authored >=100-case manifest and run `make eval-m11-heldout`. The implementation agent must not populate that held-out set and then call it independent.
+For the browser gate, verify E2E testing passes as integrated into `scripts/verify_v3_release.py`.
 
 After populating `.env`, validate live service/API wiring with bounded read-only probes:
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -82,3 +82,35 @@ class RetrievalProfile(BaseModel):
     chunk_policy: str
     extraction_revision: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class RetrievalTrace(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    query_hash: str
+    profile_id: UUID
+    filters: dict
+    candidate_ids: list[UUID]
+    candidate_ranks: list[float]
+    selected_packet_ids: list[UUID]
+    stage_times: dict[str, float]
+    cache_freshness: str
+    coverage_gaps: list[str]
+    policy_revision: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+class ClaimProposal(BaseModel):
+    claim: str
+    evidence_ids: list[UUID]
+
+class AnswerOutline(BaseModel):
+    sections: list[str]
+    facets: list[str]
+    claims: list[ClaimProposal]
+
+class RunAssessment(BaseModel):
+    method: str
+    version: str
+    rationale: str
+    relations: dict[str, list[UUID]]
+    confidence_extraction: float
+    confidence_relevance: float
+    confidence_support: float

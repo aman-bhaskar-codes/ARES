@@ -248,6 +248,8 @@ class SynthesisResult(BaseModel):
     gaps: list[str] = Field(default_factory=list)
     provider_input_tokens: int | None = Field(default=None, ge=0)
     provider_output_tokens: int | None = Field(default=None, ge=0)
+    outline: AnswerOutline | None = None
+    assessment: RunAssessment | None = None
 
 
 class DocumentTextCreate(BaseModel):
@@ -273,13 +275,13 @@ class DocumentView(BaseModel):
 
 
 class ExportCreate(BaseModel):
-    format: Literal["markdown", "json"]
+    format: Literal["markdown", "json", "html", "pdf"]
 
 
 class ArtifactView(BaseModel):
     id: UUID
     run_id: UUID
-    format: Literal["markdown", "json"]
+    format: Literal["markdown", "json", "html", "pdf"]
     file_name: str
     content_type: str
     byte_count: int
@@ -330,6 +332,9 @@ class RunQualityView(BaseModel):
     queue_wait_ms: float | None = None
     run_elapsed_ms: float | None = None
     gaps_count: int = 0
+    confidence_extraction: float | None = None
+    confidence_relevance: float | None = None
+    confidence_support: float | None = None
 
 
 class AuthMeView(BaseModel):

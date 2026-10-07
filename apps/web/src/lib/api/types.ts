@@ -158,6 +158,9 @@ export interface RunQuality extends Omit<Schema<'RunQualityView'>,
   queue_wait_ms: number | null
   run_elapsed_ms: number | null
   gaps_count: number
+  confidence_extraction?: number
+  confidence_relevance?: number
+  confidence_support?: number
 }
 export interface RunEvent {
   schema_version: number

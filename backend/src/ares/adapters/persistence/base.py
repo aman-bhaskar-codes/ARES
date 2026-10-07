@@ -76,6 +76,7 @@ from ares.domain.state_machine import assert_transition
 
 
 from ares.ports.repositories import NotFoundError, StaleLeaseError, QuotaExceededError, RunAuthorizationError, JobLease, IngestionLease
+from ares.domain.research import AnswerOutline, RunAssessment
 
 
 def _hash_request(payload: RunCreate) -> str:
@@ -471,6 +472,8 @@ class SqlRepositoryBase:
         ],
         gaps: list[str],
         *,
+        outline: AnswerOutline | None = None,
+        assessment: RunAssessment | None = None,
         lease_token: UUID | None = None,
     ) -> None:
         normalized: list[FinalizedClaim] = []
@@ -570,6 +573,10 @@ class SqlRepositoryBase:
             )
             row.answer_blocks = [block.model_dump(mode="json")]
             row.gaps = gaps
+            if outline:
+                row.outline = outline.model_dump(mode="json")
+            if assessment:
+                row.assessment = assessment.model_dump(mode="json")
             block_payload = block.model_dump(mode="json")
             # Preserve the M07 event for rolling clients and add the explicit M10 semantic: this
             # payload is complete, server-validated, and safe to replace by block id/version.

@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from ares.domain.models import SynthesisResult, SynthesizedClaim
-from ares.domain.research import EvidencePacket
+from ares.domain.research import EvidencePacket, AnswerOutline, ClaimProposal
 from ares.ports.errors import LLMProviderError
 
 
@@ -21,6 +21,8 @@ class _ModelClaim(BaseModel):
 
 class _ModelAnswer(BaseModel):
     summary_markdown: str
+    sections: list[str] = Field(default_factory=list)
+    facets: list[str] = Field(default_factory=list)
     claims: list[_ModelClaim] = Field(min_length=1)
     gaps: list[str] = Field(default_factory=list)
 
@@ -41,6 +43,8 @@ GROUNDING CONTRACT
 
 OUTPUT CONTRACT
 - `summary_markdown` is concise research prose and must not contain raw HTML.
+- `sections` is a list of logical section titles used in the summary.
+- `facets` is a list of distinct aspects or dimensions covered by the answer.
 - `claims` contains the material externally checkable statements represented in the summary.
 - Return only the schema-conforming structured response.
 """
@@ -128,6 +132,7 @@ class GeminiLLMProvider:
         except Exception as exc:
             raise ProviderUnavailable("Gemini returned invalid structured output") from exc
         claims: list[SynthesizedClaim] = []
+        claim_proposals: list[ClaimProposal] = []
         for claim in parsed.claims:
             ids = []
             for index in claim.evidence_indexes:
@@ -137,10 +142,18 @@ class GeminiLLMProvider:
                 if evidence_id not in ids:
                     ids.append(evidence_id)
             claims.append(SynthesizedClaim(text=claim.text, evidence_ids=ids))
+            claim_proposals.append(ClaimProposal(claim=claim.text, evidence_ids=ids))
+        
+        outline = AnswerOutline(
+            sections=parsed.sections,
+            facets=parsed.facets,
+            claims=claim_proposals,
+        )
         return SynthesisResult(
             summary_markdown=parsed.summary_markdown,
             claims=claims,
             gaps=parsed.gaps,
+            outline=outline,
         )
 
     def synthesize(

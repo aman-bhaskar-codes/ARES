@@ -905,6 +905,9 @@ class SqlViewRepository(SqlRepositoryBase):
                 queue_wait_ms=queue_wait_ms,
                 run_elapsed_ms=run_elapsed_ms,
                 gaps_count=len(run.gaps or []),
+                confidence_extraction=run.assessment.get("confidence_extraction") if run.assessment else None,
+                confidence_relevance=run.assessment.get("confidence_relevance") if run.assessment else None,
+                confidence_support=run.assessment.get("confidence_support") if run.assessment else None,
             )
 
     def list_visualizations(self, run_id: UUID) -> list[VisualizationView]:
