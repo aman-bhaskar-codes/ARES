@@ -1,7 +1,6 @@
 from typing import Any, Literal
 from pydantic import BaseModel, Field
 from uuid import UUID
-from datetime import datetime
 
 WorkflowNodeState = Literal[
     "pending",

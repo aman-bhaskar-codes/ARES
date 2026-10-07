@@ -1,6 +1,4 @@
-import sqlite3
 import pandas as pd
-from typing import Any
 import logging
 from ares.domain.tools import ToolSpec, ToolContext, ToolResult
 
@@ -108,6 +106,6 @@ class TableOperationsTool:
             return ToolResult(payload={"results": results})
         except KeyError as e:
             return ToolResult(error_category="invalid_input", error_message=f"Missing column: {str(e)}")
-        except Exception as e:
+        except Exception:
             logger.exception("Table operation failed")
             return ToolResult(error_category="unavailable", error_message="Calculation error.")

@@ -108,6 +108,6 @@ class RSSTool:
             return ToolResult(error_category="unavailable", error_message=str(e))
         except ET.ParseError:
             return ToolResult(error_category="unavailable", error_message="Failed to parse XML.")
-        except Exception as e:
+        except Exception:
             logger.exception("RSS fetch failed")
             return ToolResult(error_category="unavailable", error_message="RSS fetch failed.")

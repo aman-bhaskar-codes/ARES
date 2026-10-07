@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Literal, Dict, Any
 from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime
 
 ReportSectionKind = Literal[
     "overview",

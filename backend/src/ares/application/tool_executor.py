@@ -1,8 +1,7 @@
-import json
 import logging
 import jsonschema
 from typing import Dict, Any
-from ares.domain.tools import ToolSpec, ToolContext, ToolResult, ToolErrorCategory
+from ares.domain.tools import ToolSpec, ToolContext, ToolResult
 from ares.ports.tools import Tool
 from ares.application.repository import Repository
 
@@ -74,7 +73,7 @@ class ToolExecutor:
                     )
             
             return result
-        except Exception as e:
+        except Exception:
             logger.exception(f"Unhandled exception executing tool {name}")
             return ToolResult(
                 error_category="unavailable",

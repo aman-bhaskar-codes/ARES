@@ -92,6 +92,6 @@ class EuropePMCTool:
             if e.response.status_code == 429:
                 return ToolResult(error_category="rate_limited", error_message="Europe PMC rate limited.")
             return ToolResult(error_category="unavailable", error_message=str(e))
-        except Exception as e:
+        except Exception:
             logger.exception("Europe PMC query failed")
             return ToolResult(error_category="unavailable", error_message="Europe PMC query failed.")

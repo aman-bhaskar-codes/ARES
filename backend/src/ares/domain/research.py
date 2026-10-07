@@ -4,7 +4,7 @@ from datetime import datetime, UTC
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, model_validator, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class SearchRequest(BaseModel):

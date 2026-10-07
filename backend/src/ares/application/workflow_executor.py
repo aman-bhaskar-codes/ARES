@@ -1,6 +1,5 @@
 import logging
-from uuid import UUID
-from ares.domain.workflows import WorkflowPlan, WorkflowNodeState
+from ares.domain.workflows import WorkflowPlan
 from ares.application.tool_executor import ToolExecutor
 from ares.domain.tools import ToolContext
 from ares.application.repository import Repository
@@ -76,7 +75,7 @@ class WorkflowExecutor:
                 else:
                     node.state = "completed"
                     node.output_references = result.payload
-            except Exception as e:
+            except Exception:
                 logger.exception(f"Unhandled error in node execution {node.node_id}")
                 if node.retries_remaining > 0:
                     node.retries_remaining -= 1

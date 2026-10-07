@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock
 from ares.application.gemini_planner import GeminiResearchPlanner
-from ares.domain.research import ResearchPlan
 from ares.domain.models import RunMode
 
 def test_gemini_planner_injection_cannot_invent_tools_or_documents():

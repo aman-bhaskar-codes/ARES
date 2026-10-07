@@ -96,6 +96,6 @@ class WikimediaTool:
             if e.response.status_code == 429:
                 return ToolResult(error_category="rate_limited", error_message="Wikimedia rate limited.")
             return ToolResult(error_category="unavailable", error_message=str(e))
-        except Exception as e:
+        except Exception:
             logger.exception("Wikimedia query failed")
             return ToolResult(error_category="unavailable", error_message="Wikimedia query failed.")
