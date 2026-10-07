@@ -111,6 +111,11 @@ def test_research_engine_persists_claim_level_citations_and_bounds_fetches(tmp_p
     assert block.claims[1].citation_labels == [2]
     assert len(block.citations) == 2
     assert fetcher.max_active <= 2  # Quick-mode per-run HTTP concurrency ceiling.
+    retrieval = next(event for event in repository.list_events(run.id, after=0, limit=200)
+                     if event.event_type == "retrieval.network")
+    assert retrieval.payload["trace"]
+    assert retrieval.payload["trace"][0]["candidate_id"]
+    assert retrieval.payload["trace"][0]["fused_rank"] == 1
 
 
 class BlockingFetcher(TrackingFetcher):

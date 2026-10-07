@@ -9,7 +9,7 @@ class InvalidTransition(ValueError):
 
 _ALLOWED: dict[RunStatus, set[RunStatus]] = {
     RunStatus.QUEUED: {RunStatus.PLANNING, RunStatus.CANCELLED, RunStatus.FAILED},
-    RunStatus.PLANNING: {RunStatus.DISCOVERING, RunStatus.CANCELLED, RunStatus.FAILED},
+    RunStatus.PLANNING: {RunStatus.DISCOVERING, RunStatus.PARTIAL, RunStatus.CANCELLED, RunStatus.FAILED},
     RunStatus.DISCOVERING: {
         RunStatus.READING,
         RunStatus.CHECKING,

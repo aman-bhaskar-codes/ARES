@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import re
 from contextlib import contextmanager
+from dataclasses import asdict
 from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
@@ -543,8 +544,6 @@ class ResearchEngine:
                     network_result = self.retriever.retrieve_with_trace(
                         run.query, network_documents, limit=pool_size
                     )
-                for trace in network_result.trace:
-                    pass #self.repository.store_retrieval_trace(trace)
                 network_ranked = network_result.candidates
                 self.repository.record_event(
                     run_id,
@@ -553,6 +552,7 @@ class ResearchEngine:
                         "mode": network_result.mode,
                         "semantic_used": network_result.semantic_used,
                         "candidates": len(network_result.trace),
+                        "trace": [asdict(item) for item in network_result.trace[:60]],
                         "selected": len(network_result.candidates),
                     },
                     lease_token=lease.token,
@@ -762,8 +762,6 @@ class ResearchEngine:
                         extra_result = self.retriever.retrieve_with_trace(
                             targeted_query, [doc for _, doc in extra_fetched], limit=8
                         )
-                    for trace in extra_result.trace:
-                        pass #self.repository.store_retrieval_trace(trace)
                     extra_ranked = extra_result.candidates
                     self.repository.record_event(
                         run_id,
@@ -773,6 +771,7 @@ class ResearchEngine:
                             "mode": extra_result.mode,
                             "semantic_used": extra_result.semantic_used,
                             "candidates": len(extra_result.trace),
+                            "trace": [asdict(item) for item in extra_result.trace[:60]],
                             "selected": len(extra_ranked),
                         },
                         lease_token=lease.token,
