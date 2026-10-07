@@ -41,7 +41,8 @@ def test_m12_backup_and_restore_rehearsal() -> None:
             query="Restore test",
             mode="research",
             status="completed",
-            request_hash="abc"
+            request_hash="abc",
+            idempotency_key="abc",
         ))
         session.flush()
         session.add(SourceRow(
