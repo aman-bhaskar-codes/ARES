@@ -32,6 +32,8 @@ def test_postgres_serializes_provider_quota_reservations() -> None:
                 tpm=1000,
                 rpd=10,
                 input_tokens=100,
+                output_tokens=0,
+                cost_usd=0.0,
             )
         except QuotaExceededError:
             return "rejected"
@@ -49,22 +51,30 @@ def test_postgres_serializes_active_run_admission() -> None:
     from ares.adapters.db import Base
     from ares.application.repository import RunAdmissionError
     from ares.domain.models import RunCreate
+    from ares.application.auth import AuthStore
+    from ares.application.identity import principal_scope
 
     assert POSTGRES_URL is not None
     engine, sessions = build_session_factory(POSTGRES_URL)
     Base.metadata.create_all(engine)
+    
+    store = AuthStore(sessions)
+    principal = store.upsert_identity(subject=f"concurrency-{uuid4()}", email=None, display_name="C")
+        
     repository = Repository(sessions)
-    conversation = repository.create_conversation(f"admission-{uuid4()}")
-    barrier = Barrier(2)
+    with principal_scope(principal):
+        conversation = repository.create_conversation(f"admission-{uuid4()}")
+        barrier = Barrier(2)
 
     def create(index: int) -> str:
         barrier.wait(timeout=10)
         try:
-            repository.create_run(
-                RunCreate(conversation_id=conversation.id, query=f"concurrent run {index}"),
-                f"pg-admission-{uuid4()}",
-                max_active_runs=1,
-            )
+            with principal_scope(principal):
+                repository.create_run(
+                    RunCreate(conversation_id=conversation.id, query=f"concurrent run {index}"),
+                    f"pg-admission-{uuid4()}",
+                    max_active_runs=1,
+                )
         except RunAdmissionError:
             return "rejected"
         return "admitted"

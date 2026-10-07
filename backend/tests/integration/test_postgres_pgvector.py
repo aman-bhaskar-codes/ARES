@@ -17,15 +17,22 @@ pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL
 
 
 def test_pgvector_exact_search_uses_migrated_sidecar() -> None:
+    from ares.application.auth import AuthStore
+    from ares.application.identity import principal_scope
+    
     assert POSTGRES_URL is not None
     engine, sessions = build_session_factory(POSTGRES_URL)
+    store = AuthStore(sessions)
+    principal = store.upsert_identity(subject=f"pgvector-{uuid4()}", email=None, display_name="V")
+    
     repository = Repository(sessions)
     suffix = uuid4().hex[:8]
     memory = "Agent memory evaluation requires durable evidence and retrieval measurements."
     traffic = "Traffic signal timing optimizes corridor progression and queue discharge."
-    document = repository.create_user_document(
-        name=f"vector-{suffix}.txt",
-        mime_type="text/plain",
+    with principal_scope(principal):
+        document = repository.create_user_document(
+            name=f"vector-{suffix}.txt",
+            mime_type="text/plain",
         text=memory + "\n\n" + traffic,
         raw_bytes=(memory + "\n\n" + traffic).encode(),
         blob_key=None,

@@ -17,19 +17,44 @@ def test_m12_backup_and_restore_rehearsal() -> None:
     assert POSTGRES_URL is not None
     engine = create_engine(POSTGRES_URL)
     
-    # 1. Setup initial state
-    tenant_id = uuid.uuid4()
+    from ares.adapters.db import Base, WorkspaceRow, UserRow, ConversationRow, RunRow, SourceRow
+    from sqlalchemy.orm import Session
+    
+    Base.metadata.create_all(engine)
+    
+    workspace_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    conversation_id = uuid.uuid4()
     run_id = uuid.uuid4()
     doc_id = uuid.uuid4()
-    
 
-
-    # Create workspace, document, and media blob via repository
-    # Wait, doing this via SQL is easier to avoid missing repository methods
-    with engine.begin() as conn:
-        conn.execute(text("INSERT INTO tenants (id, created_at) VALUES (:tid, now()) ON CONFLICT DO NOTHING"), {"tid": tenant_id})
-        conn.execute(text("INSERT INTO runs (id, tenant_id, name, created_at, updated_at) VALUES (:rid, :tid, 'Restore Test', now(), now())"), {"rid": run_id, "tid": tenant_id})
-        conn.execute(text("INSERT INTO sources (id, tenant_id, status) VALUES (:sid, :tid, 'indexed')"), {"sid": doc_id, "tid": tenant_id})
+    with Session(engine) as session:
+        session.add(WorkspaceRow(id=workspace_id, name="Recovery Test"))
+        session.add(UserRow(id=user_id, subject=f"test-{uuid.uuid4()}"))
+        session.flush()
+        session.add(ConversationRow(id=conversation_id, workspace_id=workspace_id, created_by_user_id=user_id, title="Test"))
+        session.add(RunRow(
+            id=run_id,
+            conversation_id=conversation_id,
+            workspace_id=workspace_id,
+            created_by_user_id=user_id,
+            query="Restore test",
+            mode="research",
+            status="completed",
+            request_hash="abc"
+        ))
+        session.flush()
+        session.add(SourceRow(
+            id=doc_id,
+            run_id=run_id,
+            title="Doc",
+            url="http://test.local",
+            domain="test.local",
+            fetched_at=uuid.uuid1().time / 10000000,
+            extraction_method="web",
+            content_hash="xyz"
+        ))
+        session.commit()
 
     # 2. Run pg_dump
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -58,16 +83,16 @@ def test_m12_backup_and_restore_rehearsal() -> None:
         
         # 5. Validate references and isolation
         with engine.connect() as conn:
-            runs = conn.execute(text("SELECT id, name FROM runs WHERE tenant_id = :tid"), {"tid": tenant_id}).fetchall()
+            runs = conn.execute(text("SELECT id, query FROM runs WHERE workspace_id = :wid"), {"wid": workspace_id}).fetchall()
             assert len(runs) == 1
             assert runs[0][0] == run_id
             
-            docs = conn.execute(text("SELECT id FROM sources WHERE tenant_id = :tid"), {"tid": tenant_id}).fetchall()
+            docs = conn.execute(text("SELECT id FROM sources WHERE run_id = :rid"), {"rid": run_id}).fetchall()
             assert len(docs) == 1
             assert docs[0][0] == doc_id
             
             # Isolation check
-            other_tenant = uuid.uuid4()
-            other_runs = conn.execute(text("SELECT id FROM runs WHERE tenant_id = :tid"), {"tid": other_tenant}).fetchall()
+            other_workspace = uuid.uuid4()
+            other_runs = conn.execute(text("SELECT id FROM runs WHERE workspace_id = :wid"), {"wid": other_workspace}).fetchall()
             assert len(other_runs) == 0
 

@@ -28,6 +28,15 @@ def test_production_readiness_requires_expected_schema_and_trusted_host() -> Non
         required_schema_revision="0013",
         readiness_requires_worker=False,
     )
+    from ares.adapters.db import build_session_factory
+    from sqlalchemy import text
+    engine, _ = build_session_factory(POSTGRES_URL)
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))"))
+        connection.execute(text("DELETE FROM alembic_version"))
+        connection.execute(text("INSERT INTO alembic_version (version_num) VALUES ('0013')"))
+    engine.dispose()
+    
     client = TestClient(create_app(settings), base_url="https://testserver")
     ready = client.get("/health/ready")
     assert ready.status_code == 200

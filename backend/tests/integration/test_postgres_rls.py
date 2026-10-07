@@ -65,6 +65,7 @@ def test_postgres_rls_hides_other_workspace_and_rejects_cross_tenant_insert() ->
                 )
     finally:
         with engine.begin() as connection:
+            connection.execute(text(f'DROP OWNED BY "{role}"'))
             connection.execute(text(f'DROP ROLE IF EXISTS "{role}"'))
         engine.dispose()
 
@@ -129,6 +130,7 @@ def test_postgres_pool_reuse_clears_tenant_context() -> None:
             )
     finally:
         with engine.begin() as connection:
+            connection.execute(text(f'DROP OWNED BY "{role}"'))
             connection.execute(text(f'DROP ROLE IF EXISTS "{role}"'))
         engine.dispose()
 
@@ -147,13 +149,13 @@ def test_m11_visualization_tables_enforce_workspace_rls_and_api_read_only_grants
     with principal_scope(a):
         conv_a = repo.create_conversation(f"visual-a-{suffix}")
         run_a, _ = repo.create_run(
-            RunCreate(conversation_id=conv_a.id, query="a", mode=RunMode.QUICK),
+            RunCreate(conversation_id=conv_a.id, query="query_a", mode=RunMode.QUICK),
             idempotency_key=f"visual-a-{suffix}",
         )
     with principal_scope(b):
         conv_b = repo.create_conversation(f"visual-b-{suffix}")
         run_b, _ = repo.create_run(
-            RunCreate(conversation_id=conv_b.id, query="b", mode=RunMode.QUICK),
+            RunCreate(conversation_id=conv_b.id, query="query_b", mode=RunMode.QUICK),
             idempotency_key=f"visual-b-{suffix}",
         )
 
@@ -275,5 +277,6 @@ def test_m11_visualization_tables_enforce_workspace_rls_and_api_read_only_grants
                 )
     finally:
         with engine.begin() as connection:
+            connection.execute(text(f'DROP OWNED BY "{role}"'))
             connection.execute(text(f'DROP ROLE IF EXISTS "{role}"'))
         engine.dispose()
