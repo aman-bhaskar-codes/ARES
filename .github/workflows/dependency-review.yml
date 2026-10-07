@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
       - name: Reject newly introduced vulnerable dependencies
-        uses: actions/dependency-review-action@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
           fail-on-scopes: development, runtime
