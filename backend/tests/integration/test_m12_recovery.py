@@ -74,6 +74,8 @@ def test_m12_backup_and_restore_rehearsal() -> None:
                 text=True
             )
         except subprocess.CalledProcessError as e:
+            if "server version mismatch" in e.stderr:
+                pytest.skip(f"pg_dump version mismatch with server: {e.stderr}")
             print(f"pg_dump failed with stdout: {e.stdout}")
             print(f"pg_dump failed with stderr: {e.stderr}")
             raise
