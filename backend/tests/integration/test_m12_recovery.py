@@ -64,11 +64,18 @@ def test_m12_backup_and_restore_rehearsal() -> None:
         env = os.environ.copy()
         
         # pg_dump
-        subprocess.run(
-            ["pg_dump", "--format=custom", "--no-owner", "--no-acl", "--file", str(dump_path), POSTGRES_URL],
-            env=env,
-            check=True
-        )
+        try:
+            subprocess.run(
+                ["pg_dump", "--format=custom", "--no-owner", "--no-acl", "--file", str(dump_path), POSTGRES_URL],
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"pg_dump failed with stdout: {e.stdout}")
+            print(f"pg_dump failed with stderr: {e.stderr}")
+            raise
         assert dump_path.exists()
         
         # 3. Simulate failure (wipe data)
