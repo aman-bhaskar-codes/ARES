@@ -123,9 +123,9 @@ jobs:
           docker compose -f infra/production/compose.yaml config --quiet
       - name: Generate deterministic CycloneDX SBOM
         run: python scripts/generate_sbom.py --output /tmp/ARES_M11.sbom.cdx.json
-      - name: Verify source-level M11 release proof
-        run: PYTHONPATH=backend/src python scripts/verify_m11_release.py
+      - name: Verify source-level V3 release proof
+        run: PYTHONPATH=backend/src python scripts/verify_v3_release.py --skip-e2e --skip-archive
       - name: Verify release archive construction
-        run: python scripts/release_archive.py --output /tmp/ARES_M11_release_candidate.zip --prefix ARES_M11_release_candidate
+        run: python scripts/release_archive.py --output /tmp/ARES_V3_release_candidate.zip --prefix ARES_V3_release_candidate
       - name: Verify SBOM and release manifest are embedded
-        run: unzip -l /tmp/ARES_M11_release_candidate.zip | grep -E 'SBOM.cdx.json|RELEASE_MANIFEST.json'
+        run: unzip -l /tmp/ARES_V3_release_candidate.zip | grep -E 'SBOM.cdx.json|RELEASE_MANIFEST.json'

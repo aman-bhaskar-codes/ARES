@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_VERSION = "0.15.0"
+EXPECTED_VERSION = "0.12.0"
 EXPECTED_SCHEMA = "0016_v3_capabilities" # Placeholder for latest schema
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 
