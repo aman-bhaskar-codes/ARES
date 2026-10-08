@@ -1,7 +1,5 @@
 import ast
-import os
 import glob
-from copy import deepcopy
 
 for path in glob.glob('backend/src/ares/api/routers/*.py'):
     with open(path) as f:

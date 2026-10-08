@@ -1,5 +1,4 @@
 import ast
-import os
 
 class EndpointRemover(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
