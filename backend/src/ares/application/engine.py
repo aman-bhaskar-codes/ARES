@@ -376,6 +376,23 @@ class ResearchEngine:
             self.repository.prepare_run_resume(lease)
             run = self.repository.get_run(run_id)
             budget = BUDGETS[run.mode]
+            import dataclasses
+            if "speed" in run.plugins:
+                budget = dataclasses.replace(
+                    budget,
+                    max_waves=1,
+                    max_llm_calls=min(4, budget.max_llm_calls),
+                    max_search_requests=min(6, budget.max_search_requests),
+                    max_documents=min(10, budget.max_documents)
+                )
+            if "accuracy" in run.plugins:
+                budget = dataclasses.replace(
+                    budget,
+                    max_waves=budget.max_waves + 1,
+                    max_llm_calls=budget.max_llm_calls * 2,
+                    max_search_requests=budget.max_search_requests + 6,
+                    max_documents=budget.max_documents * 2
+                )
             context = RunContext.create(self.repository, lease, budget)
             checkpoints = CheckpointStore(self.repository, run_id, lease.token)
             telemetry = RunTelemetry(self.repository, lease)
@@ -534,7 +551,7 @@ class ResearchEngine:
             self._check_cancel(lease, context)
             self._check_cancel(lease, context)
             self.repository.set_status(run_id, RunStatus.EXTRACTING, lease_token=lease.token)
-            max_evidence = min(12, 8 if run.mode.value == "quick" else 16)
+            max_evidence = 15 if run.mode.value == "quick" else 30
             pool_size = 60
             network_documents = [
                 document for hit, document in fetched if hit.provider != "documents"
@@ -1040,6 +1057,7 @@ class ResearchEngine:
                 checked_markdown,
                 persisted_claims,
                 result.gaps,
+                related_questions=result.related_questions,
                 outline=result.outline,
                 assessment=run_assessment,
                 lease_token=lease.token,

@@ -473,6 +473,7 @@ class SqlRepositoryBase:
         ],
         gaps: list[str],
         *,
+        related_questions: list[str] | None = None,
         outline: AnswerOutline | None = None,
         assessment: RunAssessment | None = None,
         lease_token: UUID | None = None,
@@ -574,6 +575,8 @@ class SqlRepositoryBase:
             )
             row.answer_blocks = [block.model_dump(mode="json")]
             row.gaps = gaps
+            if related_questions:
+                row.related_questions = related_questions
             if outline:
                 row.outline = outline.model_dump(mode="json")
             if assessment:
@@ -972,6 +975,8 @@ class SqlRepositoryBase:
             status=RunStatus(row.status),
             answer_blocks=[AnswerBlock.model_validate(value) for value in row.answer_blocks or []],
             gaps=list(row.gaps or []),
+            plugins=list(row.plugins or []),
+            related_questions=list(row.related_questions or []),
             error_code=row.error_code,
             error_message=row.error_message,
             cancellation_requested=row.cancellation_requested,

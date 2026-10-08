@@ -80,6 +80,7 @@ export interface RunInput {
   mode: RunMode
   sourceScope: SourceScope[]
   documentIds: string[]
+  plugins: string[]
   dateWindow?: DateWindow | null
   idempotencyKey: string
 }
@@ -122,7 +123,7 @@ export const api = {
     const values = await request<unknown[]>(`/api/v1/conversations/${conversationId}/runs`)
     return values.map(parseRunSnapshot)
   },
-  createRun: ({ conversationId, query, modelProvider, mode, sourceScope, documentIds, dateWindow, idempotencyKey }: RunInput) =>
+  createRun: ({ conversationId, query, modelProvider, mode, sourceScope, documentIds, plugins, dateWindow, idempotencyKey }: RunInput) =>
     request<RunSnapshot>('/api/v1/runs', {
       method: 'POST',
       headers: { ...jsonHeaders, 'Idempotency-Key': idempotencyKey },
@@ -133,6 +134,7 @@ export const api = {
         mode,
         source_scope: sourceScope,
         document_ids: documentIds,
+        plugins,
         date_window: dateWindow ?? null
       })
     }, parseRunSnapshot),

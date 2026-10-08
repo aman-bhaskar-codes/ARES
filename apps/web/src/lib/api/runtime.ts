@@ -166,6 +166,8 @@ export function parseRunSnapshot(value: unknown): RunSnapshot {
     status,
     answer_blocks: blocksRaw.map(parseAnswerBlock),
     gaps: stringArray(value.gaps ?? [], 'run.gaps'),
+    plugins: stringArray(value.plugins ?? [], 'run.plugins'),
+    related_questions: stringArray(value.related_questions ?? [], 'run.related_questions'),
     error_code: optionalString(value.error_code),
     error_message: optionalString(value.error_message),
     cancellation_requested: cancellationRequested,

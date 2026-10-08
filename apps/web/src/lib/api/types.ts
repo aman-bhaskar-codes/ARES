@@ -31,9 +31,11 @@ export interface RunSnapshot extends Omit<Schema<'RunSnapshot'>, 'source_scope' 
   model_provider?: ModelProvider | null
   source_scope: SourceScope[]
   document_ids: string[]
+  plugins: string[]
   date_window: DateWindow | null
   answer_blocks: AnswerBlock[]
   gaps: string[]
+  related_questions: string[]
   cancellation_requested: boolean
   budget_version: string
   usage_ledger: Record<string, number>

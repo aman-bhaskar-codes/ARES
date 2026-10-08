@@ -172,6 +172,7 @@ class RunRow(Base):
     mode: Mapped[str] = mapped_column(String(24))
     source_scope: Mapped[list[str]] = mapped_column(JSON, default=list)
     document_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    plugins: Mapped[list[str]] = mapped_column(JSON, default=list)
     date_window: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     deadline_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, index=True
@@ -182,6 +183,7 @@ class RunRow(Base):
     status: Mapped[str] = mapped_column(String(32), index=True)
     answer_blocks: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
     gaps: Mapped[list[str]] = mapped_column(JSON, default=list)
+    related_questions: Mapped[list[str]] = mapped_column(JSON, default=list)
     error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     outline: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
