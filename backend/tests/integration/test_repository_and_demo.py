@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from uuid import uuid4
 
 import pytest
 
@@ -72,7 +71,9 @@ def test_stale_lease_cannot_checkpoint(repository: Repository) -> None:
         repository.set_status(run.id, RunStatus.PLANNING, lease_token=lease.token)
 
 
-def test_m07_run_contract_persists_deadline_budget_and_last_sequence(repository: Repository) -> None:
+def test_m07_run_contract_persists_deadline_budget_and_last_sequence(
+    repository: Repository,
+) -> None:
     _, _, run = create_run(repository)
     assert run.deadline_at is not None
     assert run.budget_version == "m07-v1"
@@ -84,12 +85,23 @@ def test_checkpoint_is_idempotent_and_stale_worker_cannot_publish(repository: Re
     _, _, run = create_run(repository)
     lease = repository.claim_next_job()
     assert lease is not None
-    assert repository.start_checkpoint(
-        run.id, step_key="fixture", input_hash="a" * 64, schema_version=1, lease_token=lease.token
-    ) is None
+    assert (
+        repository.start_checkpoint(
+            run.id,
+            step_key="fixture",
+            input_hash="a" * 64,
+            schema_version=1,
+            lease_token=lease.token,
+        )
+        is None
+    )
     repository.complete_checkpoint(
-        run.id, step_key="fixture", input_hash="a" * 64, schema_version=1,
-        output={"value": 1}, lease_token=lease.token,
+        run.id,
+        step_key="fixture",
+        input_hash="a" * 64,
+        schema_version=1,
+        output={"value": 1},
+        lease_token=lease.token,
     )
     assert repository.start_checkpoint(
         run.id, step_key="fixture", input_hash="a" * 64, schema_version=1, lease_token=lease.token
@@ -97,8 +109,12 @@ def test_checkpoint_is_idempotent_and_stale_worker_cannot_publish(repository: Re
     repository.finish_job(lease)
     with pytest.raises(StaleLeaseError):
         repository.complete_checkpoint(
-            run.id, step_key="fixture", input_hash="a" * 64, schema_version=1,
-            output={"value": 2}, lease_token=lease.token,
+            run.id,
+            step_key="fixture",
+            input_hash="a" * 64,
+            schema_version=1,
+            output={"value": 2},
+            lease_token=lease.token,
         )
 
 
@@ -110,9 +126,14 @@ def test_resource_lease_capacity_is_shared_and_released(repository: Repository) 
         run.id, resource_key="provider:test", capacity=1, ttl_seconds=30, lease_token=lease.token
     )
     from ares.application.repository import ResourceCapacityError
+
     with pytest.raises(ResourceCapacityError):
         repository.acquire_resource_lease(
-            run.id, resource_key="provider:test", capacity=1, ttl_seconds=30, lease_token=lease.token
+            run.id,
+            resource_key="provider:test",
+            capacity=1,
+            ttl_seconds=30,
+            lease_token=lease.token,
         )
     repository.release_resource_lease(resource)
     second = repository.acquire_resource_lease(

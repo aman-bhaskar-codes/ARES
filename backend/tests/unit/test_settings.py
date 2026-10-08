@@ -9,10 +9,10 @@ def test_demo_needs_no_key() -> None:
 
 def test_live_mode_requires_explicit_quota_and_key() -> None:
     with pytest.raises(ValueError, match="GEMINI_API_KEY"):
-        Settings(ares_mode="local_live").validate_live_mode()
+        Settings(ares_mode="local_live", gemini_api_key="", local_llm_enabled=False).validate_live_mode()
 
     with pytest.raises(ValueError, match="GEMINI_RPM"):
-        Settings(ares_mode="local_live", gemini_api_key="x").validate_live_mode()
+        Settings(ares_mode="local_live", gemini_api_key="x", gemini_rpm=None).validate_live_mode()
 
 
 def test_live_mode_rejects_billable_flag() -> None:
@@ -27,16 +27,17 @@ def test_live_mode_rejects_billable_flag() -> None:
         ).validate_live_mode()
 
 
-def test_live_mode_requires_strict_free_mode() -> None:
-    with pytest.raises(ValueError, match="STRICT_FREE_MODE"):
-        Settings(
-            ares_mode="local_live",
-            strict_free_mode=False,
-            gemini_api_key="x",
-            gemini_rpm=10,
-            gemini_tpm=10_000,
-            gemini_rpd=100,
-        ).validate_live_mode()
+def test_live_mode_requires_strict_free_mode_legacy() -> None:
+    settings = Settings(
+        ares_mode="local_live",
+        strict_free_mode=False,
+        gemini_api_key="x",
+        gemini_rpm=10,
+        gemini_tpm=10_000,
+        gemini_rpd=100,
+    )
+    settings.validate_live_mode()
+    assert settings.gemini_billing_mode == "paid"
 
 
 def test_production_security_requires_one_https_origin_and_distinct_worker_role() -> None:
@@ -68,8 +69,8 @@ def test_request_body_limit_must_cover_upload_limit() -> None:
 def test_example_environment_allows_blank_optional_quota_values() -> None:
     from pathlib import Path
 
-    settings = Settings(_env_file=Path('.env.example'))  # type: ignore[call-arg]
-    assert settings.ares_mode == 'demo'
+    settings = Settings(_env_file=Path(".env.example"))  # type: ignore[call-arg]
+    assert settings.ares_mode == "demo"
     assert settings.gemini_rpm is None
     assert settings.gemini_tpm is None
     assert settings.gemini_rpd is None
@@ -77,7 +78,7 @@ def test_example_environment_allows_blank_optional_quota_values() -> None:
     settings.validate_live_mode()
 
 
-def test_browser_feature_requires_strong_internal_service_token():
+def test_browser_feature_requires_strong_internal_service_token() -> None:
     with pytest.raises(ValueError, match="BROWSER_SERVICE_TOKEN"):
         Settings(browser_enabled=True, browser_service_token="short").validate_security_mode()
     Settings(
@@ -87,10 +88,15 @@ def test_browser_feature_requires_strong_internal_service_token():
     ).validate_security_mode()
 
 
-def test_browser_service_url_must_be_origin_only():
+def test_browser_service_url_must_be_origin_only() -> None:
     with pytest.raises(ValueError, match="origin"):
         Settings(
             browser_enabled=True,
             browser_service_url="http://browser:8090/v1/render",
             browser_service_token="b" * 40,
         ).validate_security_mode()
+
+
+def test_qwen_only_mode_does_not_require_cloud_credentials_or_quotas():
+    Settings(ares_mode="local_live", local_llm_enabled=True, gemini_api_key="",
+             gemini_rpm=None, gemini_tpm=None, gemini_rpd=None).validate_live_mode()

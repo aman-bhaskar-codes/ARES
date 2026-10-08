@@ -1,0 +1,124 @@
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #18323c;
+  background: #f3f6f6;
+  font-synthesis: none;
+  --bg: #f3f6f6;
+  --surface: #fff;
+  --surface-2: #f8fafa;
+  --ink: #17323c;
+  --muted: #6a7e86;
+  --line: #dce6e8;
+  --accent: #0e7180;
+  --accent-soft: #e5f3f4;
+  --danger: #a64137;
+  --shadow: 0 18px 50px rgba(24, 52, 63, 0.08);
+}
+
+/* M11 — visual research workspace, stable research views, accessible artifacts and themes. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e171a;
+  --surface: #152126;
+  --surface-2: #101b1f;
+  --ink: #e6eff1;
+  --muted: #9bb0b5;
+  --line: #2b3b40;
+  --accent: #62bcc6;
+  --accent-soft: #17373c;
+  --danger: #ff958b;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .nav-rail {
+  background: var(--surface-2);
+}
+
+html[data-theme="dark"] .topbar {
+  background: rgba(14, 23, 26, 0.9);
+}
+
+html[data-theme="dark"] .thread-list button:hover,
+html[data-theme="dark"] .thread-list button.active,
+html[data-theme="dark"] .nav-bottom button:hover,
+html[data-theme="dark"] .example-grid button {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+html[data-theme="dark"] .composer,
+html[data-theme="dark"] .new-research {
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .answer-toolbar,
+html[data-theme="dark"] .citations,
+html[data-theme="dark"] .quality-list div,
+html[data-theme="dark"] .readiness-row {
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .failure-card {
+  background: #2a2418;
+  border-color: #5f5132;
+  color: #e8c77a;
+}
+
+html[data-theme="dark"] .failure-card {
+  background: #2b1c1c;
+  border-color: #68423e;
+}
+
+html[data-theme="dark"] .failure-card.calm {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .evidence-preview,
+html[data-theme="dark"] .pdf-page-stage,
+html[data-theme="dark"] .image-evidence-stage {
+  background: #0d1518;
+}
+
+html[data-theme="dark"] .account-menu > button:hover {
+  background: #2a1c1c;
+}
+
+html[data-theme="dark"] .readonly-banner {
+  background: #2a2418;
+  border-color: #5f5132;
+  color: #e8c77a;
+}
+
+html[data-theme="dark"] .panel-note {
+  background: #2a2418;
+  border-color: #5f5132;
+  color: #e8c77a;
+}
+
+html[data-theme="dark"] .danger-panel-button {
+  background: #2b1c1c;
+  border-color: #68423e;
+}
+
+html[data-theme="dark"] .evidence-table .cited-cell {
+  background: #3a3020;
+}
+
+html[data-theme="dark"] .visual-status.status-supported {
+  background: #193524;
+  color: #8fd09b;
+}
+
+html[data-theme="dark"] .visual-status.status-conflicting {
+  background: #3b2220;
+  color: #ff9d91;
+}

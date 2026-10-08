@@ -25,7 +25,9 @@ def test_arxiv_preserves_preprint_version_and_abstract() -> None:
         assert request.url.path == "/api/query"
         return httpx.Response(200, request=request, text=ATOM)
 
-    client = httpx.Client(base_url="https://export.arxiv.org", transport=httpx.MockTransport(handler))
+    client = httpx.Client(
+        base_url="https://export.arxiv.org", transport=httpx.MockTransport(handler)
+    )
     provider = ArxivAcademicProvider(client=client, min_interval_seconds=0)
     results = provider.search_documents("evidence research", limit=2)
     assert len(results) == 1
@@ -44,11 +46,17 @@ def test_arxiv_applies_run_timeout_to_http_request() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         observed.append(float(request.extensions["timeout"]["read"]))
-        return httpx.Response(200, request=request, text='<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"></feed>')
+        return httpx.Response(
+            200,
+            request=request,
+            text='<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"></feed>',
+        )
 
-    client = httpx.Client(base_url="https://export.arxiv.org", transport=httpx.MockTransport(handler))
+    client = httpx.Client(
+        base_url="https://export.arxiv.org", transport=httpx.MockTransport(handler)
+    )
     provider = ArxivAcademicProvider(client=client, min_interval_seconds=0)
-    provider.search_documents("topic", timeout_seconds=2.5)
+    provider.search_documents("topic", limit=10, timeout_seconds=2.5)
     assert observed == [2.5]
 
 
@@ -57,7 +65,11 @@ def test_arxiv_filters_known_publication_date_but_keeps_contract_local() -> None
 
     client = httpx.Client(
         base_url="https://export.arxiv.org",
-        transport=httpx.MockTransport(lambda request: httpx.Response(200, request=request, text=ATOM)),
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, request=request, text=ATOM)
+        ),
     )
     provider = ArxivAcademicProvider(client=client, min_interval_seconds=0)
-    assert provider.search_documents("topic", published_after=datetime(2026, 9, 11, tzinfo=UTC)) == []
+    assert (
+        provider.search_documents("topic", limit=10, published_after=datetime(2026, 9, 11, tzinfo=UTC)) == []
+    )

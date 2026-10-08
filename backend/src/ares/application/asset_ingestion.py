@@ -6,13 +6,12 @@ import io
 import json
 import mimetypes
 import re
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 from uuid import UUID
 
-from ares.adapters.pdf_parser import BoundedPdfParser, PdfParseError
+from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.application.documents import PreparedChunk, build_document_chunks
 from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.media_ingestion import (
@@ -28,7 +27,6 @@ from ares.domain.assets import (
     ExtractionTableDraft,
     FrameRegionLocator,
     IngestionStage,
-    PageRegionLocator,
     RichExtractionResult,
     TableCellsLocator,
     TextLocator,
@@ -179,14 +177,18 @@ class AssetAdmissionService:
             if not self.audio_enabled:
                 raise AssetAdmissionError("audio ingestion is disabled")
             if self.audio_ready is not None and not self.audio_ready():
-                raise AssetAdmissionError("audio ingestion is enabled but no ready media worker is available")
+                raise AssetAdmissionError(
+                    "audio ingestion is enabled but no ready media worker is available"
+                )
             if staged.byte_count > self.max_audio_bytes:
                 raise AssetAdmissionError("audio exceeds the configured byte limit")
         elif is_video:
             if not self.video_enabled:
                 raise AssetAdmissionError("video ingestion is disabled")
             if self.video_ready is not None and not self.video_ready():
-                raise AssetAdmissionError("video ingestion is enabled but no ready media worker is available")
+                raise AssetAdmissionError(
+                    "video ingestion is enabled but no ready media worker is available"
+                )
             if staged.byte_count > self.max_video_bytes:
                 raise AssetAdmissionError("video exceeds the configured byte limit")
         else:
@@ -233,7 +235,9 @@ class BuiltinRichExtractor:
 
     @staticmethod
     def _hash_payload(payload: object) -> str:
-        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        encoded = json.dumps(
+            payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
     def extract_pdf(self, raw: bytes, *, name: str) -> RichExtractionResult:
@@ -278,7 +282,9 @@ class BuiltinRichExtractor:
             raise ValueError("CSV must be UTF-8 encoded") from exc
         sample = text[:16_384]
         try:
-            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|") if sample.strip() else csv.excel
+            dialect = (
+                csv.Sniffer().sniff(sample, delimiters=",;\t|") if sample.strip() else csv.excel
+            )
         except csv.Error:
             dialect = csv.excel
         reader = csv.reader(io.StringIO(text, newline=""), dialect)
@@ -373,7 +379,11 @@ def _normalize_scalar(value: str) -> str | int | float | None:
     if re.fullmatch(r"[-+]?(?:\d+\.\d*|\d*\.\d+)(?:[eE][-+]?\d+)?", stripped):
         try:
             value_float = float(stripped)
-            return value_float if value_float == value_float and abs(value_float) != float("inf") else stripped
+            return (
+                value_float
+                if value_float == value_float and abs(value_float) != float("inf")
+                else stripped
+            )
         except ValueError:
             pass
     return stripped
@@ -425,7 +435,9 @@ def _chunks_for_extraction(name: str, extraction: RichExtractionResult) -> list[
             if start < 0:
                 start = extraction.text.find(segment_text)
             if start < 0:
-                raise ValueError("media evidence text could not be aligned with the compatibility document")
+                raise ValueError(
+                    "media evidence text could not be aligned with the compatibility document"
+                )
             end = start + len(segment_text)
             cursor = end
             if segment.locator.kind == "time_range":
@@ -457,7 +469,10 @@ def _chunks_for_extraction(name: str, extraction: RichExtractionResult) -> list[
         segment_index = None
         for index, segment in enumerate(extraction.segments):
             if segment.locator.kind == "text":
-                if segment.locator.char_end > chunk.char_start and segment.locator.char_start < chunk.char_end:
+                if (
+                    segment.locator.char_end > chunk.char_start
+                    and segment.locator.char_start < chunk.char_end
+                ):
                     segment_index = index
                     break
             elif segment.locator.kind == "page_region" and chunk.page_start is not None:
@@ -526,14 +541,18 @@ class AssetIngestionExecutor:
                 try:
                     extraction = self.builtin.extract_pdf(raw, name=asset.original_name)
                 except RichExtractionUnavailable:
-                    extraction = self._rich_extract(lease, asset.mime_type, raw, asset.original_name)
+                    extraction = self._rich_extract(
+                        lease, asset.mime_type, raw, asset.original_name
+                    )
             elif asset.mime_type.startswith("image/"):
                 width, height = self._validate_image_dimensions(raw)
                 self.repository.set_ingestion_asset_dimensions(lease, width=width, height=height)
                 extraction = self._rich_extract(lease, asset.mime_type, raw, asset.original_name)
             elif asset.mime_type in MEDIA_MIME_TYPES:
                 if self.media_processor is None:
-                    raise RichExtractionUnavailable("media ingestion is unavailable in this worker profile")
+                    raise RichExtractionUnavailable(
+                        "media ingestion is unavailable in this worker profile"
+                    )
                 self.repository.set_ingestion_stage(lease, IngestionStage.ENRICHING)
                 media_result = self.media_processor.extract(
                     raw,
@@ -560,7 +579,9 @@ class AssetIngestionExecutor:
                 self.repository.complete_ingestion(lease)
                 return
             if sum(len(table.cells) for table in extraction.tables) > self.max_table_cells:
-                raise ValueError(f"extraction exceeds the {self.max_table_cells:,}-cell publication limit")
+                raise ValueError(
+                    f"extraction exceeds the {self.max_table_cells:,}-cell publication limit"
+                )
             chunks = _chunks_for_extraction(asset.original_name, extraction)
             status = DocumentStatus.READY if chunks else DocumentStatus.PARTIAL
             if extraction.warnings:
@@ -609,7 +630,9 @@ class AssetIngestionExecutor:
                 # the ingestion instead of discarding searchable evidence. A retry can
                 # resume missing embeddings idempotently.
                 semantic_partial = True
-                completion_warnings.append(f"Semantic indexing unavailable: {type(exc).__name__}: {str(exc)[:240]}")
+                completion_warnings.append(
+                    f"Semantic indexing unavailable: {type(exc).__name__}: {str(exc)[:240]}"
+                )
                 self.repository.mark_document_semantic_ready(
                     lease, publication.document_id, ready=False
                 )
@@ -670,7 +693,11 @@ class AssetIngestionExecutor:
             }
             selected = [media_result.frames[index] for index in sorted(indexes)]
         origin_group_id = next(
-            (segment.origin_group_id for segment in extraction.segments if segment.origin_group_id is not None),
+            (
+                segment.origin_group_id
+                for segment in extraction.segments
+                if segment.origin_group_id is not None
+            ),
             UUID(bytes=bytes.fromhex(asset_sha256)[:16]),
         )
         segments = list(extraction.segments)
@@ -755,11 +782,17 @@ class AssetIngestionExecutor:
         except Exception as exc:
             raise ValueError("image could not be safely decoded") from exc
 
-    def _rich_extract(self, lease: IngestionLease, mime_type: str, raw: bytes, name: str) -> RichExtractionResult:
+    def _rich_extract(
+        self, lease: IngestionLease, mime_type: str, raw: bytes, name: str
+    ) -> RichExtractionResult:
         if not self.ocr_enabled:
-            raise RichExtractionUnavailable("OCR is required for this asset but OCR_ENABLED is false")
+            raise RichExtractionUnavailable(
+                "OCR is required for this asset but OCR_ENABLED is false"
+            )
         if self.rich_parser is None:
-            raise RichExtractionUnavailable("rich document parser is unavailable in this worker profile")
+            raise RichExtractionUnavailable(
+                "rich document parser is unavailable in this worker profile"
+            )
         self.repository.set_ingestion_stage(lease, IngestionStage.ENRICHING)
         return self.rich_parser.parse(raw=raw, mime_type=mime_type, name=name)
 

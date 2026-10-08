@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any, Literal
 
@@ -59,12 +60,83 @@ class GeminiSemanticClaimChecker:
                 raise SemanticCheckerUnavailable("google-genai is not installed") from exc
             client = genai.Client(
                 api_key=api_key,
-                http_options=types.HttpOptions(timeout=max(1, int(float(timeout_seconds) * 1000))),
+                http_options=types.HttpOptions(
+                    timeout=max(1, int(float(timeout_seconds) * 1000)),
+                    retry_options=types.HttpRetryOptions(attempts=0),
+                ),
             )
         self._client = client
+        self._runner = asyncio.Runner()
         self._owns_client = owns_client
         self._model = model
         self._thinking_level = thinking_level
+
+    async def _async_assess_claim(self, claim: str, evidence: list[EvidencePacket]) -> ClaimDecision:
+        payload = {
+            "CLAIM": claim,
+            "EVIDENCE": [
+                {
+                    "index": index,
+                    "origin_group_id": str(packet.origin_group_id or packet.source_id),
+                    "title": packet.title,
+                    "locator": packet.locator,
+                    "text": packet.text,
+                }
+                for index, packet in enumerate(evidence)
+            ],
+        }
+        interaction = await self._client.aio.interactions.create(
+            model=self._model,
+            system_instruction=_SYSTEM,
+            input=json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+            store=False,
+            generation_config={
+                "max_output_tokens": 900,
+                "thinking_level": self._thinking_level,
+                "thinking_summaries": "none",
+            },
+            response_format={
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": _SemanticAssessment.model_json_schema(),
+            },
+        )
+        return self._parse_assessment(interaction, evidence)
+
+    def _parse_assessment(self, interaction: Any, evidence: list[EvidencePacket]) -> ClaimDecision:
+        raw = getattr(interaction, "output_text", None)
+        if not isinstance(raw, str) or not raw.strip():
+            raise SemanticCheckerUnavailable("Gemini semantic checker returned no output")
+        try:
+            parsed = _SemanticAssessment.model_validate_json(raw)
+        except Exception as exc:
+            raise SemanticCheckerUnavailable(
+                "Gemini semantic checker returned invalid structured output"
+            ) from exc
+
+        def resolve(indexes: list[int]) -> list:
+            output = []
+            for index in indexes:
+                if index < 0 or index >= len(evidence):
+                    raise SemanticCheckerUnavailable(
+                        "Gemini semantic checker referenced unknown evidence"
+                    )
+                evidence_id = evidence[index].evidence_id
+                if evidence_id not in output:
+                    output.append(evidence_id)
+            return output
+
+        return ClaimDecision(
+            verdict=ClaimVerdict(parsed.verdict),
+            confidence=parsed.confidence,
+            provider="gemini",
+            checker_method="gemini_semantic",
+            checker_version="m10-v1",
+            assessment_state=AssessmentState.SEMANTIC_ASSESSED,
+            rationale=parsed.rationale,
+            supporting_evidence_ids=resolve(parsed.supporting_indexes),
+            conflicting_evidence_ids=resolve(parsed.conflicting_indexes),
+        )
 
     def assess_claim(
         self,
@@ -83,6 +155,20 @@ class GeminiSemanticClaimChecker:
                 assessment_state=AssessmentState.SEMANTIC_ASSESSED,
                 rationale="no evidence was supplied",
             )
+            
+        if timeout_seconds is not None and getattr(self._client, "aio", None):
+            try:
+                return self._runner.run(
+                    asyncio.wait_for(
+                        self._async_assess_claim(claim, evidence),
+                        timeout=timeout_seconds,
+                    )
+                )
+            except asyncio.TimeoutError as exc:
+                raise SemanticCheckerUnavailable("Gemini semantic assessment timed out") from exc
+            except Exception as exc:
+                raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
+
         payload = {
             "CLAIM": claim,
             "EVIDENCE": [
@@ -115,39 +201,17 @@ class GeminiSemanticClaimChecker:
             )
         except Exception as exc:
             raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
-        raw = getattr(interaction, "output_text", None)
-        if not isinstance(raw, str) or not raw.strip():
-            raise SemanticCheckerUnavailable("Gemini semantic checker returned no output")
-        try:
-            parsed = _SemanticAssessment.model_validate_json(raw)
-        except Exception as exc:
-            raise SemanticCheckerUnavailable("Gemini semantic checker returned invalid structured output") from exc
-
-        def resolve(indexes: list[int]) -> list:
-            output = []
-            for index in indexes:
-                if index < 0 or index >= len(evidence):
-                    raise SemanticCheckerUnavailable("Gemini semantic checker referenced unknown evidence")
-                evidence_id = evidence[index].evidence_id
-                if evidence_id not in output:
-                    output.append(evidence_id)
-            return output
-
-        return ClaimDecision(
-            verdict=ClaimVerdict(parsed.verdict),
-            confidence=parsed.confidence,
-            provider="gemini",
-            checker_method="gemini_semantic",
-            checker_version="m10-v1",
-            assessment_state=AssessmentState.SEMANTIC_ASSESSED,
-            rationale=parsed.rationale,
-            supporting_evidence_ids=resolve(parsed.supporting_indexes),
-            conflicting_evidence_ids=resolve(parsed.conflicting_indexes),
-        )
+            
+        return self._parse_assessment(interaction, evidence)
 
     def close(self) -> None:
-        if not self._owns_client:
-            return
-        close = getattr(self._client, "close", None)
-        if callable(close):
-            close()
+        try:
+            if self._owns_client:
+                aio_close = getattr(getattr(self._client, "aio", None), "aclose", None)
+                if callable(aio_close):
+                    self._runner.run(aio_close())
+                close = getattr(self._client, "close", None)
+                if callable(close):
+                    close()
+        finally:
+            self._runner.close()

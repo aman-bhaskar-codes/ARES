@@ -14,3 +14,8 @@ server:
   secret_key: "ares-local-development-only-change-before-public-use"
   limiter: false
   image_proxy: false
+
+# Additional general engine keeps discovery usable when other engines are rate-limited.
+engines:
+  - name: yahoo
+    disabled: false

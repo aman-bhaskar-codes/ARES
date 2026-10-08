@@ -94,7 +94,10 @@ def test_worker_presence_refreshes_capabilities_on_heartbeat(tmp_path) -> None:
     presence.start()
     try:
         deadline = time.monotonic() + 0.5
-        while not any(item.get("audio") is True for item in repository.heartbeats) and time.monotonic() < deadline:
+        while (
+            not any(item.get("audio") is True for item in repository.heartbeats)
+            and time.monotonic() < deadline
+        ):
             time.sleep(0.01)
     finally:
         presence.close()

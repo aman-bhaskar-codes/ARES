@@ -76,7 +76,9 @@ class GeminiMultimodalUnderstandingProvider:
         max_output_tokens: int,
         timeout_seconds: float | None = None,
     ) -> list[MediaRegionObservation]:
-        del timeout_seconds  # client timeout is fixed at construction; run ledger clamps admission upstream.
+        del (
+            timeout_seconds
+        )  # client timeout is fixed at construction; run ledger clamps admission upstream.
         if not instruction.strip():
             raise ValueError("multimodal instruction cannot be empty")
         if not regions:
@@ -121,7 +123,9 @@ class GeminiMultimodalUnderstandingProvider:
         try:
             parsed = _ObservationEnvelope.model_validate_json(raw)
         except Exception as exc:
-            raise MultimodalProviderUnavailable("Gemini returned invalid visual observation output") from exc
+            raise MultimodalProviderUnavailable(
+                "Gemini returned invalid visual observation output"
+            ) from exc
 
         allowed = set(ids)
         seen: set[str] = set()
@@ -130,7 +134,9 @@ class GeminiMultimodalUnderstandingProvider:
             if item.region_id not in allowed:
                 raise MultimodalProviderUnavailable("Gemini referenced an unknown media region")
             if item.region_id in seen:
-                raise MultimodalProviderUnavailable("Gemini returned duplicate media-region observations")
+                raise MultimodalProviderUnavailable(
+                    "Gemini returned duplicate media-region observations"
+                )
             seen.add(item.region_id)
             observations.append(
                 MediaRegionObservation(

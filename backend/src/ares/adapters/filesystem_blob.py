@@ -23,7 +23,9 @@ class FilesystemBlobStore:
 
     def put_bytes(self, namespace: str, content: bytes) -> str:
         digest = hashlib.sha256(content).hexdigest()
-        safe_namespace = "/".join(part for part in namespace.split("/") if part and part not in {".", ".."})
+        safe_namespace = "/".join(
+            part for part in namespace.split("/") if part and part not in {".", ".."}
+        )
         key = f"{safe_namespace}/sha256/{digest[:2]}/{digest[2:4]}/{digest}"
         target = self._path(key)
         if target.exists():
@@ -41,7 +43,6 @@ class FilesystemBlobStore:
                 os.unlink(temporary)
         return key
 
-
     def put_file(self, namespace: str, path: str | Path) -> str:
         source = Path(path)
         digest = hashlib.sha256()
@@ -49,7 +50,9 @@ class FilesystemBlobStore:
             for chunk in iter(lambda: handle.read(1024 * 1024), b""):
                 digest.update(chunk)
         hexdigest = digest.hexdigest()
-        safe_namespace = "/".join(part for part in namespace.split("/") if part and part not in {".", ".."})
+        safe_namespace = "/".join(
+            part for part in namespace.split("/") if part and part not in {".", ".."}
+        )
         key = f"{safe_namespace}/sha256/{hexdigest[:2]}/{hexdigest[2:4]}/{hexdigest}"
         target = self._path(key)
         if target.exists():

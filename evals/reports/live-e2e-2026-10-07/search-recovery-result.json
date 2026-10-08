@@ -1,0 +1,21 @@
+{
+  "conversation_id": "b37fdcb6-5e23-4cd5-9b12-759846f608df",
+  "runs": [
+    {
+      "provider": "gemini",
+      "run_id": "0700cc20-9f8b-4e71-b23f-c6aaf5d5790c",
+      "status": "completed",
+      "claims": 5,
+      "words": 226,
+      "citations_resolve": true
+    },
+    {
+      "provider": "qwen",
+      "run_id": "fc32104c-747b-45c1-8d6a-d5d3f973bcd5",
+      "status": "completed",
+      "claims": 4,
+      "words": 115,
+      "citations_resolve": true
+    }
+  ]
+}

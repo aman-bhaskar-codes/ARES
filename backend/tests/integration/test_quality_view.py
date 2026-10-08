@@ -12,7 +12,9 @@ def test_run_quality_resolves_citations_and_aggregates_support(tmp_path: Path) -
     repository = Repository(sessions)
     conversation = repository.create_conversation("quality")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="Summarize ARES provenance", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id, query="Summarize ARES provenance", mode=RunMode.QUICK
+        ),
         idempotency_key="quality-1",
     )
     lease = repository.claim_next_job()

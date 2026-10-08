@@ -1,4 +1,10 @@
-from ares.evaluation.metrics import aggregate_retrieval, classification_metrics, detection_metrics, retrieval_metrics, wilson_interval
+from ares.evaluation.metrics import (
+    aggregate_retrieval,
+    classification_metrics,
+    detection_metrics,
+    retrieval_metrics,
+    wilson_interval,
+)
 
 
 def test_classification_metrics_include_macro_f1_and_selective_brier() -> None:
@@ -23,8 +29,16 @@ def test_detection_metrics_separate_attack_detection_from_benign_false_positives
     result = detection_metrics([True, True, False, False], [True, False, True, False])
     assert result.true_positive_rate == 0.5
     assert result.false_positive_rate == 0.5
-    assert result.true_positive_rate_ci95[0] < result.true_positive_rate < result.true_positive_rate_ci95[1]
-    assert result.false_positive_rate_ci95[0] < result.false_positive_rate < result.false_positive_rate_ci95[1]
+    assert (
+        result.true_positive_rate_ci95[0]
+        < result.true_positive_rate
+        < result.true_positive_rate_ci95[1]
+    )
+    assert (
+        result.false_positive_rate_ci95[0]
+        < result.false_positive_rate
+        < result.false_positive_rate_ci95[1]
+    )
 
 
 def test_wilson_interval_remains_bounded_at_extremes() -> None:

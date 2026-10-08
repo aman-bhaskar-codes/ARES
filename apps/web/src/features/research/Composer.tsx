@@ -1,11 +1,14 @@
 import { ArrowUp, Square } from 'lucide-react'
 import { type FormEvent, type KeyboardEvent, useState } from 'react'
-import type { RunMode, SourceScope } from '../../lib/api/types'
+import type { RunMode, SourceScope, ModelProvider, ModelCatalog } from '../../lib/api/types'
 import { SourceScopeControls } from './SourceScopeControls'
 
 export function Composer({
-  busy, readOnly = false, mode, onMode, sourceScope, onSourceScope, selectedDocuments, onSubmit, onStop
+  busy, readOnly = false, modelProvider, onModelProvider, models, mode, onMode, sourceScope, onSourceScope, selectedDocuments, onSubmit, onStop, placeholder
 }: {
+  modelProvider: ModelProvider
+  onModelProvider: (provider: ModelProvider) => void
+  models?: ModelCatalog
   busy: boolean
   readOnly?: boolean
   mode: RunMode
@@ -15,6 +18,7 @@ export function Composer({
   selectedDocuments: number
   onSubmit: (query: string) => Promise<void>
   onStop: () => void
+  placeholder?: string
 }) {
   const [query, setQuery] = useState('')
   const submit = async () => {
@@ -38,7 +42,7 @@ export function Composer({
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={onKey}
         rows={2}
-        placeholder="Ask a question worth tracing back to evidence…"
+        placeholder={placeholder ?? "Ask a question worth tracing back to evidence…"}
         disabled={busy || readOnly}
       />
       <SourceScopeControls value={sourceScope} onChange={readOnly ? () => undefined : onSourceScope} selectedDocuments={selectedDocuments} />
@@ -47,6 +51,14 @@ export function Composer({
           <button type="button" disabled={readOnly} className={mode === 'quick' ? 'selected' : ''} onClick={() => onMode('quick')}>Quick</button>
           <button type="button" disabled={readOnly} className={mode === 'research' ? 'selected' : ''} onClick={() => onMode('research')}>Research</button>
         </div>
+        <label className="model-selector">
+          <span className="sr-only">Answer model</span>
+          <select aria-label="Answer model" value={modelProvider} disabled={busy || readOnly || !models} onChange={(event) => onModelProvider(event.target.value as ModelProvider)}>
+            {(models?.models ?? [{id: modelProvider, label: modelProvider === 'qwen' ? 'Qwen' : 'Gemini', model: '', available: true, location: modelProvider === 'qwen' ? 'local' : 'cloud'}]).map((item) => (
+              <option key={item.id} value={item.id} disabled={!item.available}>{item.label}{item.location === 'local' ? ' · Local' : ' · Cloud'}{!item.available ? ' · Not configured' : ''}</option>
+            ))}
+          </select>
+        </label>
         {busy ? (
           <button className="send-button stop" type="button" disabled={readOnly} onClick={onStop}><Square size={15} fill="currentColor" /> Stop</button>
         ) : (

@@ -41,3 +41,12 @@ def test_searxng_adapter_maps_json_contract() -> None:
     assert hits[0].source_kind == "web"
     assert captured["params"]["format"] == "json"
     assert captured["params"]["time_range"] == "month"
+
+
+def test_empty_results_with_unresponsive_engines_are_an_outage():
+    import httpx
+    import pytest
+    from ares.ports.errors import SearchProviderError
+    client = httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(200, json={'results': [], 'unresponsive_engines': [['brave', 'too many requests']]})))
+    with pytest.raises(SearchProviderError):
+        SearXNGSearchProvider('http://localhost:8080', client=client).search(SearchRequest(query='qubit', limit=5))

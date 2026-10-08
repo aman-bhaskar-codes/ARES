@@ -12,8 +12,13 @@ class CompositeAcademicProvider:
         self.providers = providers
 
     def search_documents(
-        self, query: str, *, limit: int = 8, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
+        self,
+        query: str,
+        *,
+        limit: int = 8,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
     ) -> list[tuple[SearchHit, FetchedDocument]]:
         collected: list[tuple[SearchHit, FetchedDocument]] = []
         errors: list[str] = []
@@ -22,15 +27,20 @@ class CompositeAcademicProvider:
             try:
                 try:
                     rows = provider.search_documents(
-                        query, limit=per_provider, timeout_seconds=timeout_seconds,
-                        published_after=published_after, published_before=published_before,
+                        query,
+                        limit=per_provider,
+                        timeout_seconds=timeout_seconds,
+                        published_after=published_after,
+                        published_before=published_before,
                     )
                 except TypeError as exc:
                     # Preserve compatibility with M06 third-party adapters while the M07
                     # date-aware port rolls out. Built-in adapters implement the full contract.
                     if "published_after" not in str(exc) and "published_before" not in str(exc):
                         raise
-                    rows = provider.search_documents(query, limit=per_provider, timeout_seconds=timeout_seconds)
+                    rows = provider.search_documents(
+                        query, limit=per_provider, timeout_seconds=timeout_seconds
+                    )
                 collected.extend(rows)
             except SearchProviderError as exc:
                 errors.append(str(exc))

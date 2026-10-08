@@ -47,7 +47,7 @@ def _copy_signature(text: str) -> str | None:
     # Bound CPU and reduce footer/navigation influence. The research fetcher already caps stored
     # text, but origin grouping should have its own small deterministic bound.
     tokens = tokens[:2500]
-    shingles = {" ".join(tokens[index:index + 5]) for index in range(0, len(tokens) - 4)}
+    shingles = {" ".join(tokens[index : index + 5]) for index in range(0, len(tokens) - 4)}
     if len(shingles) < 40:
         return None
     minima: list[str] = []

@@ -79,7 +79,9 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
 
 def _extract_text(html: str) -> tuple[str, str, str]:
     title_match = _TITLE.search(html)
-    title = _WS.sub(" ", unescape(title_match.group(1))).strip() if title_match else "Untitled source"
+    title = (
+        _WS.sub(" ", unescape(title_match.group(1))).strip() if title_match else "Untitled source"
+    )
     try:
         import trafilatura  # type: ignore[import-not-found]
 
@@ -105,7 +107,9 @@ class SafeHttpFetcher:
     and then allowing a separate HTTP client's resolver to choose a different address.
     """
 
-    def __init__(self, timeout_seconds: float = 12.0, max_bytes: int = 2_000_000, max_redirects: int = 4):
+    def __init__(
+        self, timeout_seconds: float = 12.0, max_bytes: int = 2_000_000, max_redirects: int = 4
+    ):
         self.timeout_seconds = timeout_seconds
         self.max_bytes = max_bytes
         self.max_redirects = max_redirects
@@ -118,8 +122,12 @@ class SafeHttpFetcher:
         assert parsed.hostname is not None
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
         target_ip = _resolve_public_target(parsed.hostname, port)
-        connection_cls = _PinnedHTTPSConnection if parsed.scheme == "https" else _PinnedHTTPConnection
-        request_timeout = self.timeout_seconds if timeout_seconds is None else max(0.05, float(timeout_seconds))
+        connection_cls = (
+            _PinnedHTTPSConnection if parsed.scheme == "https" else _PinnedHTTPConnection
+        )
+        request_timeout = (
+            self.timeout_seconds if timeout_seconds is None else max(0.05, float(timeout_seconds))
+        )
         connection = connection_cls(parsed.hostname, target_ip, port, request_timeout)
         path = parsed.path or "/"
         if parsed.query:
@@ -161,9 +169,7 @@ class SafeHttpFetcher:
             # security regression hooks stable while still allowing a separately
             # bounded rich-document read.
             if max_bytes is None:
-                status_code, headers, body = self._request(
-                    current, timeout_seconds=timeout_seconds
-                )
+                status_code, headers, body = self._request(current, timeout_seconds=timeout_seconds)
             else:
                 status_code, headers, body = self._request(
                     current, timeout_seconds=timeout_seconds, max_bytes=byte_limit
@@ -190,7 +196,7 @@ class SafeHttpFetcher:
         if "text/html" not in content_type and "text/plain" not in content_type:
             raise FetchError(f"unsupported content type: {content_type or 'unknown'}")
         charset_match = _CHARSET.search(content_type)
-        charset = charset_match.group(1).strip('"\'') if charset_match else "utf-8"
+        charset = charset_match.group(1).strip("\"'") if charset_match else "utf-8"
         try:
             decoded = body.decode(charset, errors="replace")
         except LookupError:
@@ -236,7 +242,9 @@ class SafeHttpFetcher:
         )
         content_type = headers.get("content-type", "").split(";", 1)[0].strip().lower()
         if content_type != "application/pdf" and not body.startswith(b"%PDF-"):
-            raise FetchError(f"academic full-text candidate is not a PDF: {content_type or 'unknown'}")
+            raise FetchError(
+                f"academic full-text candidate is not a PDF: {content_type or 'unknown'}"
+            )
         try:
             from ares.adapters.pdf_parser import BoundedPdfParser, PdfParseError
 

@@ -4,6 +4,7 @@
 This is deliberately not a benchmark. It exercises the public HTTP contract and reports observed
 latencies/statuses for one local run so backpressure regressions are visible before deployment.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -50,7 +51,9 @@ def submit_run(base_url: str, conversation_id: str, query: str, timeout: float) 
         )
     latency_ms = (time.perf_counter() - started) * 1000
     if 200 <= response.status_code < 300:
-        return Submission(response.json()["id"], response.status_code, latency_ms, admitted_at=time.perf_counter())
+        return Submission(
+            response.json()["id"], response.status_code, latency_ms, admitted_at=time.perf_counter()
+        )
     try:
         payload = response.json()
         detail = payload.get("detail", payload)
@@ -60,7 +63,9 @@ def submit_run(base_url: str, conversation_id: str, query: str, timeout: float) 
     return Submission(None, response.status_code, latency_ms, detail=detail_text)
 
 
-def poll_terminal(base_url: str, admitted_at: dict[str, float], timeout: float) -> tuple[dict[str, int], list[float]]:
+def poll_terminal(
+    base_url: str, admitted_at: dict[str, float], timeout: float
+) -> tuple[dict[str, int], list[float]]:
     terminal = {"completed", "partial", "failed", "cancelled"}
     pending = dict(admitted_at)
     counts: dict[str, int] = {}
@@ -87,7 +92,9 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--requests", type=int, default=8)
     parser.add_argument("--concurrency", type=int, default=8)
-    parser.add_argument("--query", default="Explain retrieval augmented generation with inspectable citations.")
+    parser.add_argument(
+        "--query", default="Explain retrieval augmented generation with inspectable citations."
+    )
     parser.add_argument("--request-timeout", type=float, default=15.0)
     parser.add_argument("--terminal-timeout", type=float, default=120.0)
     parser.add_argument("--expect-backpressure", action="store_true")
@@ -105,7 +112,13 @@ def main() -> int:
     started = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as pool:
         futures = [
-            pool.submit(submit_run, args.base_url, conversation_id, f"{args.query} [case {index + 1}]", args.request_timeout)
+            pool.submit(
+                submit_run,
+                args.base_url,
+                conversation_id,
+                f"{args.query} [case {index + 1}]",
+                args.request_timeout,
+            )
             for index in range(args.requests)
         ]
         submissions = [future.result() for future in futures]
@@ -120,12 +133,16 @@ def main() -> int:
         for item in submissions
         if item.run_id is not None and item.admitted_at is not None
     }
-    terminal_counts, terminal_latencies = poll_terminal(
-        args.base_url, admitted_at, args.terminal_timeout
-    ) if admitted_at else ({}, [])
+    terminal_counts, terminal_latencies = (
+        poll_terminal(args.base_url, admitted_at, args.terminal_timeout)
+        if admitted_at
+        else ({}, [])
+    )
 
     print("ARES operator load smoke (not a benchmark)")
-    print(f"submitted={len(submissions)} admitted={len(admitted)} backpressured={len(rejected)} other_errors={len(other_errors)}")
+    print(
+        f"submitted={len(submissions)} admitted={len(admitted)} backpressured={len(rejected)} other_errors={len(other_errors)}"
+    )
     print(
         "create_latency_ms "
         f"median={statistics.median(create_latencies):.1f} p95={percentile(create_latencies, 0.95):.1f} "
@@ -138,7 +155,10 @@ def main() -> int:
         )
     print(f"terminal_statuses={terminal_counts}")
     if other_errors:
-        print("unexpected_submission_errors=" + repr([(item.status_code, item.detail) for item in other_errors]))
+        print(
+            "unexpected_submission_errors="
+            + repr([(item.status_code, item.detail) for item in other_errors])
+        )
         return 2
     if args.expect_backpressure and not rejected:
         print("expected at least one HTTP 429 capacity rejection but observed none")

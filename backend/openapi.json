@@ -113,7 +113,9 @@
           "format": {
             "enum": [
               "markdown",
-              "json"
+              "json",
+              "html",
+              "pdf"
             ],
             "title": "Format",
             "type": "string"
@@ -341,7 +343,7 @@
       "Body_create_asset_api_v2_assets_post": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -355,7 +357,7 @@
       "Body_create_pdf_document_api_v1_documents_pdf_post": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -828,7 +830,9 @@
           "format": {
             "enum": [
               "markdown",
-              "json"
+              "json",
+              "html",
+              "pdf"
             ],
             "title": "Format",
             "type": "string"
@@ -1440,6 +1444,21 @@
             "$ref": "#/components/schemas/RunMode",
             "default": "quick"
           },
+          "model_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "gemini",
+                  "qwen"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Provider"
+          },
           "query": {
             "maxLength": 8000,
             "minLength": 2,
@@ -1548,6 +1567,39 @@
           "claim_count": {
             "title": "Claim Count",
             "type": "integer"
+          },
+          "confidence_extraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Extraction"
+          },
+          "confidence_relevance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Relevance"
+          },
+          "confidence_support": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Support"
           },
           "distinct_source_group_count": {
             "title": "Distinct Source Group Count",
@@ -1770,6 +1822,21 @@
           },
           "mode": {
             "$ref": "#/components/schemas/RunMode"
+          },
+          "model_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "gemini",
+                  "qwen"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Provider"
           },
           "query": {
             "title": "Query",
@@ -2916,6 +2983,39 @@
         "summary": "Create Conversation"
       }
     },
+    "/api/v1/conversations/{conversation_id}": {
+      "delete": {
+        "operationId": "delete_conversation_api_v1_conversations__conversation_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Conversation"
+      }
+    },
     "/api/v1/conversations/{conversation_id}/runs": {
       "get": {
         "operationId": "list_conversation_runs_api_v1_conversations__conversation_id__runs_get",
@@ -3129,6 +3229,22 @@
           }
         },
         "summary": "Get Evidence"
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "operationId": "available_models_api_v1_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Available Models"
       }
     },
     "/api/v1/runs": {

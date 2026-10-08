@@ -57,8 +57,9 @@ def test_gemini_client_construction_applies_transport_timeout(monkeypatch) -> No
     captured: dict[str, object] = {}
 
     class FakeHttpOptions:
-        def __init__(self, *, timeout: int):
+        def __init__(self, *, timeout: int, retry_options=None):
             captured["timeout"] = timeout
+            captured["retry_attempts"] = getattr(retry_options, "attempts", None)
 
     class FakeClient:
         def __init__(self, *, api_key: str, http_options):
@@ -71,6 +72,7 @@ def test_gemini_client_construction_applies_transport_timeout(monkeypatch) -> No
 
     fake_types = pytypes.ModuleType("google.genai.types")
     fake_types.HttpOptions = FakeHttpOptions
+    fake_types.HttpRetryOptions = SimpleNamespace
     fake_genai = pytypes.ModuleType("google.genai")
     fake_genai.Client = FakeClient
     fake_genai.types = fake_types
@@ -81,5 +83,62 @@ def test_gemini_client_construction_applies_transport_timeout(monkeypatch) -> No
 
     provider = GeminiLLMProvider("secret", timeout_seconds=7.25)
     assert captured["timeout"] == 7250
+    assert captured["retry_attempts"] == 0
     provider.close()
     assert captured["closed"] is True
+
+
+def test_consecutive_synthesis_requests_reuse_client_event_loop() -> None:
+    import asyncio
+
+    class LoopBoundInteractions:
+        loop = None
+
+        async def create(self, **kwargs):
+            current = asyncio.get_running_loop()
+            if self.loop is not None and self.loop is not current:
+                raise RuntimeError('Event loop is closed')
+            self.loop = current
+            return _Interactions().create(**kwargs)
+
+    client = SimpleNamespace(aio=SimpleNamespace(interactions=LoopBoundInteractions()))
+    provider = GeminiLLMProvider('', client=client)
+    packet = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='Test', url='https://example.com', domain='example.com', text='Grounded.', locator='test', captured_at=datetime.now(UTC), content_hash='a' * 64)
+    try:
+        for _ in range(2):
+            result = provider.synthesize('Test', [packet], max_output_tokens=256, timeout_seconds=1)
+            assert result.claims[0].evidence_ids == [packet.evidence_id]
+    finally:
+        provider.close()
+
+
+def test_quota_exhaustion_explains_why_answer_is_unavailable() -> None:
+    import pytest
+    from ares.adapters.gemini import ProviderUnavailable
+
+    class QuotaError(Exception):
+        code = 429
+
+    class QuotaInteractions:
+        def create(self, **kwargs):
+            raise QuotaError('provider quota exhausted')
+
+    provider = GeminiLLMProvider('', client=SimpleNamespace(interactions=QuotaInteractions()))
+    evidence = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='Test', url='https://example.com', domain='example.com', text='Test.', locator='test', captured_at=datetime.now(UTC), content_hash='a' * 64)
+    with pytest.raises(ProviderUnavailable, match='quota'):
+        provider.synthesize('Test', [evidence], max_output_tokens=256)
+    provider.close()
+
+
+def test_reference_markers_do_not_become_claim_quantities_but_source_arrays_survive():
+    import json
+    from ares.application.decisions import DeterministicDecisionProvider
+    provider = GeminiLLMProvider('', client=_Client())
+    packet = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='Measurements', url='https://example.com', domain='example.com', text='Measured voltage is 3 V. The vector is [0, 1].', locator='passage 1', captured_at=datetime.now(UTC), content_hash='a'*64)
+    for original, expected in [('Measured voltage is 3 V [1].', 'Measured voltage is 3 V.'), ('The vector is [0, 1].', 'The vector is [0, 1].')]:
+        raw = json.dumps({'summary_markdown':'', 'claims':[{'text':original,'evidence_indexes':[0]}]})
+        result = provider._parse_synthesis_interaction(SimpleNamespace(output_text=raw), [packet])
+        assert result.claims[0].text == expected
+        decision = DeterministicDecisionProvider().evaluate_claim(result.claims[0].text, [packet])
+        assert decision.verdict.value != 'insufficient_evidence'
+    provider.close()

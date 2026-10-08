@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -30,7 +31,7 @@ def _date_from_parts(value) -> datetime | None:
         return None
 
 
-class CrossrefAcademicProvider:
+class CrossrefAcademicProvider(DiscoveryProvider):
     """Crossref DOI metadata adapter using the public/polite REST API."""
 
     def __init__(
@@ -42,13 +43,36 @@ class CrossrefAcademicProvider:
     ):
         self.mailto = mailto.strip()
         headers = {"User-Agent": "ARES-research/0.4 (+local research assistant)"}
-        self._client = client or httpx.Client(base_url=base_url.rstrip("/"), headers=headers, timeout=20.0)
+        self._client = client or httpx.Client(
+            base_url=base_url.rstrip("/"), headers=headers, timeout=20.0
+        )
         self._owns_client = client is None
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="crossref",
+            source_kind="academic",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=20.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=604800,
+        )
+
     def search_documents(
-        self, query: str, *, limit: int = 6, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         params: dict[str, str | int] = {
             "query.bibliographic": query,
             "rows": min(max(limit, 1), 20),
@@ -64,7 +88,11 @@ class CrossrefAcademicProvider:
         if self.mailto:
             params["mailto"] = self.mailto
         try:
-            response = self._client.get("/works", params=params, timeout=timeout_seconds) if timeout_seconds is not None else self._client.get("/works", params=params)
+            response = (
+                self._client.get("/works", params=params, timeout=timeout_seconds)
+                if timeout_seconds is not None
+                else self._client.get("/works", params=params)
+            )
         except httpx.HTTPError as exc:
             raise SearchProviderError(f"Crossref request failed: {type(exc).__name__}") from exc
         if response.status_code == 429:
@@ -90,7 +118,9 @@ class CrossrefAcademicProvider:
             url = f"https://doi.org/{doi}"
             authors = []
             for author in (item.get("author") or [])[:20]:
-                name = " ".join(part for part in [author.get("given", ""), author.get("family", "")] if part).strip()
+                name = " ".join(
+                    part for part in [author.get("given", ""), author.get("family", "")] if part
+                ).strip()
                 if name:
                     authors.append(name)
             containers = item.get("container-title") or []

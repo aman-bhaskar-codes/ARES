@@ -45,21 +45,35 @@ def test_query_path_does_not_create_corpus_embeddings(repository) -> None:
         chunks=[
             PreparedChunk(1, first_text, 0, len(first_text), None, None, "passage 1"),
             PreparedChunk(
-                2, second_text, len(first_text) + 2,
-                len(first_text) + 2 + len(second_text), None, None, "passage 2"
+                2,
+                second_text,
+                len(first_text) + 2,
+                len(first_text) + 2 + len(second_text),
+                None,
+                None,
+                "passage 2",
             ),
         ],
     )
     rows = repository.get_documents([document.id])
     embedder = FakeEmbedder()
     rag = PersistentDocumentRAG(
-        repository, embedder=embedder, model_id="fake-3d", dimensions=3,
-        rpm=100, tpm=100_000, rpd=1000,
+        repository,
+        embedder=embedder,
+        model_id="fake-3d",
+        dimensions=3,
+        rpm=100,
+        tpm=100_000,
+        rpd=1000,
     )
     source_map = {document.id: __import__("uuid").uuid4()}
 
-    first = rag.retrieve("agent memory evaluation", documents=rows, source_id_by_document=source_map, limit=2)
-    second = rag.retrieve("agent memory evaluation", documents=rows, source_id_by_document=source_map, limit=2)
+    first = rag.retrieve(
+        "agent memory evaluation", documents=rows, source_id_by_document=source_map, limit=2
+    )
+    second = rag.retrieve(
+        "agent memory evaluation", documents=rows, source_id_by_document=source_map, limit=2
+    )
 
     assert first.semantic_used is False
     assert second.semantic_used is False

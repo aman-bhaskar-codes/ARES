@@ -26,8 +26,15 @@ class _Client:
 
 def packet(text: str) -> EvidencePacket:
     return EvidencePacket(
-        evidence_id=uuid4(), source_id=uuid4(), title="fixture", url="https://example.com/evidence",
-        domain="example.com", text=text, locator="passage 1", captured_at=datetime.now(UTC), content_hash="a" * 64,
+        evidence_id=uuid4(),
+        source_id=uuid4(),
+        title="fixture",
+        url="https://example.com/evidence",
+        domain="example.com",
+        text=text,
+        locator="passage 1",
+        captured_at=datetime.now(UTC),
+        content_hash="a" * 64,
     )
 
 
@@ -55,3 +62,26 @@ def test_semantic_checker_rejects_invented_evidence_indexes() -> None:
     checker = GeminiSemanticClaimChecker("", model="fixture", client=client)
     with pytest.raises(SemanticCheckerUnavailable):
         checker.assess_claim("claim", [packet("evidence")])
+
+
+def test_consecutive_semantic_checks_reuse_client_event_loop() -> None:
+    import asyncio
+
+    class LoopBoundInteractions:
+        loop = None
+
+        async def create(self, **kwargs):
+            current = asyncio.get_running_loop()
+            if self.loop is not None and self.loop is not current:
+                raise RuntimeError('Event loop is closed')
+            self.loop = current
+            return SimpleNamespace(output_text='{"verdict":"supported","supporting_indexes":[0],"conflicting_indexes":[],"rationale":"Supported.","confidence":0.9}')
+
+    checker = GeminiSemanticClaimChecker('', model='fixture', client=SimpleNamespace(aio=SimpleNamespace(interactions=LoopBoundInteractions())))
+    evidence = packet('The color is blue.')
+    try:
+        for _ in range(3):
+            decision = checker.assess_claim('The color is blue.', [evidence], timeout_seconds=1)
+            assert decision.supporting_evidence_ids == [evidence.evidence_id]
+    finally:
+        checker.close()

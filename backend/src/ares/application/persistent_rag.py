@@ -7,6 +7,7 @@ from uuid import UUID
 from ares.application.repository import QuotaExceededError, Repository
 from ares.domain.research import EvidenceCandidate
 from ares.application.rag import EmbeddingProvider
+from ares.domain.budgets import calculate_provider_cost
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +32,7 @@ class PersistentDocumentRAG:
         repository: Repository,
         *,
         embedder: EmbeddingProvider | None = None,
+        profile_id: UUID | None = None,
         model_id: str = "",
         dimensions: int = 768,
         rpm: int = 1,
@@ -41,6 +43,7 @@ class PersistentDocumentRAG:
     ):
         self.repository = repository
         self.embedder = embedder
+        self.profile_id = profile_id
         self.model_id = model_id
         self.dimensions = dimensions
         self.rpm = rpm
@@ -67,13 +70,16 @@ class PersistentDocumentRAG:
         semantic_scores: dict[UUID, float] = {}
         semantic_used = False
         degraded_reason: str | None = None
-        semantic_document_ids = [row.id for row in documents if bool(getattr(row, "semantic_ready", False))]
+        semantic_document_ids = [
+            row.id for row in documents if bool(getattr(row, "semantic_ready", False))
+        ]
         if self.embedder is not None and semantic_document_ids:
             try:
                 # Legacy Gemini query embeddings remain quota-accounted. Local ONNX/FastEmbed
                 # query embeddings do not consume a remote provider quota.
                 if self.model_id.startswith("gemini"):
                     estimated_query_tokens = max(1, len(query) // 4)
+                    cost_usd = calculate_provider_cost(self.model_id, estimated_query_tokens, 0)
                     self.repository.reserve_provider_usage(
                         provider="gemini-embeddings",
                         model=self.model_id,
@@ -81,10 +87,13 @@ class PersistentDocumentRAG:
                         tpm=self.tpm,
                         rpd=self.rpd,
                         input_tokens=estimated_query_tokens,
+                        output_tokens=0,
+                        cost_usd=cost_usd,
                     )
                 query_vector = self.embedder.embed_query(query)
                 semantic = self.repository.vector_search_document_chunks(
                     semantic_document_ids,
+                    profile_id=self.profile_id,
                     model_id=self.model_id,
                     dimensions=self.dimensions,
                     query_vector=query_vector,
@@ -93,7 +102,9 @@ class PersistentDocumentRAG:
                 semantic_scores = {chunk_id: score for chunk_id, score in semantic}
                 semantic_used = bool(semantic_scores)
             except QuotaExceededError:
-                degraded_reason = "embedding quota exhausted; indexed lexical document retrieval used"
+                degraded_reason = (
+                    "embedding quota exhausted; indexed lexical document retrieval used"
+                )
             except Exception as exc:
                 degraded_reason = (
                     f"semantic document retrieval unavailable ({type(exc).__name__}); "
@@ -101,7 +112,7 @@ class PersistentDocumentRAG:
                 )
 
         lexical_rank = {row.id: rank for rank, row in enumerate(lexical_order, start=1)}
-        semantic_order = sorted(semantic_scores, key=semantic_scores.get, reverse=True)
+        semantic_order = sorted(semantic_scores.keys(), key=lambda k: semantic_scores[k], reverse=True)
         semantic_rank = {chunk_id: rank for rank, chunk_id in enumerate(semantic_order, start=1)}
         candidate_ids = list(dict.fromkeys([row.id for row in lexical_order] + semantic_order))
         if not candidate_ids:

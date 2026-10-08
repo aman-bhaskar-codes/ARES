@@ -57,12 +57,20 @@ class TrackingFetcher:
 
 
 class FakeLLM:
-    def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int) -> SynthesisResult:
+    def synthesize(
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None = None
+    ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown="### Fixture live-path contract\n\nThe provider boundary returned structured claims.",
             claims=[
-                SynthesizedClaim(text="The first fixture supports this claim.", evidence_ids=[evidence[0].evidence_id]),
-                SynthesizedClaim(text="The second fixture supports this claim.", evidence_ids=[evidence[1].evidence_id]),
+                SynthesizedClaim(
+                    text="The first fixture supports this claim.",
+                    evidence_ids=[evidence[0].evidence_id],
+                ),
+                SynthesizedClaim(
+                    text="The second fixture supports this claim.",
+                    evidence_ids=[evidence[1].evidence_id],
+                ),
             ],
             gaps=[],
         )
@@ -74,7 +82,9 @@ def test_research_engine_persists_claim_level_citations_and_bounds_fetches(tmp_p
     repository = Repository(sessions)
     conversation = repository.create_conversation("Live-contract fixture")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="What does the fixture say?", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id, query="What does the fixture say?", mode=RunMode.QUICK
+        ),
         idempotency_key="live-contract-1",
     )
     lease = repository.claim_next_job()
@@ -101,6 +111,11 @@ def test_research_engine_persists_claim_level_citations_and_bounds_fetches(tmp_p
     assert block.claims[1].citation_labels == [2]
     assert len(block.citations) == 2
     assert fetcher.max_active <= 2  # Quick-mode per-run HTTP concurrency ceiling.
+    retrieval = next(event for event in repository.list_events(run.id, after=0, limit=200)
+                     if event.event_type == "retrieval.network")
+    assert retrieval.payload["trace"]
+    assert retrieval.payload["trace"][0]["candidate_id"]
+    assert retrieval.payload["trace"][0]["fused_rank"] == 1
 
 
 class BlockingFetcher(TrackingFetcher):
@@ -139,7 +154,9 @@ def test_cancellation_does_not_admit_new_fetches(tmp_path: Path) -> None:
     repository = Repository(sessions)
     conversation = repository.create_conversation("Cancel fixture")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="Cancel this research", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id, query="Cancel this research", mode=RunMode.QUICK
+        ),
         idempotency_key="cancel-live-1",
     )
     lease = repository.claim_next_job()
@@ -170,22 +187,42 @@ def test_cancellation_does_not_admit_new_fetches(tmp_path: Path) -> None:
 def test_deduplicate_fetched_collapses_canonical_and_content_duplicates() -> None:
     now = datetime.now(UTC)
     same_id_a = FetchedDocument(
-        title="Paper mirror A", url="https://a.example/paper", final_url="https://a.example/paper",
-        text="A" * 160, content_hash="1" * 64, fetched_at=now, extraction_method="fixture",
+        title="Paper mirror A",
+        url="https://a.example/paper",
+        final_url="https://a.example/paper",
+        text="A" * 160,
+        content_hash="1" * 64,
+        fetched_at=now,
+        extraction_method="fixture",
         canonical_identifier="doi:10.1234/example",
     )
     same_id_b = FetchedDocument(
-        title="Paper mirror B", url="https://b.example/paper", final_url="https://b.example/paper",
-        text="B" * 160, content_hash="2" * 64, fetched_at=now, extraction_method="fixture",
+        title="Paper mirror B",
+        url="https://b.example/paper",
+        final_url="https://b.example/paper",
+        text="B" * 160,
+        content_hash="2" * 64,
+        fetched_at=now,
+        extraction_method="fixture",
         canonical_identifier="DOI:10.1234/EXAMPLE",
     )
     same_content = FetchedDocument(
-        title="Content mirror", url="https://c.example/copy", final_url="https://c.example/copy",
-        text="A" * 160, content_hash="1" * 64, fetched_at=now, extraction_method="fixture",
+        title="Content mirror",
+        url="https://c.example/copy",
+        final_url="https://c.example/copy",
+        text="A" * 160,
+        content_hash="1" * 64,
+        fetched_at=now,
+        extraction_method="fixture",
     )
     unique = FetchedDocument(
-        title="Unique", url="https://d.example/unique", final_url="https://d.example/unique",
-        text="D" * 160, content_hash="4" * 64, fetched_at=now, extraction_method="fixture",
+        title="Unique",
+        url="https://d.example/unique",
+        final_url="https://d.example/unique",
+        text="D" * 160,
+        content_hash="4" * 64,
+        fetched_at=now,
+        extraction_method="fixture",
     )
     hits = [
         SearchHit(title="a", url="https://a.example/paper", rank=1),
@@ -193,7 +230,9 @@ def test_deduplicate_fetched_collapses_canonical_and_content_duplicates() -> Non
         SearchHit(title="c", url="https://c.example/copy", rank=3),
         SearchHit(title="d", url="https://d.example/unique", rank=4),
     ]
-    deduped, removed = _deduplicate_fetched(list(zip(hits, [same_id_a, same_id_b, same_content, unique], strict=True)))
+    deduped, removed = _deduplicate_fetched(
+        list(zip(hits, [same_id_a, same_id_b, same_content, unique], strict=True))
+    )
     assert removed == 2
     assert len(deduped) == 2
     assert [item[1].title for item in deduped] == ["Paper mirror A", "Unique"]
@@ -216,21 +255,33 @@ class InjectionFetcher(TrackingFetcher):
         )
 
 
-def test_remote_instruction_like_content_is_visible_but_never_becomes_authority(tmp_path: Path) -> None:
+def test_remote_instruction_like_content_is_visible_but_never_becomes_authority(
+    tmp_path: Path,
+) -> None:
     engine, sessions = build_session_factory(f"sqlite+pysqlite:///{tmp_path / 'injection.sqlite3'}")
     Base.metadata.create_all(engine)
     repository = Repository(sessions)
     conversation = repository.create_conversation("Injection fixture")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="What does the fixture support?", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id,
+            query="What does the fixture support?",
+            mode=RunMode.QUICK,
+        ),
         idempotency_key="injection-live-1",
     )
     lease = repository.claim_next_job()
     assert lease is not None
 
     ResearchEngine(
-        repository, FakeSearch(), InjectionFetcher(), FakeLLM(),
-        gemini_model="fixture-model", gemini_rpm=10, gemini_tpm=100_000, gemini_rpd=100,
+        repository,
+        FakeSearch(),
+        InjectionFetcher(),
+        FakeLLM(),
+        gemini_model="fixture-model",
+        gemini_rpm=10,
+        gemini_tpm=100_000,
+        gemini_rpd=100,
     ).execute(lease)
     repository.finish_job(lease)
 
@@ -240,49 +291,75 @@ def test_remote_instruction_like_content_is_visible_but_never_becomes_authority(
     risk_events = [event for event in events if event.event_type == "security.content_risk"]
     assert risk_events
     assert all("instruction_override" in event.payload["categories"] for event in risk_events)
-    assert snapshot.answer_blocks[0].claims  # The source remains evidence data; no source instruction is executed.
+    assert snapshot.answer_blocks[
+        0
+    ].claims  # The source remains evidence data; no source instruction is executed.
 
 
 class NumericFetcher(TrackingFetcher):
     def fetch(self, url: str, **_: object) -> FetchedDocument:
         return FetchedDocument(
-            source_id=uuid4(), title="numeric fixture", url=url, final_url=url,
+            source_id=uuid4(),
+            title="numeric fixture",
+            url=url,
+            final_url=url,
             text=(
                 "The trial improved accuracy to 10 percent. "
                 "The first fixture supports this claim. Evidence for answer consistency testing."
             ),
             content_hash=(url.rsplit("/", 1)[-1].zfill(64))[-64:],
-            fetched_at=datetime.now(UTC), extraction_method="fixture",
+            fetched_at=datetime.now(UTC),
+            extraction_method="fixture",
         )
 
 
 class LeakySummaryLLM:
-    def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int) -> SynthesisResult:
+    def synthesize(
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None = None
+    ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown="The trial improved accuracy to 90 percent. THIS MUST NOT SURVIVE.",
             claims=[
-                SynthesizedClaim(text="The trial improved accuracy to 90 percent.", evidence_ids=[evidence[0].evidence_id]),
-                SynthesizedClaim(text="The trial improved accuracy to 10 percent.", evidence_ids=[evidence[0].evidence_id]),
+                SynthesizedClaim(
+                    text="The trial improved accuracy to 90 percent.",
+                    evidence_ids=[evidence[0].evidence_id],
+                ),
+                SynthesizedClaim(
+                    text="The trial improved accuracy to 10 percent.",
+                    evidence_ids=[evidence[0].evidence_id],
+                ),
             ],
             gaps=[],
         )
 
 
 def test_rejected_claim_cannot_survive_visible_summary(tmp_path: Path) -> None:
-    engine, sessions = build_session_factory(f"sqlite+pysqlite:///{tmp_path / 'checked-summary.sqlite3'}")
+    engine, sessions = build_session_factory(
+        f"sqlite+pysqlite:///{tmp_path / 'checked-summary.sqlite3'}"
+    )
     Base.metadata.create_all(engine)
     repository = Repository(sessions)
     conversation = repository.create_conversation("Checked summary fixture")
     run, _ = repository.create_run(
-        RunCreate(conversation_id=conversation.id, query="What accuracy did the trial report?", mode=RunMode.QUICK),
+        RunCreate(
+            conversation_id=conversation.id,
+            query="What accuracy did the trial report?",
+            mode=RunMode.QUICK,
+        ),
         idempotency_key="checked-summary-1",
     )
     lease = repository.claim_next_job()
     assert lease is not None
 
     ResearchEngine(
-        repository, FakeSearch(), NumericFetcher(), LeakySummaryLLM(),
-        gemini_model="fixture-model", gemini_rpm=10, gemini_tpm=100_000, gemini_rpd=100,
+        repository,
+        FakeSearch(),
+        NumericFetcher(),
+        LeakySummaryLLM(),
+        gemini_model="fixture-model",
+        gemini_rpm=10,
+        gemini_tpm=100_000,
+        gemini_rpd=100,
     ).execute(lease)
     repository.finish_job(lease)
 
@@ -294,3 +371,27 @@ def test_rejected_claim_cannot_survive_visible_summary(tmp_path: Path) -> None:
     assert "10 percent" in block.markdown
     assert len(block.claims) == 1
     assert block.claims[0].checker_version == "m07-v1"
+
+
+def test_provider_failure_preserves_readable_cited_evidence(tmp_path: Path) -> None:
+    from ares.ports.errors import LLMProviderError
+
+    class UnavailableLLM:
+        def synthesize(self, *args, **kwargs):
+            raise LLMProviderError('Gemini quota exhausted')
+
+    _, sessions = build_session_factory(f"sqlite+pysqlite:///{tmp_path / 'unavailable.sqlite3'}")
+    Base.metadata.create_all(sessions.kw['bind'])
+    repository = Repository(sessions)
+    conversation = repository.create_conversation('Provider failure')
+    run, _ = repository.create_run(RunCreate(conversation_id=conversation.id, query='What does the fixture say?', mode=RunMode.QUICK, source_scope=['web']), 'unavailable-1')
+    lease = repository.claim_next_job()
+    assert lease is not None
+    ResearchEngine(repository, FakeSearch(), TrackingFetcher(), UnavailableLLM(), gemini_model="fixture", gemini_rpm=10, gemini_tpm=100_000, gemini_rpd=100).execute(lease)
+    repository.finish_job(lease)
+    snapshot = repository.get_run(run.id)
+    assert snapshot.status is RunStatus.PARTIAL
+    assert 'Gemini quota exhausted' in snapshot.answer_blocks[0].markdown
+    assert 'Evidence passage for a bounded' in snapshot.answer_blocks[0].markdown
+    assert snapshot.answer_blocks[0].citations
+    assert not snapshot.answer_blocks[0].claims

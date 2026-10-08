@@ -21,6 +21,12 @@ describe('stable research routes', () => {
     })
   })
 
+  it('round-trips the optional diagnostics view', () => {
+    const url = researchRunUrl('c1', 'r1', 'diagnostics')
+    expect(url).toBe('/research/c1/runs/r1?view=diagnostics')
+    expect(parseResearchLocation('/research/c1/runs/r1', '?view=diagnostics').view).toBe('diagnostics')
+  })
+
   it('falls back to answer for an unknown view', () => {
     expect(parseResearchLocation('/research/c1', '?view=admin')).toEqual({ conversationId: 'c1', view: 'answer' })
   })

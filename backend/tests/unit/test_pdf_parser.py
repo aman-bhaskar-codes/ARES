@@ -23,7 +23,9 @@ def _pdf_with_pages(texts: list[str]) -> bytes:
         objects.append(
             f"<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents {content_id} 0 R >>".encode()
         )
-        objects.append(b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream")
+        objects.append(
+            b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream"
+        )
 
     out = bytearray(b"%PDF-1.4\n")
     offsets = [0]
@@ -51,5 +53,5 @@ def test_pdf_parser_preserves_page_map() -> None:
     assert len(result.page_map) == 2
     first = result.page_map[0]
     second = result.page_map[1]
-    assert result.text[first["char_start"]:first["char_end"]] == "Page one evidence."
-    assert result.text[second["char_start"]:second["char_end"]] == "Page two limitation."
+    assert result.text[first["char_start"] : first["char_end"]] == "Page one evidence."
+    assert result.text[second["char_start"] : second["char_end"]] == "Page two limitation."

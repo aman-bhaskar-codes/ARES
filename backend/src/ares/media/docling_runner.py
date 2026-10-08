@@ -12,7 +12,12 @@ def _normalized_bbox(bbox, page) -> list[float] | None:
         return None
     try:
         normalized = bbox.to_top_left_origin(page_height=page.size.height).normalized(page.size)
-        values = [float(normalized.l), float(normalized.t), float(normalized.r), float(normalized.b)]
+        values = [
+            float(normalized.l),
+            float(normalized.t),
+            float(normalized.r),
+            float(normalized.b),
+        ]
         values = [min(1.0, max(0.0, value)) for value in values]
         if values[2] <= values[0] or values[3] <= values[1]:
             return None
@@ -128,7 +133,10 @@ def run(
                         "raw_text": text,
                         "normalized_value": None,
                         "unit": None,
-                        "is_header": bool(getattr(cell, "column_header", False) or getattr(cell, "row_header", False)),
+                        "is_header": bool(
+                            getattr(cell, "column_header", False)
+                            or getattr(cell, "row_header", False)
+                        ),
                         "locator": cell_locator,
                     }
                 )
@@ -206,10 +214,19 @@ def run(
     if current_page is not None:
         page_map.append({"page": current_page, "char_start": page_start, "char_end": cursor})
     full_text = "".join(text_parts).strip()
-    page_count = len(getattr(doc, "pages", {}) or {}) or (max((p for p, _ in reading_parts), default=1))
-    payload_for_hash = {"text": full_text, "segments": segments, "tables": tables, "page_map": page_map}
+    page_count = len(getattr(doc, "pages", {}) or {}) or (
+        max((p for p, _ in reading_parts), default=1)
+    )
+    payload_for_hash = {
+        "text": full_text,
+        "segments": segments,
+        "tables": tables,
+        "page_map": page_map,
+    }
     output_hash = hashlib.sha256(
-        json.dumps(payload_for_hash, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        json.dumps(
+            payload_for_hash, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
     ).hexdigest()
     output = {
         "parser_id": "docling",
@@ -220,7 +237,9 @@ def run(
         "page_map": page_map,
         "segments": segments,
         "tables": tables,
-        "warnings": [] if full_text or tables else ["Docling produced no searchable text or table cells."],
+        "warnings": []
+        if full_text or tables
+        else ["Docling produced no searchable text or table cells."],
         "output_hash": output_hash,
     }
     output_path.write_text(json.dumps(output, ensure_ascii=False), encoding="utf-8")

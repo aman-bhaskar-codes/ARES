@@ -11,6 +11,8 @@ from ares.api.settings import Settings
 def test_keyless_demo_api_end_to_end(tmp_path: Path) -> None:
     settings = Settings(
         ares_mode="demo",
+        local_embeddings_enabled=False,
+        gemini_embeddings_enabled=False,
         database_url=f"sqlite+pysqlite:///{tmp_path / 'api.sqlite3'}",
     )
     client = TestClient(create_app(settings))
@@ -94,22 +96,30 @@ def test_api_capacity_returns_retryable_429_and_preserves_idempotent_replay(tmp_
         "source_scope": ["web"],
         "document_ids": [],
     }
-    first = client.post("/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"})
+    first = client.post(
+        "/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"}
+    )
     assert first.status_code == 202
 
-    replay = client.post("/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"})
+    replay = client.post(
+        "/api/v1/runs", json=first_payload, headers={"Idempotency-Key": "capacity-1"}
+    )
     assert replay.status_code == 202
     assert replay.headers["X-Idempotent-Replay"] == "true"
 
     second_payload = {**first_payload, "query": "second active run"}
-    rejected = client.post("/api/v1/runs", json=second_payload, headers={"Idempotency-Key": "capacity-2"})
+    rejected = client.post(
+        "/api/v1/runs", json=second_payload, headers={"Idempotency-Key": "capacity-2"}
+    )
     assert rejected.status_code == 429
     assert rejected.headers["Retry-After"] == "5"
     assert rejected.json()["detail"]["code"] == "RUN_CAPACITY_REACHED"
 
 
 def test_invalid_incoming_request_id_is_replaced(tmp_path: Path) -> None:
-    settings = Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'request-id.sqlite3'}")
+    settings = Settings(
+        ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'request-id.sqlite3'}"
+    )
     client = TestClient(create_app(settings))
     response = client.get("/health/live", headers={"X-Request-ID": "bad request id"})
     assert response.status_code == 200
@@ -141,7 +151,9 @@ def test_security_headers_and_request_size_limit(tmp_path: Path) -> None:
 
 
 def test_run_create_round_trips_date_window(tmp_path: Path) -> None:
-    settings = Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'date-window-api.sqlite3'}")
+    settings = Settings(
+        ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'date-window-api.sqlite3'}"
+    )
     client = TestClient(create_app(settings))
     conversation = client.post("/api/v1/conversations", json={"title": "Date filter"}).json()
     response = client.post(
@@ -166,3 +178,34 @@ def test_run_create_round_trips_date_window(tmp_path: Path) -> None:
     assert body["date_window"]["start"].startswith("2026-01-01")
     assert body["deadline_at"] is not None
 
+
+def test_delete_chat_removes_history_and_its_runs(tmp_path: Path) -> None:
+    client = TestClient(create_app(Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{tmp_path / 'delete.sqlite3'}")))
+    chat_id = client.post('/api/v1/conversations', json={'title': 'Delete me'}).json()['id']
+    keep_id = client.post('/api/v1/conversations', json={'title': 'Keep me'}).json()['id']
+    run_id = client.post('/api/v1/runs', json={'conversation_id': chat_id, 'query': 'test deletion', 'mode': 'quick', 'source_scope': ['web'], 'document_ids': []}, headers={'Idempotency-Key': 'delete-chat-test'}).json()['id']
+    client.post('/api/v1/internal/worker/run-once')
+    assert client.delete(f'/api/v1/conversations/{chat_id}').status_code == 204
+    assert [chat['id'] for chat in client.get('/api/v1/conversations').json()] == [keep_id]
+    assert client.get(f'/api/v1/runs/{run_id}').status_code == 404
+    assert client.delete(f'/api/v1/conversations/{chat_id}').status_code == 404
+
+
+def test_model_selection_is_persisted_and_scoped_to_each_run(tmp_path):
+    settings = Settings(ares_mode='demo', local_llm_enabled=True,
+                        database_url=f'sqlite+pysqlite:///{tmp_path / "models.sqlite3"}')
+    client = TestClient(create_app(settings))
+    catalog = client.get('/api/v1/models').json()
+    assert catalog['default'] == 'qwen'
+    assert {item['id'] for item in catalog['models']} == {'gemini', 'qwen'}
+    conversation = client.post('/api/v1/conversations', json={'title': 'Model test'}).json()
+    for provider in ['gemini', 'qwen']:
+        response = client.post('/api/v1/runs', headers={'Idempotency-Key': provider},
+                               json={'conversation_id': conversation['id'], 'query': 'What is a qubit?', 'model_provider': provider})
+        assert response.status_code == 202
+        run = response.json()
+        assert run['model_provider'] == provider
+        assert client.get('/api/v1/runs/' + run['id']).json()['model_provider'] == provider
+    response = client.post('/api/v1/runs', headers={'Idempotency-Key': 'bad'},
+                           json={'conversation_id': conversation['id'], 'query': 'What is a qubit?', 'model_provider': 'unknown'})
+    assert response.status_code == 422

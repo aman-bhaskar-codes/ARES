@@ -85,7 +85,9 @@ def main() -> None:
         "files": files,
     }
     manifest_path = resolved / "ARES_MODEL_MANIFEST.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(manifest_path)
 
 

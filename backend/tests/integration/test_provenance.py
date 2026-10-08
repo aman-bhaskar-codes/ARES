@@ -47,6 +47,6 @@ def test_persisted_evidence_is_anchored_to_immutable_document_version(repository
     evidence = repository.get_evidence(packets[0].evidence_id)
     assert evidence.document_version_id is not None
     assert evidence.char_start is not None and evidence.char_end is not None
-    assert text[evidence.char_start:evidence.char_end].strip() == evidence.text.strip()
+    assert text[evidence.char_start : evidence.char_end].strip() == evidence.text.strip()
     assert evidence.source.provider == "fixture"
     assert evidence.source.discovery_rank == 1

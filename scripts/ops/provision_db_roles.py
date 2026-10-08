@@ -3,6 +3,7 @@
 Run after Alembic 0006+ and infra/postgres/bootstrap_roles.sql. This script is
 intentionally explicit and idempotent; it does not grant superuser/createdb/createrole.
 """
+
 from __future__ import annotations
 
 import os
@@ -24,16 +25,16 @@ def ensure_login(conn: psycopg.Connection, name: str, password: str, group: str)
         cur.execute("SELECT 1 FROM pg_roles WHERE rolname=%s", (name,))
         if cur.fetchone():
             cur.execute(
-                sql.SQL("ALTER ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD %s").format(
-                    sql.Identifier(name)
-                ),
+                sql.SQL(
+                    "ALTER ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD %s"
+                ).format(sql.Identifier(name)),
                 (password,),
             )
         else:
             cur.execute(
-                sql.SQL("CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD %s").format(
-                    sql.Identifier(name)
-                ),
+                sql.SQL(
+                    "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD %s"
+                ).format(sql.Identifier(name)),
                 (password,),
             )
         cur.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(group), sql.Identifier(name)))
@@ -57,8 +58,12 @@ def main() -> int:
             )
             rows = cur.fetchall()
     if len(rows) != 2 or any(row[1] for row in rows) or any(row[2] for row in rows):
-        raise SystemExit("concrete LOGIN roles must be non-superuser and must not directly BYPASSRLS")
-    print(f"Provisioned API/worker LOGIN roles for database host {urlsplit(admin_url).hostname or 'local'}; credentials were not printed.")
+        raise SystemExit(
+            "concrete LOGIN roles must be non-superuser and must not directly BYPASSRLS"
+        )
+    print(
+        f"Provisioned API/worker LOGIN roles for database host {urlsplit(admin_url).hostname or 'local'}; credentials were not printed."
+    )
     return 0
 
 

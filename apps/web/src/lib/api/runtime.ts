@@ -151,6 +151,7 @@ export function parseRunSnapshot(value: unknown): RunSnapshot {
   if (typeof cancellationRequested !== 'boolean') throw new TypeError('Invalid API payload: run.cancellation_requested')
 
   return {
+    model_provider: value.model_provider == null ? null : enumValue(value.model_provider, new Set<import('./types').ModelProvider>(['gemini', 'qwen']), 'run.model_provider'),
     id: requiredString(value, 'id'),
     conversation_id: requiredString(value, 'conversation_id'),
     query: requiredString(value, 'query'),

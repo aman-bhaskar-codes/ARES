@@ -53,6 +53,16 @@ export function RunQualityPanel({ quality, onEvidence }: { quality: RunQuality; 
               </div>
             </>
           )}
+          {(quality.confidence_extraction !== undefined || quality.confidence_relevance !== undefined) && (
+            <>
+              <h3 className="quality-subhead">Model Confidence</h3>
+              <div className="quality-list">
+                {quality.confidence_extraction !== undefined && quality.confidence_extraction !== null && <div><span>Extraction</span><strong>{percent(quality.confidence_extraction)}</strong></div>}
+                {quality.confidence_relevance !== undefined && quality.confidence_relevance !== null && <div><span>Relevance</span><strong>{percent(quality.confidence_relevance)}</strong></div>}
+                {quality.confidence_support !== undefined && quality.confidence_support !== null && <div><span>Support</span><strong>{percent(quality.confidence_support)}</strong></div>}
+              </div>
+            </>
+          )}
         </div>
         <div>
           <h3>Source mix</h3>

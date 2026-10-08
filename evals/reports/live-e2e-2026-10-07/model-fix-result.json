@@ -1,0 +1,40 @@
+{
+  "root_cause": "Async Gemini client reused across closed asyncio.run event loops",
+  "repair": "Persistent asyncio.Runner in synthesis and semantic checker; close async clients on owned loop",
+  "runs": [
+    {
+      "run_id": "caf66117-c2b7-45dd-b6ff-9e22325f6274",
+      "status": "completed",
+      "claims": 4,
+      "citations": 6,
+      "error": null,
+      "citation_resolution_passed": true
+    },
+    {
+      "run_id": "acbfba51-80f1-460a-8975-32fe6758f21d",
+      "status": "partial",
+      "claims": 0,
+      "citations": 8,
+      "error": null,
+      "citation_resolution_passed": true
+    }
+  ],
+  "browser_checks": {
+    "completed_answer_rendered": true,
+    "reload": true,
+    "citation_drawer": true
+  },
+  "verification": {
+    "backend_passed": 207,
+    "backend_skipped": 8,
+    "frontend_passed": 19,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "live_consecutive_e2e": "blocked by provider quota",
+  "quota": {
+    "model": "gemini-3.5-flash",
+    "daily_free_limit": 20,
+    "retry_delay_seconds_observed": 44130
+  }
+}

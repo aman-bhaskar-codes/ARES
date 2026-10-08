@@ -3,6 +3,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from ares.api.app import create_app
+from ares.api.settings import Settings
 from ares.api.spa_static import SpaStaticFiles
 
 
@@ -27,10 +29,12 @@ def test_missing_assets_and_unknown_api_paths_remain_404(tmp_path: Path) -> None
     client = _client(tmp_path)
     assert client.get("/missing.js", headers={"Accept": "text/html"}).status_code == 404
     assert client.get("/api/v9/does-not-exist", headers={"Accept": "text/html"}).status_code == 404
-    assert client.get("/research/conversation-1", headers={"Accept": "application/json"}).status_code == 404
+    assert (
+        client.get("/research/conversation-1", headers={"Accept": "application/json"}).status_code
+        == 404
+    )
 
-from ares.api.app import create_app
-from ares.api.settings import Settings
+
 
 
 def test_oidc_static_shell_is_public_but_api_remains_authenticated(tmp_path: Path) -> None:
@@ -66,3 +70,21 @@ def test_oidc_static_shell_is_public_but_api_remains_authenticated(tmp_path: Pat
     protected = client.get("/api/v1/auth/me")
     assert protected.status_code == 401
     assert protected.json()["detail"]["code"] == "AUTH_REQUIRED"
+
+
+def test_hosted_frontend_does_not_shadow_api_routes(tmp_path: Path) -> None:
+    web = tmp_path / 'web'
+    web.mkdir()
+    (web / 'index.html').write_text('<main>ARES shell</main>')
+    settings = Settings(
+        ares_mode='demo', auth_mode='disabled',
+        database_url=f"sqlite+pysqlite:///{tmp_path / 'hosted.sqlite3'}",
+        blob_root=str(tmp_path / 'blobs'), web_dist_dir=str(web),
+    )
+    with TestClient(create_app(settings)) as client:
+        assert client.get('/health/live').status_code == 200
+        assert client.get('/api/v1/auth/me').status_code == 200
+        created = client.post('/api/v1/conversations', json={'title': 'Hosted research'})
+        assert created.status_code == 201
+        assert client.get('/api/v1/conversations').json()[0]['id'] == created.json()['id']
+        assert client.get('/api/v9/missing').status_code == 404

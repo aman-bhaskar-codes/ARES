@@ -29,9 +29,9 @@ def _doc(text: str, *, canonical: str | None = None) -> FetchedDocument:
 def test_origin_normalizes_doi_and_arxiv_versions() -> None:
     assert normalize_canonical_identifier("https://doi.org/10.1000/ABC") == "doi:10.1000/abc"
     assert normalize_canonical_identifier("arxiv:2401.12345v3") == "arxiv:2401.12345"
-    assert source_origin_group(_doc("x" * 200, canonical="arxiv:2401.12345v1")) == source_origin_group(
-        _doc("y" * 200, canonical="arxiv:2401.12345v4")
-    )
+    assert source_origin_group(
+        _doc("x" * 200, canonical="arxiv:2401.12345v1")
+    ) == source_origin_group(_doc("y" * 200, canonical="arxiv:2401.12345v4"))
 
 
 def test_near_copy_signature_groups_lightly_wrapped_article() -> None:

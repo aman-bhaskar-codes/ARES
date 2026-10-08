@@ -28,20 +28,32 @@ def validate(payload: bytes) -> None:
         raise RuntimeError(
             f"Playwright seccomp profile identity mismatch: expected {EXPECTED_GIT_BLOB_SHA1}, got {digest}"
         )
-    if b'"defaultAction"' not in payload or b'"clone"' not in payload or b'"unshare"' not in payload:
+    if (
+        b'"defaultAction"' not in payload
+        or b'"clone"' not in payload
+        or b'"unshare"' not in payload
+    ):
         raise RuntimeError("Playwright seccomp profile is structurally incomplete")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Vendor the exact Playwright v1.63.0 Chromium seccomp profile")
+    parser = argparse.ArgumentParser(
+        description="Vendor the exact Playwright v1.63.0 Chromium seccomp profile"
+    )
     parser.add_argument("--destination", type=Path, default=DEFAULT_DESTINATION)
-    parser.add_argument("--check", action="store_true", help="validate an already-vendored file without network access")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="validate an already-vendored file without network access",
+    )
     args = parser.parse_args()
 
     if args.check:
         payload = args.destination.read_bytes()
         validate(payload)
-        print(f"[OK] {args.destination} matches Playwright {PLAYWRIGHT_VERSION} blob {EXPECTED_GIT_BLOB_SHA1}")
+        print(
+            f"[OK] {args.destination} matches Playwright {PLAYWRIGHT_VERSION} blob {EXPECTED_GIT_BLOB_SHA1}"
+        )
         return 0
 
     request = Request(SOURCE_URL, headers={"User-Agent": "ARES-M10-release-vendor/1"})

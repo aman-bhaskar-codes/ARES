@@ -10,10 +10,20 @@ from uuid import uuid4
 from ares.adapters.db import Base, build_session_factory
 from ares.application.engine import ResearchEngine
 from ares.application.observability import RunTelemetry
+from ares.application.providers import ProviderRegistry
+from ares.application.providers import ProviderCapabilities, ProviderMetadata
 from ares.application.repository import Repository
 from ares.application.run_context import RunContext
 from ares.domain.budgets import BUDGETS
-from ares.domain.models import FetchedDocument, RunCreate, RunMode, RunStatus, SearchHit, SynthesizedClaim, SynthesisResult
+from ares.domain.models import (
+    FetchedDocument,
+    RunCreate,
+    RunMode,
+    RunStatus,
+    SearchHit,
+    SynthesizedClaim,
+    SynthesisResult,
+)
 from ares.domain.research import EvidencePacket, ResearchPlan, SearchRequest
 
 
@@ -43,12 +53,28 @@ class SlowWebSearch:
         self.probe = probe
         self.calls = calls if calls is not None else []
 
+    @property
+    def metadata(self):
+        return ProviderMetadata(
+            name="fixture-web",
+            source_kind="web",
+            capabilities=ProviderCapabilities(supports_time_range=False, supports_full_text=False, supports_exact_id=False),
+            cost_class="free",
+            timeout_seconds=10.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=0,
+        )
+
     def search(self, request: SearchRequest):
         self.calls.append(request.query)
         self.probe.enter()
         try:
             time.sleep(0.08)
-            return [SearchHit(title="web", url="https://example.com/web", rank=1, provider="fixture-web")]
+            return [
+                SearchHit(
+                    title="web", url="https://example.com/web", rank=1, provider="fixture-web"
+                )
+            ]
         finally:
             self.probe.leave()
 
@@ -59,6 +85,18 @@ class SlowDocumentProvider:
         self.kind = kind
         self.calls = calls if calls is not None else []
 
+    @property
+    def metadata(self):
+        return ProviderMetadata(
+            name=f"fixture-{self.kind}",
+            source_kind="academic" if self.kind == "academic" else "software",
+            capabilities=ProviderCapabilities(supports_time_range=True, supports_full_text=True, supports_exact_id=False),
+            cost_class="free",
+            timeout_seconds=10.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=0,
+        )
+
     def search_documents(self, query: str, **kwargs):
         self.calls.append(query)
         self.probe.enter()
@@ -66,13 +104,21 @@ class SlowDocumentProvider:
             time.sleep(0.08)
             url = f"https://example.com/{self.kind}"
             hit = SearchHit(
-                title=self.kind, url=url, rank=1, provider=f"fixture-{self.kind}",
+                title=self.kind,
+                url=url,
+                rank=1,
+                provider=f"fixture-{self.kind}",
                 source_kind="academic" if self.kind == "academic" else "software",
             )
             doc = FetchedDocument(
-                title=self.kind, url=url, final_url=url,
-                text=f"The {self.kind} fixture contains enough evidence for bounded concurrent discovery testing. " * 3,
-                content_hash=(self.kind[0] * 64), fetched_at=datetime.now(UTC), extraction_method="fixture",
+                title=self.kind,
+                url=url,
+                final_url=url,
+                text=f"The {self.kind} fixture contains enough evidence for bounded concurrent discovery testing. "
+                * 3,
+                content_hash=(self.kind[0] * 64),
+                fetched_at=datetime.now(UTC),
+                extraction_method="fixture",
                 source_kind=hit.source_kind,
             )
             return [(hit, doc)]
@@ -87,17 +133,30 @@ class FixtureFetcher:
     def fetch(self, url: str, **kwargs):
         self.calls += 1
         return FetchedDocument(
-            source_id=uuid4(), title="web", url=url, final_url=url,
-            text="The web fixture supports this claim with sufficient source text for retrieval. " * 4,
-            content_hash="f" * 64, fetched_at=datetime.now(UTC), extraction_method="fixture",
+            source_id=uuid4(),
+            title="web",
+            url=url,
+            final_url=url,
+            text="The web fixture supports this claim with sufficient source text for retrieval. "
+            * 4,
+            content_hash="f" * 64,
+            fetched_at=datetime.now(UTC),
+            extraction_method="fixture",
         )
 
 
 class FixtureLLM:
-    def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, **kwargs):
+    def synthesize(
+        self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, **kwargs
+    ):
         return SynthesisResult(
             summary_markdown="fixture",
-            claims=[SynthesizedClaim(text="The web fixture supports this claim.", evidence_ids=[evidence[0].evidence_id])],
+            claims=[
+                SynthesizedClaim(
+                    text="The web fixture supports this claim.",
+                    evidence_ids=[evidence[0].evidence_id],
+                )
+            ],
             gaps=[],
         )
 
@@ -109,11 +168,26 @@ def repository_for(tmp_path: Path):
 
 
 def make_engine(repository: Repository, search, fetcher, *, academic=None, software=None):
+    registry = ProviderRegistry()
+    registry.register(search)
+    if academic:
+        registry.register(academic)
+    if software:
+        registry.register(software)
+        
     return ResearchEngine(
-        repository, search, fetcher, FixtureLLM(),
-        gemini_model="fixture", gemini_rpm=20, gemini_tpm=100_000, gemini_rpd=100,
-        planner=OneVariantPlanner(), academic=academic, software=software,
-        discovery_concurrency=3, research_cache_enabled=True,
+        repository,
+        search,
+        fetcher,
+        FixtureLLM(),
+        gemini_model="fixture",
+        gemini_rpm=20,
+        gemini_tpm=100_000,
+        gemini_rpd=100,
+        planner=OneVariantPlanner(),
+        registry=registry,
+        discovery_concurrency=3,
+        research_cache_enabled=True,
     )
 
 
@@ -122,7 +196,9 @@ def test_independent_discovery_tracks_overlap_in_time(tmp_path: Path) -> None:
     conversation = repository.create_conversation("M10 discovery")
     run, _ = repository.create_run(
         RunCreate(
-            conversation_id=conversation.id, query="compare discovery tracks", mode=RunMode.QUICK,
+            conversation_id=conversation.id,
+            query="compare discovery tracks",
+            mode=RunMode.QUICK,
             source_scope=["web", "academic", "software"],
         ),
         idempotency_key="m10-concurrent-discovery",
@@ -132,12 +208,18 @@ def test_independent_discovery_tracks_overlap_in_time(tmp_path: Path) -> None:
     context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
     probe = ConcurrencyProbe()
     engine = make_engine(
-        repository, SlowWebSearch(probe), FixtureFetcher(),
+        repository,
+        SlowWebSearch(probe),
+        FixtureFetcher(),
         academic=SlowDocumentProvider(probe, "academic"),
         software=SlowDocumentProvider(probe, "software"),
     )
-    hits, academic, software, plan = engine._discover_tracks(
-        lease, context, repository.get_run(run.id), BUDGETS[RunMode.QUICK], RunTelemetry(repository, lease)
+    hits, academic, software, plan = engine.discovery._discover_tracks(
+        lease,
+        context,
+        repository.get_run(run.id),
+        BUDGETS[RunMode.QUICK],
+        RunTelemetry(repository, lease),
     )
     assert hits and academic and software
     assert plan.facets == ["answer"]
@@ -156,7 +238,12 @@ def test_workspace_scoped_cache_avoids_duplicate_provider_and_source_calls(tmp_p
     for index in range(2):
         conversation = repository.create_conversation(f"Cache run {index}")
         run, _ = repository.create_run(
-            RunCreate(conversation_id=conversation.id, query="same cached research", mode=RunMode.QUICK, source_scope=["web"]),
+            RunCreate(
+                conversation_id=conversation.id,
+                query="same cached research",
+                mode=RunMode.QUICK,
+                source_scope=["web"],
+            ),
             idempotency_key=f"m10-cache-{index}",
         )
         lease = repository.claim_next_job()
@@ -174,7 +261,9 @@ def test_workspace_scoped_cache_avoids_duplicate_provider_and_source_calls(tmp_p
     assert fetcher.calls == 1
 
 
-def test_claim_evidence_edges_persist_relation_rationale_and_checker_version(tmp_path: Path) -> None:
+def test_claim_evidence_edges_persist_relation_rationale_and_checker_version(
+    tmp_path: Path,
+) -> None:
     from sqlalchemy import select
     from ares.adapters.db import ClaimEvidenceRow
     from ares.domain.models import FinalizedClaim, SupportStatus
@@ -190,9 +279,15 @@ def test_claim_evidence_edges_persist_relation_rationale_and_checker_version(tmp
     # Use the normal evidence persistence path so answer finalization cannot reference foreign IDs.
     doc = FixtureFetcher().fetch("https://example.com/edge")
     from ares.domain.research import EvidenceCandidate
+
     candidate = EvidenceCandidate(
-        source_id=doc.source_id, title=doc.title, url=doc.url,
-        text=doc.text, locator="fixture", char_start=0, char_end=len(doc.text),
+        source_id=doc.source_id,
+        title=doc.title,
+        url=doc.url,
+        text=doc.text,
+        locator="fixture",
+        char_start=0,
+        char_end=len(doc.text),
     )
     evidence = repository.persist_document_evidence(
         run.id, document=doc, candidates=[candidate], provider="fixture", lease_token=lease.token
@@ -200,13 +295,21 @@ def test_claim_evidence_edges_persist_relation_rationale_and_checker_version(tmp
     repository.finalize_answer(
         run.id,
         "checked",
-        [FinalizedClaim(
-            text="A checked claim", evidence_ids=[evidence.evidence_id], support_status=SupportStatus.CONFLICTING,
-            checker_method="gemini_semantic", checker_version="m10-v1", assessment_state="semantic_assessed",
-            assessment_rationale="conflicting benchmark",
-            evidence_relations={str(evidence.evidence_id): "contradicts"},
-            evidence_rationales={str(evidence.evidence_id): "This source reports the opposing result."},
-        )],
+        [
+            FinalizedClaim(
+                text="A checked claim",
+                evidence_ids=[evidence.evidence_id],
+                support_status=SupportStatus.CONFLICTING,
+                checker_method="gemini_semantic",
+                checker_version="m10-v1",
+                assessment_state="semantic_assessed",
+                assessment_rationale="conflicting benchmark",
+                evidence_relations={str(evidence.evidence_id): "contradicts"},
+                evidence_rationales={
+                    str(evidence.evidence_id): "This source reports the opposing result."
+                },
+            )
+        ],
         [],
         lease_token=lease.token,
     )
@@ -234,32 +337,48 @@ def test_quality_view_exposes_m10_facets_and_edge_semantics(tmp_path: Path) -> N
     assert lease is not None
     doc = FixtureFetcher().fetch("https://example.com/quality")
     candidate = EvidenceCandidate(
-        source_id=doc.source_id, title=doc.title, url=doc.url,
-        text=doc.text, locator="fixture", char_start=0, char_end=len(doc.text),
+        source_id=doc.source_id,
+        title=doc.title,
+        url=doc.url,
+        text=doc.text,
+        locator="fixture",
+        char_start=0,
+        char_end=len(doc.text),
     )
     evidence = repository.persist_document_evidence(
         run.id, document=doc, candidates=[candidate], provider="fixture", lease_token=lease.token
     )[0]
     repository.persist_facet_coverage(
         run.id,
-        [FacetAssessment(
-            facet="answer", status=FacetStatus.CONFLICTING,
-            supporting_evidence_ids=[evidence.evidence_id],
-            conflicting_evidence_ids=[evidence.evidence_id],
-            rationale="fixture conflict retained",
-        )],
-        checker_method="deterministic", checker_version="m10-v1", lease_token=lease.token,
+        [
+            FacetAssessment(
+                facet="answer",
+                status=FacetStatus.CONFLICTING,
+                supporting_evidence_ids=[evidence.evidence_id],
+                conflicting_evidence_ids=[evidence.evidence_id],
+                rationale="fixture conflict retained",
+            )
+        ],
+        checker_method="deterministic",
+        checker_version="m10-v1",
+        lease_token=lease.token,
     )
     repository.finalize_answer(
         run.id,
         "checked",
-        [FinalizedClaim(
-            text="A checked claim", evidence_ids=[evidence.evidence_id], support_status=SupportStatus.CONFLICTING,
-            checker_method="gemini_semantic", checker_version="m10-v1", assessment_state="semantic_assessed",
-            assessment_rationale="fixture conflict retained",
-            evidence_relations={str(evidence.evidence_id): "contradicts"},
-            evidence_rationales={str(evidence.evidence_id): "Opposing result."},
-        )],
+        [
+            FinalizedClaim(
+                text="A checked claim",
+                evidence_ids=[evidence.evidence_id],
+                support_status=SupportStatus.CONFLICTING,
+                checker_method="gemini_semantic",
+                checker_version="m10-v1",
+                assessment_state="semantic_assessed",
+                assessment_rationale="fixture conflict retained",
+                evidence_relations={str(evidence.evidence_id): "contradicts"},
+                evidence_rationales={str(evidence.evidence_id): "Opposing result."},
+            )
+        ],
         [],
         lease_token=lease.token,
     )
@@ -281,7 +400,12 @@ def test_web_cache_identity_normalizes_case_and_whitespace(tmp_path: Path) -> No
     for index, query in enumerate(["Same   Research Query", " same research query "]):
         conversation = repository.create_conversation(f"normalized cache {index}")
         run, _ = repository.create_run(
-            RunCreate(conversation_id=conversation.id, query=query, mode=RunMode.QUICK, source_scope=["web"]),
+            RunCreate(
+                conversation_id=conversation.id,
+                query=query,
+                mode=RunMode.QUICK,
+                source_scope=["web"],
+            ),
             idempotency_key=f"m10-normalized-cache-{index}",
         )
         lease = repository.claim_next_job()
@@ -300,45 +424,90 @@ class FixtureAcademicFullTextFetcher:
         self.calls += 1
         text = "Full paper evidence supports the requested academic claim. " * 20
         return FetchedDocument(
-            title="paper.pdf", url=url, final_url=url, text=text,
-            content_hash="a" * 64, fetched_at=datetime.now(UTC),
-            extraction_method="academic-pdf:fixture", mime_type="application/pdf",
-            byte_count=len(text), page_map=[{"page": 1, "char_start": 0, "char_end": len(text)}],
+            title="paper.pdf",
+            url=url,
+            final_url=url,
+            text=text,
+            content_hash="a" * 64,
+            fetched_at=datetime.now(UTC),
+            extraction_method="academic-pdf:fixture",
+            mime_type="application/pdf",
+            byte_count=len(text),
+            page_map=[{"page": 1, "char_start": 0, "char_end": len(text)}],
         )
 
 
-def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cache(tmp_path: Path) -> None:
+def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cache(
+    tmp_path: Path,
+) -> None:
     repository = repository_for(tmp_path)
     fulltext = FixtureAcademicFullTextFetcher()
     metadata_text = "Title: Paper\n\nAbstract\nMetadata abstract only."
     hit = SearchHit(
-        title="Paper", url="https://example.org/paper", rank=1, provider="fixture-academic",
-        source_kind="academic", canonical_identifier="doi:10.1/example",
-        full_text_url="https://example.org/paper.pdf", full_text_mime_type="application/pdf",
+        title="Paper",
+        url="https://example.org/paper",
+        rank=1,
+        provider="fixture-academic",
+        source_kind="academic",
+        canonical_identifier="doi:10.1/example",
+        full_text_url="https://example.org/paper.pdf",
+        full_text_mime_type="application/pdf",
     )
     metadata = FetchedDocument(
-        title="Paper", url=hit.url, final_url=hit.url, text=metadata_text,
-        content_hash="m" * 64, fetched_at=datetime.now(UTC),
-        extraction_method="fixture-metadata-abstract", source_kind="academic",
+        title="Paper",
+        url=hit.url,
+        final_url=hit.url,
+        text=metadata_text,
+        content_hash="m" * 64,
+        fetched_at=datetime.now(UTC),
+        extraction_method="fixture-metadata-abstract",
+        source_kind="academic",
         canonical_identifier="doi:10.1/example",
     )
 
     class Academic:
+        @property
+        def metadata(self):
+            return ProviderMetadata(
+                name="fixture-academic",
+                source_kind="academic",
+                capabilities=ProviderCapabilities(supports_time_range=True, supports_full_text=True, supports_exact_id=False),
+                cost_class="free",
+                timeout_seconds=10.0,
+                rate_limit_rpm=None,
+                cache_ttl_seconds=0,
+            )
+            
         def search_documents(self, query: str, **kwargs):
             return [(hit, metadata)]
 
+    registry = ProviderRegistry()
+    registry.register(SlowWebSearch(ConcurrencyProbe()))
+    registry.register(Academic())
+    
     engine = ResearchEngine(
-        repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), FixtureLLM(),
-        gemini_model="fixture", gemini_rpm=20, gemini_tpm=100_000, gemini_rpd=100,
-        planner=OneVariantPlanner(), academic=Academic(), discovery_concurrency=3,
-        research_cache_enabled=True, academic_full_text_fetcher=fulltext,
+        repository,
+        SlowWebSearch(ConcurrencyProbe()),
+        FixtureFetcher(),
+        FixtureLLM(),
+        gemini_model="fixture",
+        gemini_rpm=20,
+        gemini_tpm=100_000,
+        gemini_rpd=100,
+        planner=OneVariantPlanner(),
+        registry=registry,
+        discovery_concurrency=3,
+        research_cache_enabled=True,
+        academic_full_text_fetcher=fulltext,
         academic_full_text_limit=1,
     )
     for index in range(2):
         conversation = repository.create_conversation(f"fulltext {index}")
         run, _ = repository.create_run(
             RunCreate(
-                conversation_id=conversation.id, query="academic full text", mode=RunMode.QUICK,
+                conversation_id=conversation.id,
+                query="academic full text",
+                mode=RunMode.QUICK,
                 source_scope=["academic"],
             ),
             idempotency_key=f"m10-fulltext-{index}",
@@ -347,8 +516,12 @@ def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cach
         assert lease is not None
         context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
         # Academic documents are returned as the second discovery track result.
-        _, academic_rows, _, _ = engine._discover_tracks(
-            lease, context, repository.get_run(run.id), BUDGETS[RunMode.QUICK], RunTelemetry(repository, lease)
+        _, academic_rows, _, _ = engine.discovery._discover_tracks(
+            lease,
+            context,
+            repository.get_run(run.id),
+            BUDGETS[RunMode.QUICK],
+            RunTelemetry(repository, lease),
         )
         assert academic_rows[0][1].extraction_method == "academic-pdf:fixture"
         assert academic_rows[0][1].canonical_identifier == "doi:10.1/example"
@@ -362,6 +535,18 @@ def test_rate_limited_web_track_does_not_discard_successful_academic_track(tmp_p
     from ares.ports.errors import ProviderRateLimitError
 
     class RateLimitedWeb:
+        @property
+        def metadata(self):
+            return ProviderMetadata(
+                name="fixture-ratelimited-web",
+                source_kind="web",
+                capabilities=ProviderCapabilities(supports_time_range=False, supports_full_text=False, supports_exact_id=False),
+                cost_class="free",
+                timeout_seconds=10.0,
+                rate_limit_rpm=None,
+                cache_ttl_seconds=0,
+            )
+            
         def search(self, request: SearchRequest):
             raise ProviderRateLimitError("fixture 429", retry_after_seconds=7.0)
 
@@ -369,7 +554,9 @@ def test_rate_limited_web_track_does_not_discard_successful_academic_track(tmp_p
     conversation = repository.create_conversation("M10 429")
     run, _ = repository.create_run(
         RunCreate(
-            conversation_id=conversation.id, query="provider backoff", mode=RunMode.QUICK,
+            conversation_id=conversation.id,
+            query="provider backoff",
+            mode=RunMode.QUICK,
             source_scope=["web", "academic"],
         ),
         idempotency_key="m10-provider-429",
@@ -379,11 +566,17 @@ def test_rate_limited_web_track_does_not_discard_successful_academic_track(tmp_p
     context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
     probe = ConcurrencyProbe()
     engine = make_engine(
-        repository, RateLimitedWeb(), FixtureFetcher(),
+        repository,
+        RateLimitedWeb(),
+        FixtureFetcher(),
         academic=SlowDocumentProvider(probe, "academic"),
     )
-    web_rows, academic_rows, software_rows, _ = engine._discover_tracks(
-        lease, context, repository.get_run(run.id), BUDGETS[RunMode.QUICK], RunTelemetry(repository, lease)
+    web_rows, academic_rows, software_rows, _ = engine.discovery._discover_tracks(
+        lease,
+        context,
+        repository.get_run(run.id),
+        BUDGETS[RunMode.QUICK],
+        RunTelemetry(repository, lease),
     )
     assert web_rows == [] and software_rows == []
     assert academic_rows
@@ -400,12 +593,26 @@ def test_date_window_is_part_of_academic_cache_identity(tmp_path: Path) -> None:
     calls: list[tuple[object, object]] = []
 
     class WindowedAcademic:
+        @property
+        def metadata(self):
+            return ProviderMetadata(
+                name="fixture-windowed",
+                source_kind="academic",
+                capabilities=ProviderCapabilities(supports_time_range=True, supports_full_text=True, supports_exact_id=False),
+                cost_class="free",
+                timeout_seconds=10.0,
+                rate_limit_rpm=None,
+                cache_ttl_seconds=0,
+            )
+            
         def search_documents(self, query: str, **kwargs):
             calls.append((kwargs.get("published_after"), kwargs.get("published_before")))
             return []
 
     repository = repository_for(tmp_path)
-    engine = make_engine(repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), academic=WindowedAcademic())
+    engine = make_engine(
+        repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), academic=WindowedAcademic()
+    )
     windows = [
         DateWindow(start=datetime(2024, 1, 1, tzinfo=UTC), end=datetime(2024, 12, 31, tzinfo=UTC)),
         DateWindow(start=datetime(2025, 1, 1, tzinfo=UTC), end=datetime(2025, 12, 31, tzinfo=UTC)),
@@ -414,17 +621,25 @@ def test_date_window_is_part_of_academic_cache_identity(tmp_path: Path) -> None:
         conversation = repository.create_conversation(f"window {index}")
         run, _ = repository.create_run(
             RunCreate(
-                conversation_id=conversation.id, query="same query", mode=RunMode.QUICK,
-                source_scope=["academic"], date_window=window,
+                conversation_id=conversation.id,
+                query="same query",
+                mode=RunMode.QUICK,
+                source_scope=["academic"],
+                date_window=window,
             ),
             idempotency_key=f"m10-window-{index}",
         )
         lease = repository.claim_next_job()
         assert lease is not None
         context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
-        engine._cached_document_track(
-            lease, context, track="academic", provider=engine.academic, query="same query",
-            limit=3, ttl_seconds=3600,
+        engine.discovery._cached_document_track(
+            lease,
+            context,
+            track="academic",
+            provider=engine.registry.get_provider("fixture-windowed"),
+            query="same query",
+            limit=3,
+            ttl_seconds=3600,
         )
         repository.finish_job(lease)
     assert len(calls) == 2
@@ -447,7 +662,9 @@ def test_semantic_checker_outage_keeps_conservative_deterministic_result(tmp_pat
     conversation = repository.create_conversation("semantic outage")
     run, _ = repository.create_run(
         RunCreate(
-            conversation_id=conversation.id, query="web fixture supports claim", mode=RunMode.QUICK,
+            conversation_id=conversation.id,
+            query="web fixture supports claim",
+            mode=RunMode.QUICK,
             source_scope=["web"],
         ),
         idempotency_key="m10-semantic-outage",
@@ -455,23 +672,35 @@ def test_semantic_checker_outage_keeps_conservative_deterministic_result(tmp_pat
     lease = repository.claim_next_job()
     assert lease is not None
     engine = ResearchEngine(
-        repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), FixtureLLM(),
-        gemini_model="fixture", gemini_rpm=100, gemini_tpm=100_000, gemini_rpd=100,
-        planner=OneVariantPlanner(), research_cache_enabled=False,
-        semantic_checker=FailingSemanticChecker(), semantic_checker_model="fixture-semantic",
+        repository,
+        SlowWebSearch(ConcurrencyProbe()),
+        FixtureFetcher(),
+        FixtureLLM(),
+        gemini_model="fixture",
+        gemini_rpm=100,
+        gemini_tpm=100_000,
+        gemini_rpd=100,
+        planner=OneVariantPlanner(),
+        research_cache_enabled=False,
+        semantic_checker=FailingSemanticChecker(),
+        semantic_checker_model="fixture-semantic",
         semantic_checker_max_claims=2,
     )
     engine.execute(lease)
     repository.finish_job(lease)
     snapshot = repository.get_run(run.id)
     assert snapshot.status is RunStatus.COMPLETED
-    assert any(event.event_type == "semantic_checker.degraded" for event in repository.list_events(run.id))
+    assert any(
+        event.event_type == "semantic_checker.degraded" for event in repository.list_events(run.id)
+    )
     answer = repository.get_run(run.id).answer_blocks
     assert answer and answer[0].claims
     assert answer[0].claims[0].assessment_state == "heuristic_screened"
 
 
-def test_semantic_checker_has_worker_enforced_deadline_even_if_adapter_blocks(tmp_path: Path) -> None:
+def test_semantic_checker_has_worker_enforced_deadline_even_if_adapter_blocks(
+    tmp_path: Path,
+) -> None:
     from ares.application.run_context import RunDeadlineExceeded
 
     repository = repository_for(tmp_path)
@@ -484,17 +713,74 @@ def test_semantic_checker_has_worker_enforced_deadline_even_if_adapter_blocks(tm
     assert lease is not None
     context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
     engine = ResearchEngine(
-        repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), FixtureLLM(),
-        gemini_model="fixture", gemini_rpm=100, gemini_tpm=100_000, gemini_rpd=100,
-        planner=OneVariantPlanner(), semantic_checker=SlowSemanticChecker(),
-        semantic_checker_model="fixture-semantic", semantic_checker_timeout_seconds=0.05,
+        repository,
+        SlowWebSearch(ConcurrencyProbe()),
+        FixtureFetcher(),
+        FixtureLLM(),
+        gemini_model="fixture",
+        gemini_rpm=100,
+        gemini_tpm=100_000,
+        gemini_rpd=100,
+        planner=OneVariantPlanner(),
+        semantic_checker=SlowSemanticChecker(),
+        semantic_checker_model="fixture-semantic",
+        semantic_checker_timeout_seconds=0.05,
     )
     packet = EvidencePacket(
-        evidence_id=uuid4(), source_id=uuid4(), title="fixture", url="https://example.com/e",
-        domain="example.com", text="bounded evidence text " * 20, locator="fixture",
-        captured_at=datetime.now(UTC), content_hash="e" * 64,
+        evidence_id=uuid4(),
+        source_id=uuid4(),
+        title="fixture",
+        url="https://example.com/e",
+        domain="example.com",
+        text="bounded evidence text " * 20,
+        locator="fixture",
+        captured_at=datetime.now(UTC),
+        content_hash="e" * 64,
     )
     started = time.perf_counter()
     with pytest.raises(RunDeadlineExceeded):
-        engine._semantic_assess_claim(context, claim="bounded evidence", evidence=[packet], telemetry=RunTelemetry(repository, lease))
-    assert time.perf_counter() - started < 0.15
+        engine.synthesis._semantic_assess_claim(
+            context,
+            claim="bounded evidence",
+            evidence=[packet],
+            telemetry=RunTelemetry(repository, lease),
+        )
+    assert time.perf_counter() - started < 0.25
+
+
+def test_semantic_outage_is_not_repeated_for_each_claim(tmp_path: Path) -> None:
+    class TwoClaimLLM(FixtureLLM):
+        def synthesize(self, query, evidence, **kwargs):
+            result = super().synthesize(query, evidence, **kwargs)
+            result.claims.append(SynthesizedClaim(text='The web fixture supports another claim.', evidence_ids=[evidence[0].evidence_id]))
+            return result
+
+    repository = repository_for(tmp_path)
+    chat = repository.create_conversation('Checker outage')
+    run, _ = repository.create_run(RunCreate(conversation_id=chat.id, query='web fixture supports claim', mode=RunMode.QUICK, source_scope=['web']), 'checker-outage-once')
+    lease = repository.claim_next_job()
+    assert lease is not None
+    engine = ResearchEngine(repository, SlowWebSearch(ConcurrencyProbe()), FixtureFetcher(), TwoClaimLLM(), gemini_model='fixture', gemini_rpm=100, gemini_tpm=100_000, gemini_rpd=100, planner=OneVariantPlanner(), research_cache_enabled=False, semantic_checker=FailingSemanticChecker(), semantic_checker_model='fixture-semantic', semantic_checker_max_claims=6)
+    engine.execute(lease)
+    repository.finish_job(lease)
+    assert repository.get_run(run.id).status is RunStatus.COMPLETED
+    assert len([e for e in repository.list_events(run.id) if e.event_type == 'semantic_checker.degraded']) == 1
+    assert len(repository.get_run(run.id).answer_blocks[0].claims) == 2
+
+
+def test_failed_search_track_is_not_reported_as_no_results(tmp_path: Path):
+    from ares.ports.errors import SearchProviderError
+
+    class UnavailableSearch(SlowWebSearch):
+        def search(self, request):
+            raise SearchProviderError('Search engines are rate-limited')
+
+    repository = repository_for(tmp_path)
+    conversation = repository.create_conversation('Search outage regression')
+    run, _ = repository.create_run(RunCreate(conversation_id=conversation.id,
+        query='what is RSI ?', mode=RunMode.QUICK, source_scope=['web']),
+        idempotency_key='search-outage-regression')
+    lease = repository.claim_next_job()
+    engine = make_engine(repository, UnavailableSearch(ConcurrencyProbe()), FixtureFetcher())
+    engine.execute(lease)
+    assert repository.get_run(run.id).error_code == 'SEARCH_UNAVAILABLE'

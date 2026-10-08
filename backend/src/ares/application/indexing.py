@@ -5,6 +5,7 @@ from uuid import UUID
 
 from ares.application.rag import EmbeddingProvider
 from ares.application.repository import IngestionLease, Repository
+from ares.domain.budgets import calculate_provider_cost
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +28,7 @@ class DocumentEmbeddingIndexer:
         repository: Repository,
         embedder: EmbeddingProvider | None,
         *,
+        profile_id: UUID | None = None,
         model_id: str,
         dimensions: int,
         batch_size: int = 32,
@@ -38,6 +40,7 @@ class DocumentEmbeddingIndexer:
     ) -> None:
         self.repository = repository
         self.embedder = embedder
+        self.profile_id = profile_id
         self.model_id = model_id
         self.dimensions = dimensions
         self.batch_size = batch_size
@@ -53,7 +56,10 @@ class DocumentEmbeddingIndexer:
             return IndexingResult(document_id=document_id, embedded_chunks=0, semantic_ready=False)
 
         pending = self.repository.get_missing_embedding_chunks(
-            [document_id], model_id=self.model_id, dimensions=self.dimensions, limit=self.max_chunks + 1
+            [document_id],
+            model_id=self.model_id,
+            dimensions=self.dimensions,
+            limit=self.max_chunks + 1,
         )
         if len(pending) > self.max_chunks:
             raise RuntimeError("document exceeds configured background embedding chunk budget")
@@ -63,18 +69,23 @@ class DocumentEmbeddingIndexer:
             rows = pending[start : start + self.batch_size]
             texts = [row.text for row in rows]
             if self.remote_provider is not None:
+                estimated_input_tokens = max(1, sum(max(1, len(text) // 4) for text in texts))
+                cost_usd = calculate_provider_cost(self.model_id, estimated_input_tokens, 0)
                 self.repository.reserve_provider_usage(
                     provider=self.remote_provider,
                     model=self.model_id,
                     rpm=self.rpm,
                     tpm=self.tpm,
                     rpd=self.rpd,
-                    input_tokens=max(1, sum(max(1, len(text) // 4) for text in texts)),
+                    input_tokens=estimated_input_tokens,
+                    output_tokens=0,
+                    cost_usd=cost_usd,
                 )
             vectors = self.embedder.embed_documents(texts)
             if len(vectors) != len(rows):
                 raise RuntimeError("embedding provider returned an unexpected vector count")
             self.repository.store_chunk_embeddings(
+                profile_id=self.profile_id,
                 model_id=self.model_id,
                 dimensions=self.dimensions,
                 embeddings=[(row.id, vector) for row, vector in zip(rows, vectors, strict=True)],
@@ -88,4 +99,6 @@ class DocumentEmbeddingIndexer:
         )
         ready = not remaining
         self.repository.mark_document_semantic_ready(lease, document_id, ready=ready)
-        return IndexingResult(document_id=document_id, embedded_chunks=embedded, semantic_ready=ready)
+        return IndexingResult(
+            document_id=document_id, embedded_chunks=embedded, semantic_ready=ready
+        )

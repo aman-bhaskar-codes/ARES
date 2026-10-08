@@ -9,7 +9,11 @@ from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.api.app import create_app
 from ares.api.settings import Settings
-from ares.application.asset_ingestion import AssetAdmissionService, AssetIngestionExecutor, BuiltinRichExtractor
+from ares.application.asset_ingestion import (
+    AssetAdmissionService,
+    AssetIngestionExecutor,
+    BuiltinRichExtractor,
+)
 from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.persistent_rag import PersistentDocumentRAG
 
@@ -56,7 +60,9 @@ def _ingest_csv(repository, tmp_path: Path, *, embedder=None):
     executor = AssetIngestionExecutor(
         repository,
         blobs,
-        BuiltinRichExtractor(BoundedPdfParser(max_bytes=1024 * 1024, max_pages=10, timeout_seconds=5)),
+        BuiltinRichExtractor(
+            BoundedPdfParser(max_bytes=1024 * 1024, max_pages=10, timeout_seconds=5)
+        ),
         indexer,
         max_table_cells=100,
     )
@@ -64,7 +70,9 @@ def _ingest_csv(repository, tmp_path: Path, *, embedder=None):
     return admitted
 
 
-def test_csv_ingestion_publishes_table_segments_and_background_embeddings(repository, tmp_path: Path) -> None:
+def test_csv_ingestion_publishes_table_segments_and_background_embeddings(
+    repository, tmp_path: Path
+) -> None:
     embedder = FakeEmbedder()
     admitted = _ingest_csv(repository, tmp_path, embedder=embedder)
 
@@ -95,7 +103,13 @@ def test_csv_ingestion_publishes_table_segments_and_background_embeddings(reposi
     assert by_cell[(3, 1)].normalized_value is None
 
     rag = PersistentDocumentRAG(
-        repository, embedder=embedder, model_id="fake-3d", dimensions=3, rpm=100, tpm=100_000, rpd=1000
+        repository,
+        embedder=embedder,
+        model_id="fake-3d",
+        dimensions=3,
+        rpm=100,
+        tpm=100_000,
+        rpd=1000,
     )
     result = rag.retrieve(
         "beta 90",
@@ -165,7 +179,9 @@ class FailingEmbedder:
         raise RuntimeError("not used")
 
 
-def test_semantic_index_failure_preserves_lexical_document_as_partial(repository, tmp_path: Path) -> None:
+def test_semantic_index_failure_preserves_lexical_document_as_partial(
+    repository, tmp_path: Path
+) -> None:
     admitted = _ingest_csv(repository, tmp_path, embedder=FailingEmbedder())
 
     ingestion = repository.get_ingestion(admitted.ingestion.id)
@@ -200,7 +216,9 @@ def test_ingestion_cancel_retry_is_durable_and_idempotent(repository, tmp_path: 
     executor = AssetIngestionExecutor(
         repository,
         blobs,
-        BuiltinRichExtractor(BoundedPdfParser(max_bytes=1024 * 1024, max_pages=10, timeout_seconds=5)),
+        BuiltinRichExtractor(
+            BoundedPdfParser(max_bytes=1024 * 1024, max_pages=10, timeout_seconds=5)
+        ),
         DocumentEmbeddingIndexer(repository, None, model_id="", dimensions=3),
         max_table_cells=100,
     )

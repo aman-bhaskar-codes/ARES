@@ -4,6 +4,7 @@
 This deliberately measures only in-process deterministic demo behavior. It is a
 regression reference, not a live-provider or production throughput benchmark.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -53,7 +54,9 @@ def main() -> int:
     replay: list[float] = []
     with tempfile.TemporaryDirectory(prefix="ares-m07-perf-") as temp:
         db = Path(temp) / "baseline.sqlite3"
-        client = TestClient(create_app(Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{db}")))
+        client = TestClient(
+            create_app(Settings(ares_mode="demo", database_url=f"sqlite+pysqlite:///{db}"))
+        )
         conversation = client.post("/api/v1/conversations", json={"title": "M07 perf baseline"})
         conversation.raise_for_status()
         conversation_id = conversation.json()["id"]

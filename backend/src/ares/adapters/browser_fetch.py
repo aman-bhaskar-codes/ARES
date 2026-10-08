@@ -24,10 +24,20 @@ class BrowserFetcher:
     """
 
     def __init__(
-        self, service_url: str, *, service_token: str, timeout_seconds: float = 20.0, max_text_chars: int = 150_000
+        self,
+        service_url: str,
+        *,
+        service_token: str,
+        timeout_seconds: float = 20.0,
+        max_text_chars: int = 150_000,
     ):
         parsed = urlparse(service_url)
-        if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+        ):
             raise ValueError("browser service URL must be an http(s) origin without credentials")
         token = service_token.strip()
         if len(token) < 32:
@@ -40,7 +50,11 @@ class BrowserFetcher:
     def fetch(self, url: str, *, timeout_seconds: float | None = None) -> FetchedDocument:
         # Blocks direct internal targets even if discovery/provider data is compromised.
         validate_public_url(url)
-        deadline = self.timeout_seconds if timeout_seconds is None else min(self.timeout_seconds, float(timeout_seconds))
+        deadline = (
+            self.timeout_seconds
+            if timeout_seconds is None
+            else min(self.timeout_seconds, float(timeout_seconds))
+        )
         try:
             response = httpx.post(
                 f"{self.service_url}/v1/render",
@@ -65,21 +79,25 @@ class BrowserFetcher:
         if len(text) > self.max_text_chars:
             raise BrowserFetchError("browser renderer exceeded text limit")
         try:
-            document = FetchedDocument.model_validate({
-                "title": payload.get("title") or final_url,
-                "url": url,
-                "final_url": final_url,
-                "text": text,
-                "content_hash": payload["content_hash"],
-                "fetched_at": payload.get("fetched_at"),
-                "extraction_method": payload.get("extraction_method", "browser-rendered"),
-                "mime_type": payload.get("mime_type", "text/html"),
-                "byte_count": payload.get("byte_count", 0),
-                "source_kind": "web",
-                "published_at": payload.get("published_at"),
-            })
+            document = FetchedDocument.model_validate(
+                {
+                    "title": payload.get("title") or final_url,
+                    "url": url,
+                    "final_url": final_url,
+                    "text": text,
+                    "content_hash": payload["content_hash"],
+                    "fetched_at": payload.get("fetched_at"),
+                    "extraction_method": payload.get("extraction_method", "browser-rendered"),
+                    "mime_type": payload.get("mime_type", "text/html"),
+                    "byte_count": payload.get("byte_count", 0),
+                    "source_kind": "web",
+                    "published_at": payload.get("published_at"),
+                }
+            )
         except Exception as exc:
-            raise BrowserFetchError("browser renderer returned an invalid document contract") from exc
+            raise BrowserFetchError(
+                "browser renderer returned an invalid document contract"
+            ) from exc
         return document
 
 
@@ -101,4 +119,6 @@ class BrowserFallbackFetcher:
             raise
         except FetchError:
             document = self.browser.fetch(url, timeout_seconds=timeout_seconds)
-            return document.model_copy(update={"extraction_method": f"browser-fallback:{document.extraction_method}"})
+            return document.model_copy(
+                update={"extraction_method": f"browser-fallback:{document.extraction_method}"}
+            )

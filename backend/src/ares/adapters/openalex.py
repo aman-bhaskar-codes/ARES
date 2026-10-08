@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -21,24 +22,51 @@ def _abstract_from_inverted(index: dict[str, list[int]] | None) -> str:
     return " ".join(word for _, word in positioned)
 
 
-class OpenAlexAcademicProvider:
+class OpenAlexAcademicProvider(DiscoveryProvider):
     """OpenAlex metadata/abstract adapter.
 
     This adapter never labels metadata or an abstract as full-text reading. The extraction method
     carried into provenance makes that limitation inspectable downstream.
     """
 
-    def __init__(self, api_key: str = "", *, base_url: str = "https://api.openalex.org", client: httpx.Client | None = None):
+    def __init__(
+        self,
+        api_key: str = "",
+        *,
+        base_url: str = "https://api.openalex.org",
+        client: httpx.Client | None = None,
+    ):
         self.api_key = api_key.strip()
         self._client = client or httpx.Client(base_url=base_url.rstrip("/"), timeout=20.0)
         self._owns_client = client is None
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="openalex",
+            source_kind="academic",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=20.0,
+            rate_limit_rpm=None,
+            cache_ttl_seconds=604800,
+        )
+
     def search_documents(
-        self, query: str, *, limit: int = 6, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         params = {
-            "search": query,
+            "search": query.replace("?", " ").replace("*", " "),
             "per_page": min(max(limit, 1), 20),
             "select": "id,doi,title,publication_year,publication_date,abstract_inverted_index,primary_location,best_oa_location,type",
         }
@@ -52,7 +80,11 @@ class OpenAlexAcademicProvider:
         if self.api_key:
             params["api_key"] = self.api_key
         try:
-            response = self._client.get("/works", params=params, timeout=timeout_seconds) if timeout_seconds is not None else self._client.get("/works", params=params)
+            response = (
+                self._client.get("/works", params=params, timeout=timeout_seconds)
+                if timeout_seconds is not None
+                else self._client.get("/works", params=params)
+            )
         except httpx.HTTPError as exc:
             raise SearchProviderError(f"OpenAlex request failed: {type(exc).__name__}") from exc
         if response.status_code == 429:
@@ -93,7 +125,11 @@ class OpenAlexAcademicProvider:
                     pass
             text = f"{title}\n\nAbstract\n{abstract}"
             source_id = uuid4()
-            canonical_identifier = f"doi:{doi.removeprefix('https://doi.org/').lower()}" if doi else f"openalex:{openalex_id.rsplit('/', 1)[-1]}"
+            canonical_identifier = (
+                f"doi:{doi.removeprefix('https://doi.org/').lower()}"
+                if doi
+                else f"openalex:{openalex_id.rsplit('/', 1)[-1]}"
+            )
             hit = SearchHit(
                 title=title,
                 url=url,
@@ -104,8 +140,12 @@ class OpenAlexAcademicProvider:
                 source_kind="academic",
                 canonical_identifier=canonical_identifier,
                 published_at=published_at,
-                full_text_url=full_text_url if isinstance(full_text_url, str) and full_text_url.startswith("http") else None,
-                full_text_mime_type="application/pdf" if isinstance(full_text_url, str) and full_text_url.startswith("http") else None,
+                full_text_url=full_text_url
+                if isinstance(full_text_url, str) and full_text_url.startswith("http")
+                else None,
+                full_text_mime_type="application/pdf"
+                if isinstance(full_text_url, str) and full_text_url.startswith("http")
+                else None,
             )
             document = FetchedDocument(
                 source_id=source_id,

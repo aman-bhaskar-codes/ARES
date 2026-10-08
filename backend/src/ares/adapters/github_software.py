@@ -7,11 +7,12 @@ from uuid import uuid4
 
 import httpx
 
+from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
 
-class GitHubSoftwareProvider:
+class GitHubSoftwareProvider(DiscoveryProvider):
     """Read-only GitHub research adapter.
 
     Reads public repository metadata, latest release metadata, license identity, and a bounded
@@ -27,7 +28,9 @@ class GitHubSoftwareProvider:
         }
         if token.strip():
             headers["Authorization"] = f"Bearer {token.strip()}"
-        self._client = client or httpx.Client(base_url="https://api.github.com", headers=headers, timeout=20.0)
+        self._client = client or httpx.Client(
+            base_url="https://api.github.com", headers=headers, timeout=20.0
+        )
         self._headers = headers
         self._owns_client = client is None
 
@@ -46,12 +49,37 @@ class GitHubSoftwareProvider:
             raise SearchProviderError(f"GitHub returned HTTP {response.status_code}")
         return response
 
+    @property
+    def metadata(self) -> ProviderMetadata:
+        return ProviderMetadata(
+            name="github",
+            source_kind="software",
+            capabilities=ProviderCapabilities(
+                supports_time_range=True,
+                supports_full_text=False,  # it gets README, not full codebase
+                supports_exact_id=True,
+            ),
+            cost_class="free",
+            timeout_seconds=20.0,
+            rate_limit_rpm=60,  # default unauthenticated rate limit is 60/hr, but authenticated is 5000/hr, so conservatively 60
+            cache_ttl_seconds=604800,
+        )
+
     def search_documents(
-        self, query: str, *, limit: int = 5, timeout_seconds: float | None = None,
-        published_after: datetime | None = None, published_before: datetime | None = None,
-    ) -> list[tuple[SearchHit, FetchedDocument]]:
+        self,
+        query: str,
+        limit: int,
+        *,
+        timeout_seconds: float | None = None,
+        published_after: datetime | None = None,
+        published_before: datetime | None = None,
+    ) -> list[tuple[SearchHit, FetchedDocument | None]]:
         request_timeout = {"timeout": timeout_seconds} if timeout_seconds is not None else {}
-        response = self._get("/search/repositories", params={"q": query, "per_page": min(max(limit, 1), 10)}, **request_timeout)
+        response = self._get(
+            "/search/repositories",
+            params={"q": query, "per_page": min(max(limit, 1), 10)},
+            **request_timeout,
+        )
         if response.status_code >= 400:
             raise SearchProviderError(f"GitHub search returned HTTP {response.status_code}")
         try:
@@ -72,10 +100,12 @@ class GitHubSoftwareProvider:
             if readme.status_code == 200:
                 try:
                     encoded = readme.json().get("content", "")
-                    readme_text = base64.b64decode(encoded).decode("utf-8", errors="replace")[:12_000]
+                    readme_text = base64.b64decode(encoded).decode("utf-8", errors="replace")[
+                        :12_000
+                    ]
                 except (ValueError, TypeError):
                     readme_text = ""
-            license_name = ((repo.get("license") or {}).get("spdx_id") or "unknown")
+            license_name = (repo.get("license") or {}).get("spdx_id") or "unknown"
             description = repo.get("description") or ""
             topics = ", ".join(repo.get("topics") or [])
             release_tag = release_data.get("tag_name") or "none published"
@@ -89,7 +119,9 @@ class GitHubSoftwareProvider:
             published_at = None
             if release_data.get("published_at"):
                 try:
-                    published_at = datetime.fromisoformat(str(release_data["published_at"]).replace("Z", "+00:00")).astimezone(UTC)
+                    published_at = datetime.fromisoformat(
+                        str(release_data["published_at"]).replace("Z", "+00:00")
+                    ).astimezone(UTC)
                 except ValueError:
                     published_at = None
             if published_at is not None:

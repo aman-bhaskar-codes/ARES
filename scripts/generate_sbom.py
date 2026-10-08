@@ -19,13 +19,15 @@ def _python_components() -> list[dict[str, object]]:
         version = str(package.get("version", "")).strip()
         if not name or not version:
             continue
-        components.append({
-            "type": "library",
-            "name": name,
-            "version": version,
-            "purl": f"pkg:pypi/{name}@{version}",
-            "properties": [{"name": "ares:ecosystem", "value": "python"}],
-        })
+        components.append(
+            {
+                "type": "library",
+                "name": name,
+                "version": version,
+                "purl": f"pkg:pypi/{name}@{version}",
+                "properties": [{"name": "ares:ecosystem", "value": "python"}],
+            }
+        )
     return components
 
 
@@ -77,19 +79,21 @@ def _node_components() -> list[dict[str, object]]:
             purl_name = f"{namespace.replace('@', '%40', 1)}/{package_name}"
         else:
             purl_name = name
-        components.append({
-            "type": "library",
-            "name": name,
-            "version": version,
-            "purl": f"pkg:npm/{purl_name}@{version}",
-            "properties": [{"name": "ares:ecosystem", "value": "node"}],
-        })
+        components.append(
+            {
+                "type": "library",
+                "name": name,
+                "version": version,
+                "purl": f"pkg:npm/{purl_name}@{version}",
+                "properties": [{"name": "ares:ecosystem", "value": "node"}],
+            }
+        )
     return components
 
 
 def build_sbom() -> dict[str, object]:
     components = _python_components() + _node_components()
-    components.sort(key=lambda item: (str(item["purl"])))
+    components.sort(key=lambda item: str(item["purl"]))
     fingerprint = hashlib.sha256(
         "\n".join(str(component["purl"]) for component in components).encode("utf-8")
     ).hexdigest()
@@ -119,7 +123,9 @@ def render_sbom() -> bytes:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate a deterministic CycloneDX SBOM from committed lockfiles")
+    parser = argparse.ArgumentParser(
+        description="Generate a deterministic CycloneDX SBOM from committed lockfiles"
+    )
     parser.add_argument("--output", default="dist/ARES_M11.sbom.cdx.json")
     args = parser.parse_args()
     output = Path(args.output)
@@ -128,7 +134,9 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     payload = render_sbom()
     output.write_bytes(payload)
-    print(f"{output}\nsha256={hashlib.sha256(payload).hexdigest()}\ncomponents={len(build_sbom()['components'])}")
+    print(
+        f"{output}\nsha256={hashlib.sha256(payload).hexdigest()}\ncomponents={len(build_sbom()['components'])}"
+    )
     return 0
 
 

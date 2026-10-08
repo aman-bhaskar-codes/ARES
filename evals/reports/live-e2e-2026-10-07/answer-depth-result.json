@@ -1,0 +1,44 @@
+{
+  "runs": [
+    {
+      "run_id": "2b8a435e-acd3-4367-9836-512e6c99c03b",
+      "provider": "gemini",
+      "status": "completed",
+      "paragraphs": 5,
+      "words": 396,
+      "citations_resolve": true,
+      "answer": "Quantum superposition is a fundamental principle of quantum mechanics allowing a quantum system, such as a qubit, to exist in multiple states simultaneously rather than being restricted to a single definite state. This differs fundamentally from classical bits in traditional computing, which must be in either a definitive zero or one at any given time. Mathematically, this state can be represented as a linear combination of basis states with associated complex probability amplitudes. Through this capability, quantum systems can combine all possible component states into a single overarching condition.\n\nThe mechanism of superposition relies on complex numbers known as probability amplitudes, which dictate the mathematical weights assigned to each potential basis state. These components can also experience quantum interference, where different parts of a superposition interact to amplify or diminish the likelihood of specific outcomes. Quantum gates are frequently utilized to create, manipulate, and coordinate these complex linear combinations within a processor. Consequently, the system acts as a combination of multiple potential configurations until external interactions alter its status.\n\nThe act of measurement fundamentally alters a system in superposition, forcing the wave function to collapse into a single definitive basis state. This is a probabilistic process where the exact outcome cannot be predicted beforehand, and measurement typically destroys the underlying superposition. The likelihood of landing on a specific outcome is governed by the squared magnitudes of the probability amplitudes. Following this collapse, the system loses its simultaneous multiple states and yields a single classical result.\n\nIn quantum computing, superposition forms the backbone of quantum parallelism by allowing qubits to represent both zero and one simultaneously. Because classical bits process information sequentially in one state at a time, quantum computers leverage superposition to explore many possible solutions and calculations in parallel. This capability serves as a core ingredient in specialized algorithms designed to accelerate complex problem-solving. Through algorithms like Grover's search and Shor's algorithm, this principle helps unlock significantly faster performance for specific computational tasks.\n\nThe practical significance of superposition extends across multiple high-impact fields such as cryptography, simulation, and optimization. For instance, Shor's algorithm utilizes superposition to efficiently factor large numbers to break certain classical encryption schemes, while Grover's algorithm accelerates database searches. Additionally, it aids in simulating complex molecular structures and chemical reactions for drug discovery by modeling protein interactions. These applications demonstrate how parallel exploration of states can provide advantages over traditional computing methods."
+    },
+    {
+      "run_id": "503126f8-51d3-4348-8809-607390c1e3d2",
+      "provider": "qwen",
+      "status": "completed",
+      "paragraphs": 5,
+      "words": 239,
+      "citations_resolve": true,
+      "answer": "Quantum superposition is a fundamental principle in quantum mechanics where a quantum system can exist in multiple states simultaneously, rather than being confined to a single definite state as classical systems are. This phenomenon allows quantum bits (qubits) to represent both |0\u27e9 and |1\u27e9 states at the same time, forming a linear combination described by probability amplitudes \u03b1 and \u03b2.\n\nThe superposition state of a qubit is mathematically represented as |\u03c8\u27e9 = \u03b1|0\u27e9 + \u03b2|1\u27e9, where \u03b1 and \u03b2 are complex probability amplitudes that determine the likelihood of measuring the qubit in either state. This representation enables quantum systems to explore multiple computational paths concurrently, a key mechanism for quantum parallelism.\n\nMeasurement of a quantum system in superposition causes the wave function to collapse into one of the basis states (e.g., |0\u27e9 or |1\u27e9) with probabilities determined by the squared magnitudes of the probability amplitudes. This probabilistic outcome is a direct consequence of quantum mechanics and cannot be predicted with certainty beforehand.\n\nA practical example of superposition in quantum computing is Grover's algorithm, which leverages superposition to search an unsorted database quadratically faster than classical algorithms. This demonstrates how superposition enables quantum parallelism by evaluating multiple potential solutions simultaneously.\n\nSuperposition plays a critical role in quantum computing by enabling algorithms like Shor's algorithm for factoring large numbers and quantum key distribution for secure communication. These applications highlight its importance in solving problems that are computationally intractable for classical systems."
+    }
+  ],
+  "changes": [
+    "Expanded grounded writing/context budgets",
+    "Complete visible paragraphs instead of unused summary",
+    "Citation annotations no longer interpreted as factual numeric quantities; source numeric arrays preserved",
+    "One semantic-verification notice instead of repeated unassessed badges"
+  ],
+  "quality_gate": {
+    "minimum_words_for_test": 180,
+    "citations_resolve": true,
+    "semantic_verification": "unassessed"
+  },
+  "browser_checks": {
+    "expanded_answer_rendered": true,
+    "verification_notice_count": 1,
+    "repeated_badge_count": 0
+  },
+  "verification": {
+    "frontend_tests_passed": 21,
+    "build": "passed",
+    "backend_tests_passed": 219,
+    "backend_tests_skipped": 8
+  }
+}

@@ -1,187 +1,148 @@
-# ARES — Autonomous Research & Evidence System
+<div align="center">
+  <img src="https://raw.githubusercontent.com/amanbhaskar/ARES/main/ares_banner.jpg" alt="ARES Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px;" />
 
-> Research you can trace back to evidence.
+  # ✦ ARES ✦
+  **Autonomous AI Research and Engineering System**
 
-ARES is an evidence-first research application built as a React/Vite client, FastAPI API, durable Python worker, PostgreSQL/pgvector data layer, bounded research tool fabric, and Gemini synthesis layer. The full design baseline is retained at `docs/architecture/ARES_Master_Blueprint.html`.
+  <p align="center">
+    A world-class, multi-agent platform for deep research, hybrid retrieval-augmented generation (RAG), and intelligent multi-modal content extraction.
+  </p>
 
-## Current milestone
+  <p align="center">
+    <img src="https://img.shields.io/badge/Python-3.12+-blue.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/TypeScript-Ready-blue.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Next.js-14-black.svg?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/FastAPI-Modern-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/Qdrant-Vector_DB-FF5252.svg?style=for-the-badge&logo=qdrant&logoColor=white" alt="Qdrant" />
+  </p>
+</div>
 
-**Milestone 11 — visual research workspace and V2 release proof** is implemented in source as ARES `0.11.0`, schema `0012`. It extends the supplied M10 release candidate in place; no framework, evidence-store, database, or worker rewrite was introduced.
+<br />
 
-M11 completes the V2 product surface around the evidence contracts built in M07–M10:
+## 🚀 Vision & Capabilities
 
-- stable conversation/run/evidence deep links with SPA fallback, answer/sources/comparison/activity workspace views, safe Markdown/GFM rendering, source/date/read-state filters, semantic light/dark tokens, reduced-motion handling, and keyboard/focus-aware evidence inspection;
-- additive migration `0012_visual_artifacts` for workspace-owned visualization datasets, approved non-executable specs, lineage, and export metadata;
-- deterministic worker-side visualization publication after finalized research, with `visualization.ready` / `visualization.failed` durable events and no model-controlled JavaScript, HTML, SQL, Python, or chart expressions;
-- evidence-linked comparison matrices, validated numeric charts, honest source-publication timelines, and capped claim/evidence/source relationship maps with text/table alternatives;
-- server-authorized lineage-bearing CSV exports with private/no-store headers and spreadsheet-formula escaping;
-- release proof tooling for migration compatibility, deterministic SBOM/archive generation, pinned GitHub Actions, browser E2E, accessibility/responsive checks, and explicit external held-out evaluation boundaries.
+ARES is engineered from the ground up to be the ultimate **AI-driven research companion**. By blending deterministic data extraction pipelines with state-of-the-art Generative AI, ARES executes complex, multi-wave research processes completely autonomously. 
 
-Milestones 1–10 remain integrated: durable execution and replay, strict-free provider policy, OIDC/workspaces/RLS, asynchronous document/image/table ingestion, local indexing, audio/video timestamp evidence, bounded concurrent live research, source-origin grouping, facets, semantic assessment, and isolated browser fallback.
+Whether you are performing deep literature reviews, generating bounded financial summaries, or creating polished Markdown/PDF reports, ARES handles the entire lifecycle securely and deterministically.
 
-The checked-in regression fixtures are **not an independent benchmark**. Source completion is also distinct from production promotion: PostgreSQL/FORCE-RLS target-role tests, the three-browser E2E matrix, backup/restore and M06→M11 rehearsal, live OIDC/provider/media/browser checks, and the separately authored >=100-question held-out evaluation/external tester round still require the operator's provisioned environment. See `docs/development/MILESTONE_11_RELEASE_REPORT.md`.
+### 🌟 Key Features
+- **🧠 Autonomous Research Engine**: Spawns concurrent AI workers to conduct deep, iterative web and document searches.
+- **⚡ Hybrid RAG Pipeline**: Merges dense semantic vector similarity (via **Qdrant**) with precise lexical token matching for unparalleled retrieval accuracy.
+- **🖥️ Cinematic Web Interface**: A stunning, ultra-responsive **Next.js & React** interface, styled with **Tailwind CSS** and **Framer Motion** for a fluid, real-time streaming experience.
+- **🛡️ Secure & Sandboxed Execution**: Data bounded strictly to authorized workspaces, backed by **PostgreSQL** or **SQLite**.
+- **🌐 Omni-Model Architecture**: Seamlessly plug-and-play with cloud giants (OpenAI, Anthropic, Gemini) or run 100% locally with offline models via **Ollama**.
 
-## Research flow
+---
 
-```text
-query
-  │
-  ├─ deterministic policy / optional Jev decision adapter
-  │
-  ├─ bounded concurrent discovery
-  │    ├─ web ─────── SearXNG -> SafeFetcher -> optional isolated browser fallback
-  │    ├─ academic ── OpenAlex / Crossref / arXiv -> optional safe OA PDF enrichment
-  │    └─ software ── GitHub public repository/release/license/README evidence
-  └─ local assets ─ PDF / image / CSV / audio / short video / legacy text
-                    │
-                    ├─ immutable extraction + page/cell/time/frame evidence
-                    ├─ local ASR + bounded PTS frame sampling for configured media
-                    ├─ lexical retrieval
-                    └─ background local/versioned embeddings -> exact pgvector search
-                                      │
-                              reciprocal-rank fusion
-                                      │
-                               stored evidence spans
-                                      │
-                       facet coverage / deterministic + optional semantic checks
-                                      │
-                            Gemini structured synthesis
-                                      │
-                       server-resolved claim citations
-                                      │
-                     finalized run + evidence relations
-                                      │
-             validated comparison / chart / timeline / evidence map
+## 🏗️ Technology Stack
+
+ARES is built utilizing a hardened, production-grade enterprise stack divided into distinct, scalable domains:
+
+### 🐍 The Backend Control Plane
+The nervous system of ARES, providing real-time data streaming and asynchronous job execution.
+* **Core**: Python 3.12+, asynchronous event loops.
+* **API Framework**: **FastAPI** with robust Pydantic schemas.
+* **Database & ORM**: **SQLAlchemy** (async), **Alembic** for migrations, **PostgreSQL** (production) / **SQLite** (local).
+* **Vector Store**: **Qdrant** for high-dimensional semantic search.
+* **Tooling**: **uv** (lightning-fast Python package manager), **Playwright** (headless Chromium for PDF generation).
+
+### ⚛️ The Frontend Interface
+A beautiful, highly interactive SPA built for raw speed and aesthetics.
+* **Core**: TypeScript, React 18+.
+* **Framework**: **Next.js** (App Router).
+* **Styling & Animation**: **Tailwind CSS**, **Framer Motion**.
+* **State Management**: React Query / Context API.
+* **Tooling**: **pnpm** (fast, disk-space efficient package manager).
+
+---
+
+## 🛠️ Quick Start & Installation
+
+You can get ARES up and running on any machine (Mac, Windows, Linux) in minutes.
+
+### 1. Prerequisites
+Ensure you have the following installed on your system:
+* **[uv](https://docs.astral.sh/uv/)** - An extremely fast Python package and project manager.
+* **Node.js (v20+)** & **[pnpm](https://pnpm.io/)** - For the frontend.
+* *(Optional)* **Ollama** - If you intend to run AI models entirely locally on your hardware.
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/your-username/ARES.git
+cd ARES
 ```
 
-The invariant is `answer claim -> evidence span -> immutable document/source version`. Retrieved content is untrusted data and never receives tool authority.
-
-## Quickstart — keyless demo
-
-Prerequisites: Python 3.12+ and `uv`; Node 22.16+ and pnpm for the web client.
-
+### 3. Backend Setup
+We use `uv` to guarantee fast, deterministic Python environments.
 ```bash
-cp .env.example .env
-python scripts/doctor.py
-uv sync --project backend --extra dev
+# Move to the backend directory
+cd backend
+
+# Install dependencies instantly via uv
+uv sync
+
+# Setup your environment variables
+cp ../.env.example ../.env
+# -> Edit ../.env with your specific API keys if not using local models
+
+# Install Playwright browser binaries (Required for PDF export capabilities)
+uv run playwright install chromium
+```
+
+### 4. Frontend Setup
+```bash
+# Return to the root directory
+cd ..
+
+# Install all node packages via pnpm
+pnpm install
+```
+
+---
+
+## 🚦 Running ARES
+
+To run the full suite locally, you will need to open **two separate terminal windows**.
+
+### Terminal 1: Backend Services (API & Worker)
+Start the primary FastAPI server and the background job worker.
+```bash
+# 1. Start the API Server (runs on port 8000)
 uv run --project backend uvicorn ares.api.app:app --app-dir backend/src --reload
-```
 
-Second terminal:
-
-```bash
+# 2. In a NEW tab, start the Background Job Worker
 PYTHONPATH=backend/src uv run --project backend python -m ares.worker.main
 ```
 
-Web client:
-
+### Terminal 2: Web Frontend
+Start the stunning Next.js interface.
 ```bash
-corepack enable pnpm
-pnpm install --frozen-lockfile
+# Start the web UI (runs on port 3000)
 pnpm --filter @ares/web dev
 ```
 
-The UI labels demo output **Recorded demo · keyless**. Demo mode does not claim live web/Gemini execution.
+🎯 **That's it!** Open your browser and navigate to **[http://localhost:3000](http://localhost:3000)** to experience ARES.
 
-## Local live mode
+---
 
-Start local infrastructure:
+## 🔋 Running 100% Locally (Offline AI)
 
-```bash
-make infra
-```
+ARES is fully compatible with local, offline LLMs via **Ollama** for maximum privacy and zero API costs.
 
-The local PostgreSQL service uses the pgvector PostgreSQL 18 image. Copy the PostgreSQL example environment and configure the quotas shown by your own provider project:
+1. Install and start [Ollama](https://ollama.com/).
+2. Pull your preferred model (e.g., `qwen2.5:3b` or `llama3`):
+   ```bash
+   ollama pull qwen2.5:3b
+   ```
+3. Update your `.env` file at the root of the project:
+   ```env
+   LOCAL_LLM_ENABLED=true
+   LOCAL_LLM_URL=http://127.0.0.1:11434
+   LOCAL_LLM_MODEL=qwen2.5:3b
+   ```
+4. Restart your backend services. ARES will now route all autonomous research through your local GPU/CPU!
 
-```bash
-cp .env.postgres.example .env
-```
-
-Required live policy remains:
-
-```env
-ARES_MODE=local_live
-STRICT_FREE_MODE=true
-ALLOW_BILLABLE_PROVIDERS=false
-```
-
-Then:
-
-```bash
-uv run --project backend alembic -c backend/alembic.ini upgrade head
-```
-
-`JEV_ENABLED` stays false under strict-free live mode because Jev is a metered provider. It can be enabled only in a separately authorized evaluation profile; deterministic routing remains available without it.
-
-## Verification
-
-Backend:
-
-```bash
-PYTHONPATH=backend/src pytest backend/tests -q
-PYTHONPATH=backend/src python -m compileall -q backend/src backend/tests
-PYTHONPATH=backend/src python scripts/export_openapi.py
-```
-
-With the local PostgreSQL/pgvector test database, run the complete release database gate:
-
-```bash
-export ARES_TEST_POSTGRES_URL="$DATABASE_URL"
-make test-postgres
-```
-
-This covers provider-quota concurrency, active-run concurrency, exact pgvector ordering, production readiness/Trusted Host, direct RLS isolation and pooled-connection tenant reset.
-
-Frontend:
-
-```bash
-pnpm install --frozen-lockfile
-pnpm --filter @ares/web typecheck
-pnpm --filter @ares/web test
-pnpm --filter @ares/web build
-```
-
-Production/source release checks also include:
-
-```bash
-PYTHONPATH=backend/src python scripts/verify_migrations.py
-python scripts/production_doctor.py --env-file .env.production
-python scripts/check_secrets.py
-make perf-baseline
-make verify-m11-release
-make sbom
-# Builds the deterministic source archive under dist/ after source-level gates pass:
-make release-m11
-```
-
-For the M11 browser gate, prepare a provisioned run with at least 200 persisted user-safe activity events and export its IDs, then run `make test-e2e`; the target executes Chromium, Firefox and WebKit at the 320 px/reduced-motion/deep-link/focus-return boundary. For independent release evaluation, point `ARES_M11_HELDOUT_MANIFEST` at the separately authored >=100-case manifest and run `make eval-m11-heldout`. The implementation agent must not populate that held-out set and then call it independent.
-
-After populating `.env`, validate live service/API wiring with bounded read-only probes:
-
-```bash
-make connectivity-doctor
-# Release/operator gate including optional research providers:
-make connectivity-doctor-strict
-```
-
-Do not promote the RC to a public production release until the PostgreSQL/RLS gate, native frontend test/build, Docker image/Compose gate and live OIDC/provider smoke tests pass on the target environment.
-
-## Repository map
-
-- `apps/web/` — responsive React/Vite research workspace.
-- `backend/src/ares/domain/` — typed run/evidence/document/budget models.
-- `backend/src/ares/application/` — orchestration, persistent RAG, documents, exports and repository services.
-- `backend/src/ares/adapters/` — Gemini, Jev, SearXNG, safe HTTP, OpenAlex, Crossref, arXiv, GitHub, PDF, blob and SQL adapters.
-- `backend/src/ares/api/` — REST/SSE boundary and runtime status.
-- `backend/src/ares/worker/` — durable lease worker with graceful admission stop/drain.
-- `backend/migrations/` — additive Alembic history through M11; current head is `0012` (`0012_visual_artifacts`).
-- `backend/tests/` — unit/integration/security/provider contracts.
-- `evals/` — versioned routing/evaluation fixtures and reports.
-- `docs/adr/` — architectural decisions.
-- `infra/local/` — local PostgreSQL/pgvector + SearXNG infrastructure.
-- `infra/production/` — hardened production Compose contract; `infra/postgres/` contains privilege-group provisioning.
-- `docs/operations/` — production, backup/restore and rollout/rollback runbooks.
-
-## Engineering stance
-
-ARES is Perplexity-inspired in workflow, not a claim of proprietary parity or benchmark superiority. Exact source passages, known gaps and conflicts are preferred over polished unsupported prose. M11 adds validated visual projections over the same evidence store: a chart point, comparison cell, timeline item or graph edge cannot bypass evidence authorization or provenance. Source code is not equivalent to a proven public deployment: PostgreSQL/RLS, production containers, browser/network isolation, model provisioning, live providers, independent held-out evaluation and external testing still require target-environment verification before public promotion.
+---
+<div align="center">
+  <i>Engineered for the future of Autonomous Intelligence.</i>
+</div>

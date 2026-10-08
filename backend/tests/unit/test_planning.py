@@ -22,3 +22,14 @@ def test_explicit_date_window_suppresses_relative_recency_filter() -> None:
     plan = DeterministicResearchPlanner().plan("latest Gemini model", RunMode.QUICK, window)
     assert plan.time_range is None
 
+
+def test_quick_question_uses_compact_search_terms():
+    plan = DeterministicResearchPlanner().plan('What is a qubit, and why does decoherence matter in quantum computing? Explain clearly with cited sources.', RunMode.QUICK)
+    assert 'qubit decoherence quantum computing' in plan.subqueries
+
+
+def test_single_topic_questions_are_searchable_in_both_modes():
+    for mode in RunMode:
+        plan = DeterministicResearchPlanner().plan('what is RSI ?', mode)
+        assert plan.subqueries[0] == 'rsi'
+        assert plan.query_variants[0] == 'what is RSI ?'

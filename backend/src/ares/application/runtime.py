@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from ares.adapters.academic import CompositeAcademicProvider
+from ares.adapters.local_reranker import LocalCrossEncoderReranker
+from ares.adapters.ollama_synthesis import OllamaLLMProvider
+from ares.application.planning import DeterministicResearchPlanner
 from ares.adapters.arxiv import ArxivAcademicProvider
 from ares.adapters.crossref import CrossrefAcademicProvider
 from ares.adapters.gemini import GeminiLLMProvider
@@ -16,9 +18,9 @@ from ares.adapters.searxng import SearXNGSearchProvider
 from ares.api.settings import Settings
 from ares.application.engine import DemoResearchEngine, ResearchEngine
 from ares.application.persistent_rag import PersistentDocumentRAG
+from ares.application.providers import ProviderRegistry
 from ares.application.rag import HybridRAGRetriever
 from ares.application.repository import Repository
-
 
 
 def build_embedding_runtime(settings: Settings):
@@ -46,7 +48,8 @@ def build_embedding_runtime(settings: Settings):
         return provider, settings.gemini_embedding_model, settings.gemini_embedding_dimensions
     return None, "", settings.local_embedding_dimensions
 
-def build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
+
+def _build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
     """Compose external adapters once at the worker process boundary."""
     if settings.ares_mode == "demo":
         return DemoResearchEngine(repository)
@@ -67,16 +70,29 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         embedding_runtime if embedding_runtime is not None else build_embedding_runtime(settings)
     )
 
-    academic = CompositeAcademicProvider(
-        [
-            OpenAlexAcademicProvider(settings.openalex_api_key),
-            CrossrefAcademicProvider(mailto=settings.crossref_mailto),
-            ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds),
-        ]
+    registry = ProviderRegistry()
+    registry.register(
+        SearXNGSearchProvider(
+            settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds
+        )
     )
+    registry.register(OpenAlexAcademicProvider(settings.openalex_api_key))
+    registry.register(CrossrefAcademicProvider(mailto=settings.crossref_mailto))
+    registry.register(
+        ArxivAcademicProvider(min_interval_seconds=settings.arxiv_min_interval_seconds)
+    )
+    registry.register(GitHubSoftwareProvider(settings.github_read_token))
+    
+    profile_id = None
+    if embedding_model_id:
+        profile = repository.get_retrieval_profile_by_model(embedding_model_id)
+        if profile:
+            profile_id = profile["id"]
+
     persistent_documents = PersistentDocumentRAG(
         repository,
         embedder=embedder,
+        profile_id=profile_id,
         model_id=embedding_model_id,
         dimensions=embedding_dimensions,
         rpm=settings.gemini_embedding_rpm or 1,
@@ -86,7 +102,8 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
     semantic_checker = None
     if settings.semantic_checker_enabled:
         semantic_checker = GeminiSemanticClaimChecker(
-            settings.gemini_api_key, settings.semantic_checker_model,
+            settings.gemini_api_key,
+            settings.semantic_checker_model,
             thinking_level=settings.gemini_thinking_level,
             timeout_seconds=settings.semantic_checker_timeout_seconds,
         )
@@ -103,29 +120,38 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
             ),
         )
 
-    return ResearchEngine(
-        repository,
-        SearXNGSearchProvider(settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds),
-        source_fetcher,
-        GeminiLLMProvider(
-            settings.gemini_api_key,
-            settings.gemini_model,
+    planner = DeterministicResearchPlanner()
+    writer = (
+        OllamaLLMProvider(settings.local_llm_url, settings.local_llm_model)
+        if settings.local_llm_enabled else GeminiLLMProvider(
+            settings.gemini_api_key, settings.gemini_model,
             thinking_level=settings.gemini_thinking_level,
             timeout_seconds=settings.gemini_timeout_seconds,
+        )
+    )
+
+    return ResearchEngine(
+        repository,
+        SearXNGSearchProvider(
+            settings.searxng_url, timeout_seconds=settings.provider_http_timeout_seconds
         ),
-        gemini_model=settings.gemini_model,
-        gemini_rpm=settings.gemini_rpm or 1,
-        gemini_tpm=settings.gemini_tpm or 1,
-        gemini_rpd=settings.gemini_rpd or 1,
+        source_fetcher,
+        writer,
+        planner=planner,
+        candidate_reranker=LocalCrossEncoderReranker(),
+        gemini_model=settings.local_llm_model if settings.local_llm_enabled else settings.gemini_model,
+        gemini_rpm=60 if settings.local_llm_enabled else settings.gemini_rpm or 1,
+        gemini_tpm=100_000 if settings.local_llm_enabled else settings.gemini_tpm or 1,
+        gemini_rpd=10_000 if settings.local_llm_enabled else settings.gemini_rpd or 1,
+        gemini_max_daily_spend_usd=settings.gemini_max_daily_spend_usd if settings.gemini_max_daily_spend_usd > 0 else None,
         global_http_concurrency=settings.max_http_concurrency,
         gemini_concurrency=settings.gemini_concurrency,
         provider_http_timeout_seconds=settings.provider_http_timeout_seconds,
         source_fetch_timeout_seconds=settings.source_fetch_timeout_seconds,
-        gemini_timeout_seconds=settings.gemini_timeout_seconds,
+        gemini_timeout_seconds=settings.local_llm_timeout_seconds if settings.local_llm_enabled else settings.gemini_timeout_seconds,
         decisions=decisions,
         retriever=HybridRAGRetriever(embedder=embedder),
-        academic=academic,
-        software=GitHubSoftwareProvider(settings.github_read_token),
+        registry=registry,
         persistent_documents=persistent_documents,
         discovery_concurrency=settings.discovery_concurrency,
         research_cache_enabled=settings.research_cache_enabled,
@@ -137,9 +163,25 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         semantic_checker_model=settings.semantic_checker_model,
         semantic_checker_max_claims=settings.semantic_checker_max_claims,
         semantic_checker_timeout_seconds=settings.semantic_checker_timeout_seconds,
-        academic_full_text_fetcher=safe_source_fetcher if settings.academic_full_text_enabled else None,
+        academic_full_text_fetcher=safe_source_fetcher
+        if settings.academic_full_text_enabled
+        else None,
         academic_full_text_limit=settings.academic_full_text_limit,
         academic_full_text_timeout_seconds=settings.academic_full_text_timeout_seconds,
         academic_full_text_max_bytes=settings.academic_full_text_max_bytes,
         academic_full_text_max_pages=settings.academic_full_text_max_pages,
     )
+
+
+def build_research_runtime(settings: Settings, repository: Repository, *, embedding_runtime=None):
+    if settings.ares_mode == "demo":
+        return DemoResearchEngine(repository)
+    from ares.application.model_routing import ModelRoutingEngine
+    engines = {}
+    if settings.gemini_api_key:
+        engines["gemini"] = _build_research_runtime(
+            settings.model_copy(update={"local_llm_enabled": False}), repository,
+            embedding_runtime=embedding_runtime)
+    if settings.local_llm_enabled:
+        engines["qwen"] = _build_research_runtime(settings, repository, embedding_runtime=embedding_runtime)
+    return ModelRoutingEngine(repository, engines, default="qwen" if settings.local_llm_enabled else "gemini")

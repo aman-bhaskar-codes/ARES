@@ -5,7 +5,9 @@ from pathlib import Path
 from ares.application import media_capabilities
 
 
-def test_media_probe_does_not_treat_empty_model_directory_as_ready(tmp_path: Path, monkeypatch) -> None:
+def test_media_probe_does_not_treat_empty_model_directory_as_ready(
+    tmp_path: Path, monkeypatch
+) -> None:
     monkeypatch.setattr(media_capabilities.shutil, "which", lambda name: f"/usr/bin/{name}")
     monkeypatch.setattr(media_capabilities.importlib.util, "find_spec", lambda name: object())
 

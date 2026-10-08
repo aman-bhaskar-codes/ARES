@@ -1,0 +1,21 @@
+## Description
+
+This massive pull request implements the culmination of the V3 development phase (Phases 12 through 15), delivering a robust, production-ready Autonomous AI Research System (ARES).
+
+### 🚀 Key Features & Additions
+- **Hybrid Retrieval-Augmented Generation (RAG):** Fully integrated `Qdrant` for semantic vector search combined with exact lexical matching, yielding high-precision document extraction.
+- **Robust Persistence & Job Processing:** Added JSON state tracking (`outline`, `assessment`) to the `runs` table, completing the state machine for the autonomous research loops.
+- **Local LLM Support (Ollama):** Added integration for `Ollama`, enabling 100% offline, privacy-first AI modeling alongside cloud providers.
+- **Data Export Pipelines:** Completed Playwright-based PDF generation and Markdown exporters for seamless artifact extraction.
+- **Cinematic Documentation:** Completely overhauled the `README.md` with an ultra-clean, tech-stack focused presentation and a generated banner.
+
+### 🧹 Cleanup & Tech Debt Removal
+- Removed hundreds of lines of outdated planning documents, architectural trackers, and phase checkpoints (`ARES_V3_M12_M15_Implementation_Plan.md`, `DESIGN.md`, `docs/`, `scratch/`).
+- Removed leftover debugging and scratch scripts.
+- Resolved local SQLite schema divergence issues that caused backend API `500` errors during RAG job enqueueing.
+
+### 🛠️ Tech Stack Upgrades
+- Fast and deterministic package management via `uv` for Python and `pnpm` for Node.js.
+- Hardened `FastAPI` + `SQLAlchemy` schemas for multi-modal storage.
+
+This branch is completely up to date with `v3-development` and has been locally verified end-to-end.

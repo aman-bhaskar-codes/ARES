@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     worker_database_url: str = ""
     blob_root: str = ".data/blobs"
 
-
     public_base_url: str = "http://127.0.0.1:8000"
     frontend_origin: str = "http://127.0.0.1:5173"
     session_cookie_name: str = "ares_session"
@@ -40,8 +39,13 @@ class Settings(BaseSettings):
     gemini_tpm: int | None = Field(default=None, ge=1)
     gemini_rpd: int | None = Field(default=None, ge=1)
     gemini_concurrency: int = Field(default=1, ge=1, le=8)
+    local_llm_enabled: bool = False
+    local_llm_url: str = "http://127.0.0.1:11434"
+    local_llm_model: str = "qwen3:4b"
+    local_llm_timeout_seconds: float = Field(default=120.0, ge=5.0, le=120.0)
     gemini_timeout_seconds: float = Field(default=45.0, ge=5.0, le=120.0)
-
+    gemini_billing_mode: Literal["free", "paid"] = "free"
+    gemini_max_daily_spend_usd: float = Field(default=0.0, ge=0.0)
     searxng_url: str = "http://127.0.0.1:8080"
     max_http_concurrency: int = Field(default=4, ge=1, le=16)
     provider_http_timeout_seconds: float = Field(default=20.0, ge=2.0, le=120.0)
@@ -59,7 +63,9 @@ class Settings(BaseSettings):
     academic_full_text_enabled: bool = True
     academic_full_text_limit: int = Field(default=2, ge=0, le=6)
     academic_full_text_timeout_seconds: float = Field(default=20.0, ge=2.0, le=60.0)
-    academic_full_text_max_bytes: int = Field(default=20 * 1024 * 1024, ge=1024, le=50 * 1024 * 1024)
+    academic_full_text_max_bytes: int = Field(
+        default=20 * 1024 * 1024, ge=1024, le=50 * 1024 * 1024
+    )
     academic_full_text_max_pages: int = Field(default=100, ge=1, le=300)
     semantic_checker_enabled: bool = False
     semantic_checker_model: str = "gemini-3.8-flash"
@@ -170,37 +176,45 @@ class Settings(BaseSettings):
     event_max_replay: int = Field(default=1000, ge=100, le=10_000)
     event_heartbeat_seconds: float = Field(default=15.0, ge=5.0, le=60.0)
     stream_authorization_recheck_seconds: float = Field(default=10.0, ge=2.0, le=15.0)
-    required_schema_revision: str = "0012"
+    required_schema_revision: str = "0013"
 
     @field_validator(
-        "gemini_rpm", "gemini_tpm", "gemini_rpd",
-        "gemini_embedding_rpm", "gemini_embedding_tpm", "gemini_embedding_rpd",
+        "gemini_rpm",
+        "gemini_tpm",
+        "gemini_rpd",
+        "gemini_embedding_rpm",
+        "gemini_embedding_tpm",
+        "gemini_embedding_rpd",
         mode="before",
     )
     @classmethod
-    def blank_optional_quota_is_none(cls, value):
+    def blank_optional_quota_is_none(cls, value: str | int | None) -> str | int | None:
         if value is None or (isinstance(value, str) and not value.strip()):
             return None
         return value
 
     def validate_live_mode(self) -> None:
         self.validate_security_mode()
-        if self.ares_mode != "local_live":
-            return
-        if not self.strict_free_mode:
-            raise ValueError("ARES local_live requires STRICT_FREE_MODE=true")
+        
+        # Legacy normalization
+        if not self.strict_free_mode and self.gemini_billing_mode == "free":
+            self.gemini_billing_mode = "paid"
+            
         if self.allow_billable_providers:
             raise ValueError("ARES strict-free mode refuses ALLOW_BILLABLE_PROVIDERS=true")
-        if not self.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY is required for local_live mode")
-        if None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
+            
+        if self.ares_mode != "local_live":
+            return
+            
+        if not self.gemini_api_key and not self.local_llm_enabled:
+            raise ValueError("Configure GEMINI_API_KEY or enable LOCAL_LLM_ENABLED for local_live mode")
+        if self.gemini_api_key and None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
             raise ValueError("GEMINI_RPM, GEMINI_TPM and GEMINI_RPD must be explicit in live mode")
-        if self.jev_enabled and not self.jev_api_key:
-            raise ValueError("JEV_API_KEY is required when JEV_ENABLED=true")
-        if self.jev_enabled and self.strict_free_mode:
+            
+        if self.jev_enabled:
             raise ValueError(
-                "Jev is a metered external service; strict-free live mode requires JEV_ENABLED=false. "
-                "Use Jev only in an explicitly authorized metered evaluation profile."
+                "Jev is a metered external service; ARES V3 policy rejects JEV_ENABLED=true. "
+                "Only Gemini paid billing is permitted."
             )
         if self.gemini_embeddings_enabled and None in {
             self.gemini_embedding_rpm,
@@ -223,7 +237,9 @@ class Settings(BaseSettings):
         if self.video_enabled:
             required_asset_body = max(required_asset_body, self.max_video_bytes)
         if self.max_asset_request_body_bytes < required_asset_body:
-            raise ValueError("MAX_ASSET_REQUEST_BODY_BYTES must cover every enabled asset upload type")
+            raise ValueError(
+                "MAX_ASSET_REQUEST_BODY_BYTES must cover every enabled asset upload type"
+            )
         if (self.audio_enabled or self.video_enabled) and not self.async_ingestion_enabled:
             raise ValueError("AUDIO_ENABLED/VIDEO_ENABLED require ASYNC_INGESTION_ENABLED=true")
         if self.microphone_enabled and not self.audio_enabled:
@@ -244,12 +260,23 @@ class Settings(BaseSettings):
             raise ValueError("LOCAL_EMBEDDING_DIMENSIONS must be positive")
         if self.browser_enabled:
             if len(self.browser_service_token.strip()) < 32:
-                raise ValueError("BROWSER_ENABLED requires BROWSER_SERVICE_TOKEN with at least 32 characters")
+                raise ValueError(
+                    "BROWSER_ENABLED requires BROWSER_SERVICE_TOKEN with at least 32 characters"
+                )
             browser = urlsplit(self.browser_service_url)
-            if browser.scheme not in {"http", "https"} or not browser.hostname or browser.username or browser.password:
-                raise ValueError("BROWSER_SERVICE_URL must be an http(s) origin without embedded credentials")
+            if (
+                browser.scheme not in {"http", "https"}
+                or not browser.hostname
+                or browser.username
+                or browser.password
+            ):
+                raise ValueError(
+                    "BROWSER_SERVICE_URL must be an http(s) origin without embedded credentials"
+                )
             if browser.path not in {"", "/"} or browser.query or browser.fragment:
-                raise ValueError("BROWSER_SERVICE_URL must be an origin without path, query or fragment")
+                raise ValueError(
+                    "BROWSER_SERVICE_URL must be an origin without path, query or fragment"
+                )
         if self.auth_mode == "oidc":
             if not self.oidc_issuer or not self.oidc_client_id:
                 raise ValueError("OIDC_ISSUER and OIDC_CLIENT_ID are required when AUTH_MODE=oidc")
@@ -261,17 +288,23 @@ class Settings(BaseSettings):
             if not self.database_url.startswith("postgresql"):
                 raise ValueError("production requires PostgreSQL")
             if not self.worker_database_url or self.worker_database_url == self.database_url:
-                raise ValueError("production requires a distinct WORKER_DATABASE_URL for the privileged worker role")
+                raise ValueError(
+                    "production requires a distinct WORKER_DATABASE_URL for the privileged worker role"
+                )
             if not self.session_cookie_secure:
                 raise ValueError("production requires SESSION_COOKIE_SECURE=true")
-            if not self.public_base_url.startswith("https://") or not self.frontend_origin.startswith("https://"):
+            if not self.public_base_url.startswith(
+                "https://"
+            ) or not self.frontend_origin.startswith("https://"):
                 raise ValueError("production public URLs must use HTTPS")
             if not self.oidc_issuer.startswith("https://"):
                 raise ValueError("production OIDC_ISSUER must use HTTPS")
             public = urlsplit(self.public_base_url)
             frontend = urlsplit(self.frontend_origin)
             if (public.scheme, public.netloc) != (frontend.scheme, frontend.netloc):
-                raise ValueError("production requires FRONTEND_ORIGIN and PUBLIC_BASE_URL to share one origin")
+                raise ValueError(
+                    "production requires FRONTEND_ORIGIN and PUBLIC_BASE_URL to share one origin"
+                )
             if public.path not in {"", "/"} or frontend.path not in {"", "/"}:
                 raise ValueError("production public origins must not contain path prefixes")
 

@@ -22,7 +22,9 @@ def stable_cache_key(namespace: str, payload: dict[str, object]) -> str:
     identity out of this digest lets the cache schema make that boundary explicit and avoids
     accidental cross-tenant cache reuse if a key is logged or inspected.
     """
-    body = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    body = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
     return hashlib.sha256(f"{namespace}\n{CACHE_POLICY_VERSION}\n{body}".encode()).hexdigest()
 
 
@@ -72,6 +74,9 @@ class RunResearchCache:
             lease_token=context.lease.token,
         )
         if row is None:
+            return None
+        # An empty search may reflect a temporary upstream suspension, not a lasting absence.
+        if namespace == "web.search" and not row["payload"].get("hits"):
             return None
         return CacheLookup(
             payload=dict(row["payload"]),

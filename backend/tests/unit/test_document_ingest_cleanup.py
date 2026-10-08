@@ -7,8 +7,10 @@ from ares.domain.models import DocumentTextCreate
 class FakeBlobStore:
     def __init__(self) -> None:
         self.deleted: list[str] = []
+
     def put_bytes(self, namespace: str, content: bytes) -> str:
         return "documents/sha256/deadbeef"
+
     def delete(self, key: str) -> None:
         self.deleted.append(key)
 
@@ -16,6 +18,7 @@ class FakeBlobStore:
 class FailingRepository:
     def create_user_document(self, **kwargs):
         raise RuntimeError("db unavailable")
+
     def is_blob_referenced(self, key: str) -> bool:
         return False
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -9,14 +10,14 @@ from sqlalchemy import create_engine, text
 
 ROOT = Path(__file__).resolve().parents[1]
 ALEMBIC = ROOT / "backend" / "alembic.ini"
-EXPECTED_HEAD = "0012"
+EXPECTED_HEAD = "0020"
 
 
 def run_upgrade(database_url: str, revision: str) -> None:
     env = os.environ.copy()
     env["DATABASE_URL"] = database_url
     subprocess.run(
-        ["alembic", "-c", str(ALEMBIC), "upgrade", revision],
+        [sys.executable, "-m", "alembic", "-c", str(ALEMBIC), "upgrade", revision],
         cwd=ROOT,
         env=env,
         check=True,

@@ -1,7 +1,0 @@
-ARES Milestone 02 handoff — 2026-10-03
-
-Implemented: live web research + evidence RAG + immutable document provenance + Gemini evidence synthesis.
-Validation in implementation sandbox: 25 passed, 1 PostgreSQL-only test skipped; migration 0003 head; compileall/OpenAPI/secret scan passed.
-Machine-local release gates: real PostgreSQL concurrency test, pnpm typecheck/test/build, live SearXNG+Gemini smoke.
-Manual guide: docs/development/MILESTONE_02_LIVE_RESEARCH.md
-Next: Milestone 03 document/academic/software RAG + hybrid embeddings + multi-wave verification.
