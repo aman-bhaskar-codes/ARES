@@ -55,7 +55,7 @@ def _check_openapi(failures: list[str]) -> None:
         "/api/v1/runs",
         "/api/v1/conversations",
         "/api/v1/auth/me",
-        "/api/v1/system/health",
+        "/api/v1/system/status",
     }
     missing = sorted(required - set(paths))
     if missing:
