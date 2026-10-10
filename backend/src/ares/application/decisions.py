@@ -383,13 +383,13 @@ class DeterministicDecisionProvider:
                 assessment_state="deterministic_exact",
                 rationale="available evidence conflicts with claim polarity",
             )
-        if strongest >= 0.45:
+        if strongest >= 0.65:
             return ClaimDecision(
                 verdict=ClaimVerdict.SUPPORTED,
                 confidence=min(0.9, 0.55 + strongest / 2),
                 rationale="material overlap and explicit quantities are compatible",
             )
-        if strongest >= 0.20:
+        if strongest >= 0.42:
             return ClaimDecision(
                 verdict=ClaimVerdict.PARTIAL,
                 confidence=min(0.8, 0.45 + strongest / 3),
@@ -405,7 +405,7 @@ class DeterministicDecisionProvider:
 class ResilientDecisionProvider:
     """Use Jev when configured, but never let a decision-provider outage break research."""
 
-    def __init__(self, primary: DecisionProvider | None, fallback: DecisionProvider | None = None):
+    def __init__(self, primary: DecisionProvider | None, fallback: DecisionProvider | None = None) -> None:
         self.primary = primary
         self.fallback = fallback or DeterministicDecisionProvider()
 

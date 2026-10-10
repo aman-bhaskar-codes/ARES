@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -10,7 +11,28 @@ from sqlalchemy import create_engine, text
 
 ROOT = Path(__file__).resolve().parents[1]
 ALEMBIC = ROOT / "backend" / "alembic.ini"
-EXPECTED_HEAD = "0020"
+MIGRATIONS_DIR = ROOT / "backend" / "migrations" / "versions"
+
+
+def _discover_head() -> str:
+    """Auto-detect the highest migration revision by scanning filenames.
+
+    Migration files follow the pattern ``0NNN_description.py`` where ``0NNN``
+    is the revision id. This removes the need to hardcode EXPECTED_HEAD every
+    time a new migration is added.
+    """
+    pattern = re.compile(r"^(\d{4})_.*\.py$")
+    revisions: list[str] = []
+    for p in MIGRATIONS_DIR.iterdir():
+        m = pattern.match(p.name)
+        if m:
+            revisions.append(m.group(1))
+    if not revisions:
+        raise SystemExit("no migration files found")
+    return sorted(revisions)[-1]
+
+
+EXPECTED_HEAD = _discover_head()
 
 
 def run_upgrade(database_url: str, revision: str) -> None:
