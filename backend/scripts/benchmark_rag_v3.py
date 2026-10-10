@@ -2,8 +2,6 @@ import os
 import time
 import math
 import random
-from uuid import uuid4
-from datetime import datetime, UTC
 
 from sqlalchemy import text
 from ares.adapters.db import build_session_factory, Base
@@ -14,7 +12,8 @@ from ares.application.documents import PreparedChunk
 def generate_random_vector(dim=384):
     vec = [random.gauss(0, 1) for _ in range(dim)]
     norm = math.sqrt(sum(v*v for v in vec))
-    if norm == 0: norm = 1
+    if norm == 0:
+        norm = 1
     return [v/norm for v in vec]
 
 def run_benchmark(engine, sessions, num_chunks, narrow_filter_size, broad_filter_size):

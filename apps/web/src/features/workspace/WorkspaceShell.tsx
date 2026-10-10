@@ -12,6 +12,7 @@ import {
   Moon,
   Plus,
   RotateCcw,
+  Check,
   Settings2,
   Sparkles,
   Sun,
@@ -32,6 +33,7 @@ import { EvidenceDrawer } from '../research/EvidenceDrawer'
 import { EvidenceIndex } from '../research/EvidenceIndex'
 import { ResearchActivity } from '../research/ResearchActivity'
 import { ResearchGaps } from '../research/ResearchGaps'
+import { RelatedQuestions } from '../research/RelatedQuestions'
 import { CompactResearchProgress } from '../research/CompactResearchProgress'
 import { RunQualityPanel } from '../research/RunQualityPanel'
 import { VisualizationWorkspace } from '../research/VisualizationWorkspace'
@@ -77,6 +79,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
   const { events, connected, snapshotRequiredSeq } = useRunStream(run?.id, Math.max(0, (run?.last_seq ?? 0) - 200))
+  const [activePlugins, setActivePlugins] = useState<string[]>(['speed'])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -275,6 +278,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
         modelProvider,
         mode,
         sourceScope,
+        plugins: activePlugins,
         documentIds: sourceScope.includes('documents') ? selectedDocuments : [],
         idempotencyKey: idempotencyKey(),
       })
@@ -296,6 +300,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
         mode: run.mode,
         sourceScope: run.source_scope,
         documentIds: run.document_ids,
+        plugins: run.plugins,
         dateWindow: run.date_window,
         idempotencyKey: idempotencyKey(),
       })
@@ -471,7 +476,6 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
           <div className="home-state">
             <div className="hero-badge"><Sparkles size={16} /> evidence-first research</div>
             <h1>Research you can<br /><em>trace back.</em></h1>
-            <p>ARES finds sources, preserves evidence, and gives you an answer you can inspect—not just trust.</p>
             <Composer
               busy={false}
               readOnly={!canWrite}
@@ -488,11 +492,27 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
             />
             <div className="example-grid">
               {[
-                ['Compare', 'How do current agent-memory approaches differ in evaluation?'],
-                ['Trace', 'Trace a software claim back to its official documentation.'],
-                ['Challenge', 'Find where two sources disagree and explain the scope difference.']
-              ].map(([label, text]) => (
-                <button key={label} disabled={!canWrite} onClick={() => void submit(text)}><span>{label}</span>{text}</button>
+                { id: 'speed', label: 'Speed Boost', desc: 'Accelerates retrieval and reduces token overhead.' },
+                { id: 'accuracy', label: 'Deep Verification', desc: 'Cross-checks every claim against multiple sources.' },
+                { id: 'code', label: 'Code Interpreter', desc: 'Executes Python for technical math and logic.' }
+              ].map(p => (
+                <button 
+                  key={p.id} 
+                  disabled={!canWrite}
+                  className={activePlugins.includes(p.id) ? 'active-plugin' : ''}
+                  onClick={() => setActivePlugins(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}
+                  style={{ 
+                    textAlign: 'left', 
+                    border: activePlugins.includes(p.id) ? '1px solid var(--brand)' : '1px solid var(--border)',
+                    background: activePlugins.includes(p.id) ? 'var(--brand-surface)' : 'var(--bg)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 600, color: activePlugins.includes(p.id) ? 'var(--brand)' : 'var(--text)' }}>{p.label}</span>
+                    {activePlugins.includes(p.id) && <Check size={14} color="var(--brand)" />}
+                  </div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{p.desc}</span>
+                </button>
               ))}
             </div>
           </div>
@@ -508,14 +528,9 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
 
             {activeView === 'answer' && <>
               {run.answer_blocks.map((block) => <Answer key={block.id} block={block} runEvidence={runEvidence.data} onReviewSources={() => navigate(runUrl('sources'))} onEvidence={openEvidence} />)}
-              {['completed', 'partial'].includes(run.status) && run.answer_blocks.length > 0 && (
-                <div className="export-bar" aria-label="Export research">
-                  <span><Download size={15} /> Export finalized evidence</span>
-                  <button disabled={!canWrite || Boolean(exporting)} onClick={() => void exportRun('markdown')}>{exporting === 'markdown' ? 'Preparing…' : 'Markdown'}</button>
-                  <button disabled={!canWrite || Boolean(exporting)} onClick={() => void exportRun('json')}>{exporting === 'json' ? 'Preparing…' : 'JSON manifest'}</button>
-                </div>
-              )}
+
               <ResearchGaps gaps={run.gaps} runStatus={run.status} />
+              <RelatedQuestions questions={run.related_questions} onAsk={submit} />
               {run.status === 'failed' && <section className="failure-card"><div><AlertTriangle size={18} /><strong>{run.error_code ?? 'Research failed'}</strong><p>{run.error_message}</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry as new run</button></section>}
               {run.status === 'cancelled' && <section className="failure-card calm"><div><strong>Research stopped</strong><p>Completed work was preserved. Retry starts a new run with the same source policy.</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry</button></section>}
               <div className="followup">

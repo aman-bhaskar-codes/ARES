@@ -84,9 +84,13 @@ class ArxivAcademicProvider(DiscoveryProvider):
         published_after: datetime | None = None,
         published_before: datetime | None = None,
     ) -> list[tuple[SearchHit, FetchedDocument | None]]:
+        clean_query = "".join(c if c.isalnum() else " " for c in query).strip()
+        if not clean_query:
+            clean_query = "research"
+            
         request_kwargs: dict[str, object] = {
             "params": {
-                "search_query": f"all:{query}",
+                "search_query": f"all:{clean_query}",
                 "start": 0,
                 "max_results": min(max(limit, 1), 12),
                 "sortBy": "relevance",

@@ -1,15 +1,11 @@
 import argparse
 import hashlib
-import json
 import logging
 from pathlib import Path
-from uuid import uuid4
 
 from fastembed import TextEmbedding
 
-from ares.adapters.db import RetrievalProfileRow
 from ares.application.repository import Repository
-from ares.api.settings import Settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

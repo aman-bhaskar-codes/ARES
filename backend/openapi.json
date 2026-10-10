@@ -1459,6 +1459,13 @@
             ],
             "title": "Model Provider"
           },
+          "plugins": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Plugins",
+            "type": "array"
+          },
           "query": {
             "maxLength": 8000,
             "minLength": 2,
@@ -1838,9 +1845,23 @@
             ],
             "title": "Model Provider"
           },
+          "plugins": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Plugins",
+            "type": "array"
+          },
           "query": {
             "title": "Query",
             "type": "string"
+          },
+          "related_questions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Related Questions",
+            "type": "array"
           },
           "source_scope": {
             "items": {

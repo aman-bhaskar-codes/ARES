@@ -1315,6 +1315,8 @@ export interface components {
             mode: components["schemas"]["RunMode"];
             /** Model Provider */
             model_provider?: ("gemini" | "qwen") | null;
+            /** Plugins */
+            plugins?: string[];
             /** Query */
             query: string;
             /** Source Scope */
@@ -1478,8 +1480,12 @@ export interface components {
             mode: components["schemas"]["RunMode"];
             /** Model Provider */
             model_provider?: ("gemini" | "qwen") | null;
+            /** Plugins */
+            plugins?: string[];
             /** Query */
             query: string;
+            /** Related Questions */
+            related_questions?: string[];
             /** Source Scope */
             source_scope?: string[];
             status: components["schemas"]["RunStatus"];

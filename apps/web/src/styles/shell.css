@@ -30,7 +30,7 @@
   display: grid;
   place-items: center;
   background: var(--ink);
-  color: white;
+  color: var(--bg);
   font:
     600 18px Georgia,
     serif;

@@ -94,7 +94,7 @@ sbom:
 	uv run --project backend python scripts/generate_sbom.py --output dist/ARES_M11.sbom.cdx.json
 
 verify-m11-release:
-	PYTHONPATH=backend/src uv run --project backend python scripts/verify_m11_release.py
+	PYTHONPATH=backend/src uv run --project backend python scripts/verify_v3_release.py
 
 
 release-m11: verify-m11-release sbom

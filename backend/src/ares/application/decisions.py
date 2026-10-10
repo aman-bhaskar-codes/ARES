@@ -342,7 +342,7 @@ class DeterministicDecisionProvider:
                 1, len(claim_terms)
             )
             quantity_ok = not claim_values or claim_values.issubset(_quantities(packet.text))
-            incompatible_quantity = incompatible_quantity or (not quantity_ok and overlap >= 0.45)
+            incompatible_quantity = incompatible_quantity or (not quantity_ok and overlap >= 0.35)
             compatible.append((overlap, _polarity_conflict(claim_set, evidence_set), quantity_ok))
         usable = [(score, conflict) for score, conflict, ok in compatible if ok]
         if claim_values and not usable:
@@ -366,7 +366,7 @@ class DeterministicDecisionProvider:
                 rationale="evidence contains incompatible numeric or unit values",
             )
         if any(conflict for _, conflict in usable) and any(
-            score >= 0.45 and not conflict for score, conflict in usable
+            score >= 0.35 and not conflict for score, conflict in usable
         ):
             return ClaimDecision(
                 verdict=ClaimVerdict.CONFLICTING,
@@ -375,7 +375,7 @@ class DeterministicDecisionProvider:
                 assessment_state="deterministic_exact",
                 rationale="supporting and polarity-conflicting evidence are both present",
             )
-        if usable and all(conflict for _, conflict in usable) and strongest >= 0.35:
+        if usable and all(conflict for _, conflict in usable) and strongest >= 0.25:
             return ClaimDecision(
                 verdict=ClaimVerdict.INSUFFICIENT,
                 confidence=0.9,
@@ -405,7 +405,7 @@ class DeterministicDecisionProvider:
 class ResilientDecisionProvider:
     """Use Jev when configured, but never let a decision-provider outage break research."""
 
-    def __init__(self, primary: DecisionProvider | None, fallback: DecisionProvider | None = None):
+    def __init__(self, primary: DecisionProvider | None, fallback: DecisionProvider | None = None) -> None:
         self.primary = primary
         self.fallback = fallback or DeterministicDecisionProvider()
 

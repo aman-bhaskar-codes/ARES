@@ -54,7 +54,7 @@
 .send-button {
   border: 0;
   background: var(--ink);
-  color: white;
+  color: var(--bg);
   min-height: 38px;
   border-radius: 9px;
   padding: 0 14px;

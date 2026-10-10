@@ -193,6 +193,7 @@ class SqlJobRepository(SqlRepositoryBase):
                 mode=request.mode.value,
                 source_scope=list(request.source_scope),
                 document_ids=[str(value) for value in request.document_ids],
+                plugins=list(request.plugins),
                 date_window=request.date_window.model_dump(mode="json")
                 if request.date_window
                 else None,

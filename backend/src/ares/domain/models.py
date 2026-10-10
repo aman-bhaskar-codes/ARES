@@ -97,6 +97,7 @@ class RunCreate(BaseModel):
     )
     date_window: DateWindow | None = None
     document_ids: list[UUID] = Field(default_factory=list, max_length=20)
+    plugins: list[str] = Field(default_factory=list)
 
 
 class CitationRef(BaseModel):
@@ -181,6 +182,7 @@ class RunSnapshot(BaseModel):
     mode: RunMode
     source_scope: list[str] = Field(default_factory=list)
     document_ids: list[UUID] = Field(default_factory=list)
+    plugins: list[str] = Field(default_factory=list)
     date_window: DateWindow | None = None
     deadline_at: datetime | None = None
     budget_version: str = "legacy"
@@ -189,6 +191,7 @@ class RunSnapshot(BaseModel):
     status: RunStatus
     answer_blocks: list[AnswerBlock] = Field(default_factory=list)
     gaps: list[str] = Field(default_factory=list)
+    related_questions: list[str] = Field(default_factory=list)
     error_code: str | None = None
     error_message: str | None = None
     cancellation_requested: bool = False
@@ -249,6 +252,7 @@ class SynthesisResult(BaseModel):
     summary_markdown: str
     claims: list[SynthesizedClaim]
     gaps: list[str] = Field(default_factory=list)
+    related_questions: list[str] = Field(default_factory=list)
     provider_input_tokens: int | None = Field(default=None, ge=0)
     provider_output_tokens: int | None = Field(default=None, ge=0)
     outline: AnswerOutline | None = None

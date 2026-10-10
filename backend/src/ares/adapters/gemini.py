@@ -33,6 +33,7 @@ class _ModelAnswer(BaseModel):
     facets: list[str] = Field(default_factory=list)
     claims: list[_ModelClaim] = Field(min_length=1)
     gaps: list[str] = Field(default_factory=list)
+    related_questions: list[str] = Field(default_factory=list)
 
 
 _SYSTEM_INSTRUCTION = """You are the synthesis stage of ARES, an evidence-led research system.
@@ -58,6 +59,7 @@ GROUNDING CONTRACT
 - Evidence indexes are opaque references assigned by ARES; never create an index outside the supplied range.
 
 OUTPUT CONTRACT
+- Generate 2-3 short, exploratory follow-up questions related to the topic in `related_questions`.
 - Set `summary_markdown` to an empty string. The application displays claims as the answer; writing an explanation only in summary_markdown will hide it.
 - `sections` is a list of logical section titles used in the summary.
 - `facets` is a list of distinct aspects or dimensions covered by the answer.
@@ -182,6 +184,7 @@ class GeminiLLMProvider:
             summary_markdown=parsed.summary_markdown,
             claims=claims,
             gaps=parsed.gaps,
+            related_questions=parsed.related_questions,
             outline=outline,
         )
 
