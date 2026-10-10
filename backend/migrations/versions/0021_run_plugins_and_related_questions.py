@@ -9,8 +9,11 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    op.add_column("runs", sa.Column("plugins", sa.JSON(), nullable=True))
-    op.add_column("runs", sa.Column("related_questions", sa.JSON(), nullable=True))
+    existing = {column['name'] for column in sa.inspect(op.get_bind()).get_columns('runs')}
+    if 'plugins' not in existing:
+        op.add_column("runs", sa.Column("plugins", sa.JSON(), nullable=True))
+    if 'related_questions' not in existing:
+        op.add_column("runs", sa.Column("related_questions", sa.JSON(), nullable=True))
 
 def downgrade():
     op.drop_column("runs", "plugins")
