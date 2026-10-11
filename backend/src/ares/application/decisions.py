@@ -57,7 +57,6 @@ _NEGATION = {
     "not",
     "never",
     "none",
-    "without",
     "cannot",
     "can't",
     "didn't",
@@ -333,6 +332,10 @@ class DeterministicDecisionProvider:
                 rationale="claim had no material lexical content after normalization",
             )
         claim_values = _quantities(claim)
+        all_evidence_quantities: set[tuple[str, str | None]] = set()
+        for p in evidence:
+            all_evidence_quantities.update(_quantities(p.text))
+
         compatible = []
         incompatible_quantity = False
         claim_set = set(claim_terms)
@@ -341,12 +344,20 @@ class DeterministicDecisionProvider:
             overlap = sum(1 for term in claim_terms if term in evidence_set) / max(
                 1, len(claim_terms)
             )
-            quantity_ok = not claim_values or claim_values.issubset(_quantities(packet.text))
-            incompatible_quantity = incompatible_quantity or (not quantity_ok and overlap >= 0.35)
+            packet_vals = _quantities(packet.text)
+            quantity_ok = not claim_values or bool(claim_values & packet_vals) or claim_values.issubset(all_evidence_quantities)
+            has_unit_conflict = any(
+                p_unit == c_unit and p_val != c_val and (p_val, p_unit) not in claim_values
+                for p_val, p_unit in packet_vals
+                for c_val, c_unit in claim_values
+                if c_unit
+            )
+            incompatible_quantity = incompatible_quantity or (has_unit_conflict and overlap >= 0.35)
             compatible.append((overlap, _polarity_conflict(claim_set, evidence_set), quantity_ok))
         usable = [(score, conflict) for score, conflict, ok in compatible if ok]
-        if claim_values and not usable:
-            rendered = ", ".join(f"{n}{' ' + u if u else ''}" for n, u in sorted(claim_values))
+        if claim_values and not claim_values.issubset(all_evidence_quantities):
+            missing = claim_values - all_evidence_quantities
+            rendered = ", ".join(f"{n}{' ' + u if u else ''}" for n, u in sorted(missing))
             return ClaimDecision(
                 verdict=ClaimVerdict.INSUFFICIENT,
                 confidence=0.98,
@@ -365,9 +376,9 @@ class DeterministicDecisionProvider:
                 assessment_state="deterministic_exact",
                 rationale="evidence contains incompatible numeric or unit values",
             )
-        if any(conflict for _, conflict in usable) and any(
-            score >= 0.35 and not conflict for score, conflict in usable
-        ):
+        conflicting_evidence = [score for score, conflict in usable if conflict and score >= 0.35]
+        supporting_evidence = [score for score, conflict in usable if not conflict and score >= 0.35]
+        if conflicting_evidence and supporting_evidence:
             return ClaimDecision(
                 verdict=ClaimVerdict.CONFLICTING,
                 confidence=0.9,

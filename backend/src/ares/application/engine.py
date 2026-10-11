@@ -405,10 +405,11 @@ class ResearchEngine:
             if "accuracy" in run.plugins:
                 budget = dataclasses.replace(
                     budget,
-                    max_waves=budget.max_waves + 1,
+                    max_waves=min(4, budget.max_waves + 1),
                     max_llm_calls=budget.max_llm_calls * 2,
-                    max_search_requests=budget.max_search_requests + 6,
-                    max_documents=budget.max_documents * 2
+                    max_search_requests=min(18, budget.max_search_requests + 6),
+                    max_documents=min(24, budget.max_documents + 6),
+                    wall_clock_seconds=int(budget.wall_clock_seconds * 1.5),
                 )
                 self.repository.record_event(
                     run_id,

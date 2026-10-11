@@ -52,8 +52,9 @@ class SearXNGSearchProvider(DiscoveryProvider):
 
     def search(self, request: SearchRequest) -> list[SearchHit]:
         endpoint = urljoin(self.base_url, "search")
+        clean_query = " ".join(request.query.split())
         params: dict[str, object] = {
-            "q": request.query,
+            "q": clean_query,
             "format": "json",
             "safesearch": 1,
             "language": request.language,

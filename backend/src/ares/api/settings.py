@@ -42,8 +42,8 @@ class Settings(BaseSettings):
     local_llm_enabled: bool = False
     local_llm_url: str = "http://127.0.0.1:11434"
     local_llm_model: str = "qwen3:4b"
-    local_llm_timeout_seconds: float = Field(default=120.0, ge=5.0, le=120.0)
-    gemini_timeout_seconds: float = Field(default=45.0, ge=5.0, le=120.0)
+    local_llm_timeout_seconds: float = Field(default=180.0, ge=5.0, le=600.0)
+    gemini_timeout_seconds: float = Field(default=60.0, ge=5.0, le=300.0)
     gemini_billing_mode: Literal["free", "paid"] = "free"
     gemini_max_daily_spend_usd: float = Field(default=0.0, ge=0.0)
     searxng_url: str = "http://127.0.0.1:8080"

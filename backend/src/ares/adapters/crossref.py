@@ -73,8 +73,9 @@ class CrossrefAcademicProvider(DiscoveryProvider):
         published_after: datetime | None = None,
         published_before: datetime | None = None,
     ) -> list[tuple[SearchHit, FetchedDocument | None]]:
+        clean_query = " ".join(query.split())[:150]
         params: dict[str, str | int] = {
-            "query.bibliographic": query,
+            "query": clean_query,
             "rows": min(max(limit, 1), 20),
             "select": "DOI,title,author,container-title,published,published-online,published-print,abstract,type,URL,subject",
         }
@@ -87,12 +88,9 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             params["filter"] = ",".join(filters)
         if self.mailto:
             params["mailto"] = self.mailto
+        effective_timeout = min(timeout_seconds if timeout_seconds is not None else 10.0, 10.0)
         try:
-            response = (
-                self._client.get("/works", params=params, timeout=timeout_seconds)
-                if timeout_seconds is not None
-                else self._client.get("/works", params=params)
-            )
+            response = self._client.get("/works", params=params, timeout=effective_timeout)
         except httpx.HTTPError as exc:
             raise SearchProviderError(f"Crossref request failed: {type(exc).__name__}") from exc
         if response.status_code == 429:

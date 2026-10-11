@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
-from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, as_completed, wait
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
 from typing import Callable
@@ -531,6 +531,7 @@ class DiscoveryStage:
         if (
             self.engine.academic_full_text_fetcher is None
             or self.engine.academic_full_text_limit <= 0
+            or context.run.mode.value == "quick"
         ):
             return rows
         output: list[tuple[SearchHit, FetchedDocument]] = []
@@ -671,20 +672,51 @@ class DiscoveryStage:
             else:
 
                 def academic_task():
+                    clean_query = " ".join(run.query.split())
                     all_rows = []
-                    for provider in academic_providers:
-                        rows = self._cached_document_track(
-                            lease,
-                            context,
-                            track=f"academic:{provider.metadata.name}",
-                            provider=provider,
-                            query=run.query,
-                            limit=min(8, budget.max_documents),
-                            ttl_seconds=self.engine.academic_cache_ttl_seconds,
-                        )
-                        all_rows.extend(
-                            self._enrich_academic_full_text(lease, context, rows)
-                        )
+                    if len(academic_providers) <= 1:
+                        for provider in academic_providers:
+                            rows = self._cached_document_track(
+                                lease,
+                                context,
+                                track=f"academic:{provider.metadata.name}",
+                                provider=provider,
+                                query=clean_query,
+                                limit=min(6, budget.max_documents),
+                                ttl_seconds=self.engine.academic_cache_ttl_seconds,
+                            )
+                            all_rows.extend(
+                                self._enrich_academic_full_text(lease, context, rows)
+                            )
+                    else:
+                        with ThreadPoolExecutor(max_workers=min(4, len(academic_providers))) as pool:
+                            fut_to_prov = {
+                                pool.submit(
+                                    self._cached_document_track,
+                                    lease,
+                                    context,
+                                    track=f"academic:{provider.metadata.name}",
+                                    provider=provider,
+                                    query=clean_query,
+                                    limit=min(6, budget.max_documents),
+                                    ttl_seconds=self.engine.academic_cache_ttl_seconds,
+                                ): provider
+                                for provider in academic_providers
+                            }
+                            for fut in as_completed(fut_to_prov):
+                                prov = fut_to_prov[fut]
+                                try:
+                                    rows = fut.result()
+                                    all_rows.extend(
+                                        self._enrich_academic_full_text(lease, context, rows)
+                                    )
+                                except Exception as exc:
+                                    self.engine.repository.record_event(
+                                        lease.run_id,
+                                        "tool.error",
+                                        {"tool": f"academic:{prov.metadata.name}", "error": str(exc)},
+                                        lease_token=lease.token,
+                                    )
                     return all_rows
 
                 tasks["academic"] = academic_task
@@ -704,6 +736,7 @@ class DiscoveryStage:
             else:
 
                 def software_task():
+                    clean_query = " ".join(run.query.split())
                     all_rows = []
                     for provider in software_providers:
                         rows = self._cached_document_track(
@@ -711,7 +744,7 @@ class DiscoveryStage:
                             context,
                             track=f"software:{provider.metadata.name}",
                             provider=provider,
-                            query=run.query,
+                            query=clean_query,
                             limit=min(5, budget.max_documents),
                             ttl_seconds=self.engine.software_cache_ttl_seconds,
                         )
