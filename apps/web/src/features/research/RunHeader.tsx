@@ -21,6 +21,14 @@ export function RunHeader({ run }: RunHeaderProps) {
             {run.document_ids.length === 1 ? '' : 's'}
           </span>
         )}
+        {run.plugins && run.plugins.length > 0 && run.plugins.map((plugin) => (
+          <span key={plugin} className="plugin-pill">
+            {plugin === 'speed' && '⚡ Speed'}
+            {plugin === 'accuracy' && '🛡️ Deep Verification'}
+            {plugin === 'code' && '💻 Code Interpreter'}
+            {!['speed', 'accuracy', 'code'].includes(plugin) && `🔌 ${plugin}`}
+          </span>
+        ))}
       </div>
     </div>
   )

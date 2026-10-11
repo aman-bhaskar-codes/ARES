@@ -6,8 +6,10 @@ from typing import Literal
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 from ares.domain.research import AnswerOutline, RunAssessment
+
+KNOWN_PLUGINS: tuple[str, ...] = ("speed", "accuracy", "code")
 
 
 class RunMode(StrEnum):
@@ -98,6 +100,18 @@ class RunCreate(BaseModel):
     date_window: DateWindow | None = None
     document_ids: list[UUID] = Field(default_factory=list, max_length=20)
     plugins: list[str] = Field(default_factory=list)
+
+    @field_validator("plugins", mode="before")
+    @classmethod
+    def clean_plugins(cls, v: object) -> list[str]:
+        if not v or not isinstance(v, (list, tuple, set)):
+            return []
+        cleaned: list[str] = []
+        for item in v:
+            val = str(item).strip().lower()
+            if val in KNOWN_PLUGINS and val not in cleaned:
+                cleaned.append(val)
+        return cleaned
 
 
 class CitationRef(BaseModel):

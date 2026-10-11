@@ -377,6 +377,13 @@ class ResearchEngine:
             run = self.repository.get_run(run_id)
             budget = BUDGETS[run.mode]
             import dataclasses
+            if run.plugins:
+                self.repository.record_event(
+                    run_id,
+                    "plugins.activated",
+                    {"plugins": list(run.plugins)},
+                    lease_token=lease.token,
+                )
             if "speed" in run.plugins:
                 budget = dataclasses.replace(
                     budget,
@@ -384,6 +391,16 @@ class ResearchEngine:
                     max_llm_calls=min(4, budget.max_llm_calls),
                     max_search_requests=min(6, budget.max_search_requests),
                     max_documents=min(10, budget.max_documents)
+                )
+                self.repository.record_event(
+                    run_id,
+                    "plugin.speed.applied",
+                    {
+                        "max_waves": 1,
+                        "max_search_requests": budget.max_search_requests,
+                        "max_documents": budget.max_documents,
+                    },
+                    lease_token=lease.token,
                 )
             if "accuracy" in run.plugins:
                 budget = dataclasses.replace(
@@ -393,6 +410,47 @@ class ResearchEngine:
                     max_search_requests=budget.max_search_requests + 6,
                     max_documents=budget.max_documents * 2
                 )
+                self.repository.record_event(
+                    run_id,
+                    "plugin.accuracy.applied",
+                    {
+                        "deep_verification": True,
+                        "max_waves": budget.max_waves,
+                        "semantic_max_claims": 20,
+                    },
+                    lease_token=lease.token,
+                )
+            if "code" in run.plugins:
+                self.repository.record_event(
+                    run_id,
+                    "plugin.code.applied",
+                    {"status": "interpreter_ready"},
+                    lease_token=lease.token,
+                )
+                from ares.application.code_interpreter import CodeInterpreter
+                interp = CodeInterpreter()
+                if interp.detect_computational_intent(run.query):
+                    math_match = re.search(
+                        r"(?:calculate|compute|solve|eval|evaluate|what is)?\s*([0-9\.\+\-\*\/\(\)\^\%\s]{3,})",
+                        run.query,
+                        re.IGNORECASE,
+                    )
+                    if math_match and any(op in math_match.group(1) for op in ("+", "-", "*", "/", "^", "%")):
+                        clean_expr = math_match.group(1).strip().replace("^", "**")
+                        script = f"import math\nres = {clean_expr}\nprint(res)"
+                        comp_res = interp.execute(script)
+                        self.repository.record_event(
+                            run_id,
+                            "code_interpreter.executed",
+                            {
+                                "code": script,
+                                "stdout": comp_res.stdout,
+                                "stderr": comp_res.stderr,
+                                "success": comp_res.success,
+                                "duration_seconds": comp_res.execution_time_seconds,
+                            },
+                            lease_token=lease.token,
+                        )
             context = RunContext.create(self.repository, lease, budget)
             checkpoints = CheckpointStore(self.repository, run_id, lease.token)
             telemetry = RunTelemetry(self.repository, lease)
@@ -913,12 +971,31 @@ class ResearchEngine:
                 if result.provider_output_tokens is not None:
                     context.consume(model_output_tokens=result.provider_output_tokens)
                 checkpoints.complete(synthesis_key, {"result": result.model_dump(mode="json")})
+            if "code" in run.plugins:
+                from ares.application.code_interpreter import CodeInterpreter
+                interp = CodeInterpreter()
+                for claim in result.claims:
+                    for block in interp.extract_python_blocks(claim.text):
+                        block_res = interp.execute(block)
+                        self.repository.record_event(
+                            run_id,
+                            "code_interpreter.executed",
+                            {
+                                "code": block[:300],
+                                "stdout": block_res.stdout[:500],
+                                "stderr": block_res.stderr[:500],
+                                "success": block_res.success,
+                                "duration_seconds": block_res.execution_time_seconds,
+                            },
+                            lease_token=lease.token,
+                        )
             persisted_claims: list[FinalizedClaim] = []
             packet_by_id = {packet.evidence_id: packet for packet in evidence_packets}
             available = set(packet_by_id)
             semantic_calls = 0
             semantic_budget_exhausted = False
             semantic_unavailable = False
+            effective_semantic_max_claims = 20 if "accuracy" in run.plugins else self.semantic_checker_max_claims
             with telemetry.stage("evaluation.claims", claims=len(result.claims)):
                 for claim in result.claims:
                     ids = list(dict.fromkeys(claim.evidence_ids))
@@ -931,7 +1008,7 @@ class ResearchEngine:
                     if (
                         self.semantic_checker is not None
                         and decision.assessment_state is AssessmentState.HEURISTIC_SCREENED
-                        and semantic_calls < self.semantic_checker_max_claims
+                        and semantic_calls < effective_semantic_max_claims
                         and not semantic_budget_exhausted
                         and not semantic_unavailable
                     ):

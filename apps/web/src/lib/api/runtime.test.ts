@@ -37,6 +37,14 @@ describe('API runtime validators', () => {
     expect(run.last_seq).toBe(0)
     expect(run.answer_blocks).toEqual([])
     expect(run.source_scope).toEqual([])
+    expect(run.plugins).toEqual([])
+
+    const runWithPlugins = parseRunSnapshot({
+      id: 'run-2', conversation_id: 'conversation-1', query: 'question', mode: 'quick', status: 'queued',
+      created_at: '2026-10-03T00:00:00Z', updated_at: '2026-10-03T00:00:00Z',
+      plugins: ['speed', 'accuracy', 'code'],
+    })
+    expect(runWithPlugins.plugins).toEqual(['speed', 'accuracy', 'code'])
   })
 
   it('preserves the selected provider and rejects unknown model IDs', () => {

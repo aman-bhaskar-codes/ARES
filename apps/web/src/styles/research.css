@@ -567,6 +567,56 @@
   text-transform: capitalize;
 }
 
+.run-meta .plugin-pill {
+  background: var(--brand-surface, rgba(42, 114, 122, 0.1));
+  border-color: var(--brand, #2a727a);
+  color: var(--brand, #2a727a);
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.plugin-toggles {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-2, rgba(0, 0, 0, 0.04));
+  padding: 2px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.plugin-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.plugin-toggle-btn:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.plugin-toggle-btn.active {
+  background: var(--brand-surface, rgba(42, 114, 122, 0.15));
+  border-color: var(--brand, #2a727a);
+  color: var(--brand, #2a727a);
+}
+
+.plugin-toggle-btn .plugin-icon {
+  font-size: 11px;
+}
+
 .answer-claim {
   padding: 12px 14px;
   border-left: 3px solid transparent;

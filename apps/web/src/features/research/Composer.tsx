@@ -4,7 +4,7 @@ import type { RunMode, SourceScope, ModelProvider, ModelCatalog } from '../../li
 import { SourceScopeControls } from './SourceScopeControls'
 
 export function Composer({
-  busy, readOnly = false, modelProvider, onModelProvider, models, mode, onMode, sourceScope, onSourceScope, selectedDocuments, onSubmit, onStop, placeholder
+  busy, readOnly = false, modelProvider, onModelProvider, models, mode, onMode, sourceScope, onSourceScope, selectedDocuments, plugins = [], onPlugins, onSubmit, onStop, placeholder
 }: {
   modelProvider: ModelProvider
   onModelProvider: (provider: ModelProvider) => void
@@ -16,6 +16,8 @@ export function Composer({
   sourceScope: SourceScope[]
   onSourceScope: (value: SourceScope[]) => void
   selectedDocuments: number
+  plugins?: string[]
+  onPlugins?: (plugins: string[]) => void
   onSubmit: (query: string) => Promise<void>
   onStop: () => void
   placeholder?: string
@@ -59,6 +61,33 @@ export function Composer({
             ))}
           </select>
         </label>
+        {onPlugins && (
+          <div className="plugin-toggles" role="group" aria-label="Research plugins">
+            {[
+              { id: 'speed', label: 'Speed', icon: '⚡', title: 'Speed Boost: Fast retrieval and compact budget' },
+              { id: 'accuracy', label: 'Verify', icon: '🛡️', title: 'Deep Verification: Cross-checks claims across sources' },
+              { id: 'code', label: 'Code', icon: '💻', title: 'Code Interpreter: Safe Python execution for math & logic' },
+            ].map((p) => {
+              const active = plugins.includes(p.id)
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={busy || readOnly}
+                  className={`plugin-toggle-btn ${active ? 'active' : ''}`}
+                  title={p.title}
+                  onClick={() => {
+                    const next = active ? plugins.filter((id) => id !== p.id) : [...plugins, p.id]
+                    onPlugins(next)
+                  }}
+                >
+                  <span className="plugin-icon">{p.icon}</span>
+                  <span className="plugin-label">{p.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
         {busy ? (
           <button className="send-button stop" type="button" disabled={readOnly} onClick={onStop}><Square size={15} fill="currentColor" /> Stop</button>
         ) : (

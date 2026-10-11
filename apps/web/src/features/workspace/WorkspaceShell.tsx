@@ -175,6 +175,9 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
     setMode(snapshot.mode)
     setSourceScope(snapshot.source_scope.length ? snapshot.source_scope : ['web'])
     setSelectedDocuments(snapshot.document_ids)
+    if (snapshot.plugins && snapshot.plugins.length > 0) {
+      setActivePlugins(snapshot.plugins)
+    }
   }, [])
 
   useEffect(() => {
@@ -487,6 +490,8 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
               sourceScope={sourceScope}
               onSourceScope={setSourceScope}
               selectedDocuments={selectedDocuments.length}
+              plugins={activePlugins}
+              onPlugins={setActivePlugins}
               onSubmit={submit}
               onStop={() => undefined}
             />
@@ -545,6 +550,8 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
                   sourceScope={sourceScope}
                   onSourceScope={setSourceScope}
                   selectedDocuments={selectedDocuments.length}
+                  plugins={activePlugins}
+                  onPlugins={setActivePlugins}
                   onSubmit={submit}
                   onStop={() => cancel.mutate()}
                 />

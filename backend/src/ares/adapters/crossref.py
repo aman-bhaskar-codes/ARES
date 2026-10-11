@@ -109,7 +109,7 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             raise SearchProviderError("Crossref returned an invalid response schema") from exc
 
         results: list[tuple[SearchHit, FetchedDocument]] = []
-        for rank, item in enumerate(items[:limit], start=1):
+        for item in items:
             doi = str(item.get("DOI") or "").strip().lower()
             titles = item.get("title") or []
             title = str(titles[0] if titles else "Untitled work").strip()
@@ -145,6 +145,7 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             if abstract:
                 lines.extend(["", "Abstract", abstract])
             text = "\n".join(lines)
+            rank = len(results) + 1
             hit = SearchHit(
                 title=title,
                 url=url,
@@ -172,6 +173,8 @@ class CrossrefAcademicProvider(DiscoveryProvider):
                 published_at=published_at,
             )
             results.append((hit, document))
+            if len(results) >= limit:
+                break
         return results
 
     def close(self) -> None:
