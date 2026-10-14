@@ -24,7 +24,7 @@ def test_production_documentation_is_disabled(tmp_path: Path):
     from ares.adapters.db import Base, build_session_factory
     engine, sessions = build_session_factory(f'sqlite+pysqlite:///{tmp_path / "prod.sqlite3"}')
     Base.metadata.create_all(engine)
-    with patch('ares.api.app.build_session_factory', return_value=(engine, sessions)):
+    with patch('ares.api.bootstrap.build_session_factory', return_value=(engine, sessions)):
         app = create_app(cfg)
     client = TestClient(app, base_url='https://ares.example')
     for path in ['/docs', '/redoc', '/openapi.json']:

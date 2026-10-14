@@ -197,22 +197,24 @@ class Settings(BaseSettings):
 
     def validate_live_mode(self) -> None:
         self.validate_security_mode()
-        
+
         # Legacy normalization
         if not self.strict_free_mode and self.gemini_billing_mode == "free":
             self.gemini_billing_mode = "paid"
-            
+
         if self.allow_billable_providers:
             raise ValueError("ARES strict-free mode refuses ALLOW_BILLABLE_PROVIDERS=true")
-            
+
         if self.ares_mode != "local_live":
             return
-            
+
         if not self.gemini_api_key and not self.local_llm_enabled:
-            raise ValueError("Configure GEMINI_API_KEY or enable LOCAL_LLM_ENABLED for local_live mode")
+            raise ValueError(
+                "Configure GEMINI_API_KEY or enable LOCAL_LLM_ENABLED for local_live mode"
+            )
         if self.gemini_api_key and None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
             raise ValueError("GEMINI_RPM, GEMINI_TPM and GEMINI_RPD must be explicit in live mode")
-            
+
         if self.jev_enabled:
             raise ValueError(
                 "Jev is a metered external service; ARES V3 policy rejects JEV_ENABLED=true. "
