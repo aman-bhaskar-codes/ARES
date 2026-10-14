@@ -38,3 +38,10 @@ backups/
 
 # Generated evaluation outputs
 evals/reports/*.json
+
+# Build/scratch artifacts belong outside source control.
+*.zip
+scratch_*
+.kilo/
+evals/reports/**
+!evals/reports/README.md
