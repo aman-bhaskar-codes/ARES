@@ -55,7 +55,9 @@ jobs:
       - name: Tests
         run: uv run --project backend pytest backend/tests -q
       - name: Offline regression evaluation
-        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite all --decision-provider deterministic --retrieval-mode lexical --report evals/reports/regression_ci.json
+        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite all --decision-provider deterministic --retrieval-mode lexical --repeats 3 --report evals/reports/regression_ci.json
+      - name: Report external scientific support limits (not a release qualification gate)
+        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite claims --dataset-dir evals/datasets/heldout/scifact --dataset-kind scifact_external_holdout --repeats 3 --no-gate --report evals/reports/scifact_ci.json
       - name: Compile
         run: PYTHONPATH=backend/src uv run --project backend python -m compileall -q backend/src backend/tests
       - name: Export API contract

@@ -9,3 +9,5 @@ Synthetic/adversarial fixtures are useful for invariants and regressions. They m
 Repeat evaluations and report mean and standard deviation. Deterministic offline runs normally have zero variance; that does not establish model stability. Live provider comparisons should use multiple seeds/runs, fixed input evidence, matched budgets and separate latency/cost/failure statistics.
 
 CI thresholds are regression guards, not statistical claims. Keep generated reports outside Git and publish selected artifacts with releases or research materials. PostgreSQL, browser and live-model checks should be reported separately from keyless tests.
+
+The shipped SciFact sample and current measured limits are described in [HARDENING_RESULTS.md](HARDENING_RESULTS.md). Per-passage heuristic predictions are scored against externally annotated support edges; this is not a substitute for generated-answer evaluation.

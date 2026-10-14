@@ -6,6 +6,7 @@ import os
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
+from statistics import fmean, pstdev
 from uuid import NAMESPACE_URL, uuid5
 
 from ares.adapters.gemini_embeddings import GeminiEmbeddingProvider
@@ -17,9 +18,10 @@ from ares.domain.models import FetchedDocument
 from ares.domain.research import EvidencePacket
 from ares.evaluation.metrics import (
     aggregate_retrieval,
+    citation_faithfulness,
     classification_metrics,
     detection_metrics,
-    retrieval_metrics,
+    graded_retrieval_metrics,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -84,6 +86,8 @@ def claims(
     predicted: list[str] = []
     confidences: list[float] = []
     results = []
+    cited_edges: list[set[int]] = []
+    annotated_edges: list[set[int]] = []
     try:
         for case_index, case in enumerate(cases):
             packets = [
@@ -101,6 +105,10 @@ def claims(
                 for idx, text in enumerate(case["evidence"])
             ]
             decision = provider.evaluate_claim(case["claim"], packets)
+            predicted_edges = {index for index, packet in enumerate(packets)
+                if provider.evaluate_claim(case["claim"], [packet]).verdict.value in {"supported", "partially_supported"}}
+            cited_edges.append(predicted_edges)
+            annotated_edges.append(set(case.get("supporting_evidence_indexes", [])))
             expected.append(case["expected_verdict"])
             predicted.append(decision.verdict.value)
             confidences.append(decision.confidence)
@@ -145,8 +153,10 @@ def claims(
     }
     metric_payload = asdict(metrics)
     metric_payload.update(claim_quality)
+    metric_payload.update(citation_faithfulness(cited_edges, annotated_edges))
     return {
         "suite": "claims",
+        "citation_scoring": "Per-passage heuristic predictions versus annotated support edges; not generated-answer faithfulness",
         "provider": provider_name,
         "dataset_kind": dataset_kind,
         "metrics": metric_payload,
@@ -205,7 +215,7 @@ def retrieval(
             )
             result = retriever.retrieve_with_trace(case["query"], docs, limit=5)
             ranked_ids = [source_to_id[str(item.source_id)] for item in result.candidates]
-            metric = retrieval_metrics(ranked_ids, set(case["relevant_ids"]), k=5)
+            metric = graded_retrieval_metrics(ranked_ids, case.get("relevance_grades", {key: 1 for key in case["relevant_ids"]}), k=5)
             per_case.append(metric)
             details.append(
                 {
@@ -269,6 +279,8 @@ def _gate(report: dict[str, object]) -> tuple[bool, list[str]]:
         if metrics["macro_f1"] < 0.80:
             failures.append("routing macro_f1 < 0.80")
     elif suite == "claims":
+        if metrics.get("citation_precision", 1.0) < 0.80:
+            failures.append("annotated citation precision < 0.80")
         if metrics["macro_f1"] < 0.60:
             failures.append("claim macro_f1 < 0.60")
         if metrics["unsupported_claim_retention_rate"] > 0.10:
@@ -278,6 +290,8 @@ def _gate(report: dict[str, object]) -> tuple[bool, list[str]]:
     elif suite == "retrieval":
         if metrics["recall_at_k"] < 0.80:
             failures.append("retrieval mean recall@5 < 0.80")
+        if metrics["ndcg_at_k"] < 0.75:
+            failures.append("retrieval graded nDCG@5 < 0.75")
         if metrics["reciprocal_rank"] < 0.75:
             failures.append("retrieval mean reciprocal rank < 0.75")
     elif suite == "security":
@@ -312,44 +326,50 @@ def main() -> int:
         help="Provenance label written into the report",
     )
     parser.add_argument("--no-gate", action="store_true")
+    parser.add_argument("--repeats", type=int, default=1, choices=range(1, 21))
     args = parser.parse_args()
 
     data_dir = Path(args.dataset_dir).resolve()
-    required = {
-        "routing_cases.json",
-        "claim_cases.json",
-        "retrieval_cases.json",
-        "security_cases.json",
-    }
+    names = [args.suite] if args.suite != "all" else ["routing", "claims", "retrieval", "security"]
+    required = {f"{name[:-1] if name == 'claims' else name}_cases.json" for name in names}
     missing = sorted(name for name in required if not (data_dir / name).is_file())
     if missing:
         raise SystemExit(
             f"evaluation dataset directory is incomplete: missing {', '.join(missing)}"
         )
 
-    names = [args.suite] if args.suite != "all" else ["routing", "claims", "retrieval", "security"]
     reports = []
     for name in names:
-        if name == "routing":
-            reports.append(routing(args.decision_provider, data_dir, args.dataset_kind))
-        elif name == "claims":
-            reports.append(claims(args.decision_provider, data_dir, args.dataset_kind))
-        elif name == "retrieval":
-            reports.append(
-                retrieval(args.retrieval_mode, args.embedding_provider, data_dir, args.dataset_kind)
-            )
-        elif name == "security":
-            reports.append(security(data_dir, args.dataset_kind))
+        repeated = []
+        for _ in range(args.repeats):
+            if name == "routing":
+                repeated.append(routing(args.decision_provider, data_dir, args.dataset_kind))
+            elif name == "claims":
+                repeated.append(claims(args.decision_provider, data_dir, args.dataset_kind))
+            elif name == "retrieval":
+                repeated.append(retrieval(args.retrieval_mode, args.embedding_provider, data_dir, args.dataset_kind))
+            elif name == "security":
+                repeated.append(security(data_dir, args.dataset_kind))
+        summary = repeated[0]
+        keys = [key for key, value in summary["metrics"].items() if isinstance(value, (int, float))]
+        summary["run_variance"] = {key: {"mean": fmean(row["metrics"][key] for row in repeated),
+            "std": pstdev(row["metrics"][key] for row in repeated)} for key in keys}
+        summary["repeat_count"] = args.repeats
+        summary["repeated_run_gate_failures"] = [failure for row in repeated for failure in _gate(row)[1]]
+        reports.append(summary)
 
     gate_failures = []
     for report in reports:
         passed, failures = _gate(report)
+        failures = list(dict.fromkeys(failures + report["repeated_run_gate_failures"]))
+        passed = not failures
         report["gate_passed"] = passed
         report["gate_failures"] = failures
         gate_failures.extend(f"{report['suite']}: {failure}" for failure in failures)
     output = {
         "schema_version": 1,
         "generated_at": datetime.now(UTC).isoformat(),
+        "repeats": args.repeats,
         "important_limit": "Development regression fixtures are not an external benchmark or production-quality claim. A held-out label is credible only when dataset provenance is genuinely independent of tuning.",
         "reports": reports,
         "gate_passed": not gate_failures,
