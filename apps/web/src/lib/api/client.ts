@@ -41,12 +41,12 @@ function cookie(name: string): string | undefined {
 
 async function parse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('ares:auth-expired'))
-    }
     const payload = await response.json().catch(() => null)
     const detail = payload?.detail
     const code = typeof detail?.code === 'string' ? detail.code : undefined
+    if ((response.status === 401 || (response.status === 403 && code === 'CSRF_TOKEN')) && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('ares:auth-expired'))
+    }
     const message = detail?.message ?? code ?? `Request failed (${response.status})`
     throw new ApiError(response.status, code, message)
   }
@@ -58,7 +58,10 @@ async function download(url: string): Promise<{ blob: Blob; filename: string | u
   if (!response.ok) await parse<never>(response)
   const disposition = response.headers.get('Content-Disposition') ?? ''
   const filenameMatch = disposition.match(/filename="?([^";]+)"?/i)
-  return { blob: await response.blob(), filename: filenameMatch?.[1] }
+  const utf8Name = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  let filename = filenameMatch?.[1]
+  if (utf8Name) { try { filename = decodeURIComponent(utf8Name) } catch { /* Keep the ASCII fallback. */ } }
+  return { blob: await response.blob(), filename }
 }
 
 async function request<T>(url: string, init: RequestInit = {}, validate?: (value: unknown) => T): Promise<T> {

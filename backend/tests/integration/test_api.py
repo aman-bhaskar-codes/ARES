@@ -213,3 +213,12 @@ def test_model_selection_is_persisted_and_scoped_to_each_run(tmp_path):
     response = client.post('/api/v1/runs', headers={'Idempotency-Key': 'bad'},
                            json={'conversation_id': conversation['id'], 'query': 'What is a qubit?', 'model_provider': 'unknown'})
     assert response.status_code == 422
+
+
+def test_spa_never_serves_build_source_maps(tmp_path):
+    root = tmp_path / 'web'
+    root.mkdir()
+    (root / 'index.html').write_text('<html>ARES</html>')
+    (root / 'app.js.map').write_text('{"sourcesContent":["private source"]}')
+    app = create_app(Settings(_env_file=None, database_url=f'sqlite+pysqlite:///{tmp_path / "maps.db"}', web_dist_dir=str(root)))
+    assert TestClient(app).get('/app.js.map').status_code == 404
