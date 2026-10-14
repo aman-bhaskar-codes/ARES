@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from ares.api.schema_revision import schema_head
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")
@@ -25,7 +26,7 @@ def test_production_readiness_requires_expected_schema_and_trusted_host() -> Non
         session_cookie_secure=True,
         database_url=POSTGRES_URL,
         worker_database_url=POSTGRES_URL + "?application_name=ares-worker-test",
-        required_schema_revision="0013",
+        required_schema_revision=schema_head(),
         readiness_requires_worker=False,
     )
     from ares.adapters.db import build_session_factory
@@ -34,7 +35,7 @@ def test_production_readiness_requires_expected_schema_and_trusted_host() -> Non
     with engine.begin() as connection:
         connection.execute(text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))"))
         connection.execute(text("DELETE FROM alembic_version"))
-        connection.execute(text("INSERT INTO alembic_version (version_num) VALUES ('0013')"))
+        connection.execute(text("INSERT INTO alembic_version (version_num) VALUES (:revision)"), {"revision": schema_head()})
     engine.dispose()
     
     client = TestClient(create_app(settings), base_url="https://testserver")

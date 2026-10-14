@@ -29,3 +29,11 @@ def test_production_documentation_is_disabled(tmp_path: Path):
     client = TestClient(app, base_url='https://ares.example')
     for path in ['/docs', '/redoc', '/openapi.json']:
         assert client.get(path).status_code == 404
+    from sqlalchemy import text
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(32))"))
+        connection.execute(text("INSERT INTO alembic_version VALUES (:head)"), {"head": cfg.required_schema_revision})
+    assert client.get("/health/ready").status_code == 200
+    with engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'stale'"))
+    assert client.get("/health/ready").status_code == 503
