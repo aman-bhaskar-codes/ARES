@@ -54,6 +54,7 @@ def ready(
                 raise RuntimeError("no active research-capable worker is available")
         return {"status": "ready", "mode": cfg.ares_mode}
     except Exception as exc:
+        logging.getLogger(__name__).warning("system: recovery boundary (%s)", type(exc).__name__)
         raise HTTPException(
             status_code=503, detail={"code": "NOT_READY", "message": str(exc)}
         ) from exc

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 from pydantic import BaseModel, Field
@@ -38,6 +39,7 @@ class GroundedSynthesisBase:
         try:
             parsed = _ModelAnswer.model_validate_json(raw)
         except Exception as exc:
+            logging.getLogger(__name__).warning("grounded_synthesis: recovery boundary (%s)", type(exc).__name__)
             raise ProviderUnavailable('Model returned invalid structured output') from exc
         claims: list[SynthesizedClaim] = []
         claim_proposals: list[ClaimProposal] = []

@@ -2753,7 +2753,7 @@
   },
   "info": {
     "title": "ARES API",
-    "version": "0.11.0"
+    "version": "0.12.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -3259,7 +3259,11 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Available Models Api V1 Models Get",
+                  "type": "object"
+                }
               }
             },
             "description": "Successful Response"

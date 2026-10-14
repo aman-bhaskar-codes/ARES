@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any
 
 from ares.adapters.grounded_synthesis import _SYSTEM_INSTRUCTION as _SYSTEM_INSTRUCTION
@@ -53,11 +54,13 @@ class GeminiLLMProvider(GroundedSynthesisBase):
             except ProviderUnavailable:
                 raise
             except Exception as exc:
+                logging.getLogger(__name__).warning("gemini: recovery boundary (%s)", type(exc).__name__)
                 raise _interaction_error(exc) from exc
         model_input = _build_synthesis_input(query, evidence)
         try:
             interaction = self._client.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': max_output_tokens, 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
         except Exception as exc:
+            logging.getLogger(__name__).warning("gemini: recovery boundary (%s)", type(exc).__name__)
             raise _interaction_error(exc) from exc
         return self._parse_synthesis_interaction(interaction, evidence)
 

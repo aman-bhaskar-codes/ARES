@@ -85,7 +85,8 @@ def optional_span(name: str, **attributes: object) -> Iterator[None]:
         }
         span_context = tracer.start_as_current_span(name, attributes=safe_attributes)
         span_context.__enter__()
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("observability: recovery boundary (%s)", type(_boundary_error).__name__)
         yield
         return
 
@@ -116,7 +117,8 @@ def _get_stage_duration_histogram() -> object | None:
                 unit="ms",
                 description="Duration of research stages",
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("observability: recovery boundary (%s)", type(_boundary_error).__name__)
             _stage_duration_histogram = False
     return None if _stage_duration_histogram is False else _stage_duration_histogram
 
@@ -136,7 +138,8 @@ class RunTelemetry:
         try:
             with optional_span(f"ares.run.{name}", run_id=str(self.lease.run_id), stage=name):
                 yield
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("observability: recovery boundary (%s)", type(_boundary_error).__name__)
             outcome = "error"
             raise
         finally:

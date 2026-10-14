@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from typing import cast
 
@@ -68,7 +69,8 @@ def visualization_storage_ready(cfg: Settings, engine: Engine) -> bool:
         return inspector.has_table("visualization_datasets") and inspector.has_table(
             "visualizations"
         )
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("dependencies: recovery boundary (%s)", type(_boundary_error).__name__)
         return False
 
 

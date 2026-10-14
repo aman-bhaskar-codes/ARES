@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -22,7 +23,8 @@ def _normalized_bbox(bbox, page) -> list[float] | None:
         if values[2] <= values[0] or values[3] <= values[1]:
             return None
         return values
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("docling_runner: recovery boundary (%s)", type(_boundary_error).__name__)
         return None
 
 
@@ -32,7 +34,8 @@ def _page_for(doc, page_no: int):
         return pages.get(page_no) or pages.get(str(page_no))
     try:
         return pages[page_no]
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("docling_runner: recovery boundary (%s)", type(_boundary_error).__name__)
         return None
 
 
@@ -277,5 +280,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
+        logging.getLogger(__name__).warning("docling_runner: recovery boundary (%s)", type(exc).__name__)
         print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
         raise

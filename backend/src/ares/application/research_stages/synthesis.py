@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -133,7 +134,7 @@ def _in_date_window(value: datetime | None, window) -> bool:
 
 _DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
 _ARXIV_RE = re.compile(r"\b(?:arxiv:)?(\d{4}\.\d{4,5}(?:v\d+)?)\b", re.IGNORECASE)
-_GITHUB_RE = re.compile(r"(?:github\.com/)?([A-Z0-9_.-]+/[A-Z0-9_.-]+)", re.IGNORECASE)
+_GITHUB_RE = re.compile(r"(?<![A-Z0-9_.-])github\.com/([A-Z0-9_.-]+/[A-Z0-9_.-]+)", re.IGNORECASE)
 
 
 def _query_identifiers(query: str) -> set[str]:
@@ -254,7 +255,8 @@ class SynthesisStage:
                 usage_id, input_tokens_actual=None, output_tokens_actual=None
             )
             return decision
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("synthesis: recovery boundary (%s)", type(_boundary_error).__name__)
             # The conservative reservation remains recorded even when the remote call fails.
             self.engine.repository.reconcile_provider_usage(
                 usage_id, input_tokens_actual=None, output_tokens_actual=None

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import uuid4
 
 from ares.adapters.pdf_parser import BoundedPdfParser, PdfParseError
@@ -99,7 +101,8 @@ class DocumentIngestService:
                 parser_version="plain-text-v1",
                 chunks=chunks,
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("documents: recovery boundary (%s)", type(_boundary_error).__name__)
             if not self.repository.is_blob_referenced(blob_key):
                 self.blobs.delete(blob_key)
             raise
@@ -127,7 +130,28 @@ class DocumentIngestService:
                 parser_version=parsed.parser_version,
                 chunks=chunks,
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("documents: recovery boundary (%s)", type(_boundary_error).__name__)
+            if not self.repository.is_blob_referenced(blob_key):
+                self.blobs.delete(blob_key)
+            raise
+
+    def ingest_pdf_file(self, *, name: str, path: Path) -> DocumentView:
+        parsed = self.pdf_parser.parse_file(path)
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for block in iter(lambda: handle.read(64 * 1024), b""):
+                digest.update(block)
+        blob_key = self.blobs.put_file("documents", path)
+        status = DocumentStatus(parsed.status)
+        chunks = build_document_chunks(name=name, text=parsed.text, page_map=parsed.page_map) if status in {DocumentStatus.READY, DocumentStatus.PARTIAL} else []
+        try:
+            return self.repository.create_user_document(name=name.strip(), mime_type="application/pdf",
+                text=parsed.text, raw_bytes=None, content_hash=digest.hexdigest(), byte_count=path.stat().st_size,
+                blob_key=blob_key, status=status, page_count=parsed.page_count, page_map=parsed.page_map,
+                warnings=parsed.warnings, parser_version=parsed.parser_version, chunks=chunks)
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("documents: recovery boundary (%s)", type(_boundary_error).__name__)
             if not self.repository.is_blob_referenced(blob_key):
                 self.blobs.delete(blob_key)
             raise

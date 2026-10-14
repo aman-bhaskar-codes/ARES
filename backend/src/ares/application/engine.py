@@ -1164,6 +1164,7 @@ class ResearchEngine:
         except LLMProviderError as exc:
             self._partial_or_fail(lease, code="MODEL_UNAVAILABLE", message=str(exc))
         except Exception as exc:
+            logging.getLogger(__name__).warning("engine: recovery boundary (%s)", type(exc).__name__)
             self.repository.fail_run(run_id, "UNEXPECTED_ERROR", str(exc), lease_token=lease.token)
 
 

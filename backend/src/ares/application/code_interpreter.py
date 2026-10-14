@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import subprocess
@@ -79,6 +80,7 @@ class CodeInterpreter:
                 timed_out=True,
             )
         except Exception as exc:
+            logging.getLogger(__name__).warning("code_interpreter: recovery boundary (%s)", type(exc).__name__)
             duration = time.monotonic() - start_time
             return CodeExecutionResult(
                 success=False,

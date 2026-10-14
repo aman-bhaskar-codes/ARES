@@ -5,9 +5,11 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import FileResponse
 
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.api.dependencies import get_blobs, get_repository
+from ares.api.downloads import content_disposition
 from ares.application.repository import NotFoundError, Repository
 
 logger = logging.getLogger("ares.api")
@@ -23,7 +25,7 @@ async def download_artifact(
 ) -> Response:
     try:
         record = await asyncio.to_thread(repository.get_artifact_record, artifact_id)
-        content = await asyncio.to_thread(blobs.get_bytes, record.blob_key)
+        path = await asyncio.to_thread(blobs.file_path, record.blob_key)
     except NotFoundError as exc:
         raise HTTPException(
             status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
@@ -33,8 +35,8 @@ async def download_artifact(
             status_code=410,
             detail={"code": "ARTIFACT_GONE", "message": "artifact bytes are unavailable"},
         ) from exc
-    return Response(
-        content=content,
+    return FileResponse(
+        path=path,
         media_type=record.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{record.file_name}"'},
+        headers={"Content-Disposition": content_disposition(record.file_name)},
     )

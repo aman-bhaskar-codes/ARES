@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import Any
 
@@ -116,6 +117,7 @@ class GeminiMultimodalUnderstandingProvider:
                 },
             )
         except Exception as exc:
+            logging.getLogger(__name__).warning("gemini_multimodal: recovery boundary (%s)", type(exc).__name__)
             raise MultimodalProviderUnavailable("Gemini visual observation failed") from exc
         raw = getattr(response, "text", None)
         if not isinstance(raw, str) or not raw.strip():
@@ -123,6 +125,7 @@ class GeminiMultimodalUnderstandingProvider:
         try:
             parsed = _ObservationEnvelope.model_validate_json(raw)
         except Exception as exc:
+            logging.getLogger(__name__).warning("gemini_multimodal: recovery boundary (%s)", type(exc).__name__)
             raise MultimodalProviderUnavailable(
                 "Gemini returned invalid visual observation output"
             ) from exc

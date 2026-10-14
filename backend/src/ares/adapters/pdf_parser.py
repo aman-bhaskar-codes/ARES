@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 import multiprocessing as mp
 from dataclasses import dataclass
 from io import BytesIO
+from pathlib import Path
 from queue import Empty
 from typing import Any
 
@@ -35,7 +37,7 @@ def _apply_resource_limits(memory_bytes: int, cpu_seconds: int) -> None:
 
 
 def _parse_worker(
-    payload: bytes,
+    payload: bytes | str,
     result_queue: Any,
     *,
     max_pages: int,
@@ -48,11 +50,12 @@ def _parse_worker(
         from pypdf import PdfReader
         from pypdf import __version__ as pypdf_version
 
-        reader = PdfReader(BytesIO(payload), strict=False)
+        reader = PdfReader(BytesIO(payload) if isinstance(payload, bytes) else payload, strict=False)
         if reader.is_encrypted:
             try:
                 unlocked = reader.decrypt("")
             except Exception as exc:  # pypdf raises several encryption-specific errors
+                logging.getLogger(__name__).warning("pdf_parser: recovery boundary (%s)", type(exc).__name__)
                 raise PdfParseError("encrypted PDF could not be opened without a password") from exc
             if not unlocked:
                 raise PdfParseError("password-protected PDFs are not supported")
@@ -71,6 +74,7 @@ def _parse_worker(
             try:
                 page_text = (page.extract_text() or "").strip()
             except Exception as exc:
+                logging.getLogger(__name__).warning("pdf_parser: recovery boundary (%s)", type(exc).__name__)
                 page_text = ""
                 warnings.append(f"Page {index} could not be extracted ({type(exc).__name__}).")
             if not page_text:
@@ -135,6 +139,18 @@ class BoundedPdfParser:
             raise PdfParseError("file signature is not a PDF")
         if len(payload) > self.max_bytes:
             raise PdfParseError(f"PDF exceeds the {self.max_bytes // (1024 * 1024)} MB limit")
+        return self._parse_payload(payload)
+
+    def parse_file(self, path: str | Path) -> ParsedPdf:
+        source = Path(path)
+        with source.open("rb") as handle:
+            if handle.read(5) != b"%PDF-":
+                raise PdfParseError("file signature is not a PDF")
+        if source.stat().st_size > self.max_bytes:
+            raise PdfParseError("PDF exceeds the configured upload limit")
+        return self._parse_payload(str(source.resolve()))
+
+    def _parse_payload(self, payload: bytes | str) -> ParsedPdf:
         context = mp.get_context("spawn")
         result_queue = context.Queue(maxsize=1)
         process = context.Process(

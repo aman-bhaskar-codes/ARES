@@ -29,6 +29,7 @@ from ares.application.media_capabilities import probe_local_media_runtime
 from ares.application.observability import configure_logging, configure_telemetry, request_context
 from ares.application.repository import Repository
 from ares.application.visualizations import VisualizationService
+from ares.version import VERSION
 
 
 def create_application(settings: Settings | None = None) -> FastAPI:
@@ -117,7 +118,8 @@ def create_application(settings: Settings | None = None) -> FastAPI:
             return inspector.has_table("visualization_datasets") and inspector.has_table(
                 "visualizations"
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("bootstrap: recovery boundary (%s)", type(_boundary_error).__name__)
             return False
 
     @asynccontextmanager
@@ -130,7 +132,7 @@ def create_application(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="ARES API",
-        version="0.11.0",
+        version=VERSION,
         lifespan=lifespan,
         docs_url=None if cfg.deployment_environment == "production" else "/docs",
         redoc_url=None if cfg.deployment_environment == "production" else "/redoc",

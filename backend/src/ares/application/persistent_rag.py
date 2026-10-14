@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from uuid import UUID
@@ -106,6 +107,7 @@ class PersistentDocumentRAG:
                     "embedding quota exhausted; indexed lexical document retrieval used"
                 )
             except Exception as exc:
+                logging.getLogger(__name__).warning("persistent_rag: recovery boundary (%s)", type(exc).__name__)
                 degraded_reason = (
                     f"semantic document retrieval unavailable ({type(exc).__name__}); "
                     "indexed lexical retrieval used"

@@ -55,3 +55,33 @@ def test_pdf_parser_preserves_page_map() -> None:
     second = result.page_map[1]
     assert result.text[first["char_start"] : first["char_end"]] == "Page one evidence."
     assert result.text[second["char_start"] : second["char_end"]] == "Page two limitation."
+
+
+def test_pdf_file_parser_matches_byte_parser_without_parent_read_bytes(tmp_path):
+    path = tmp_path / 'document.pdf'
+    path.write_bytes(_pdf_with_pages(['Research evidence from the file parser.']))
+    result = BoundedPdfParser().parse_file(path)
+    assert 'Research evidence' in result.text
+
+
+def test_pdf_upload_uses_file_parser_and_unicode_download_stream(tmp_path, monkeypatch):
+    from ares.api.app import create_app
+    from ares.api.settings import Settings
+    from fastapi.testclient import TestClient
+    app = create_app(Settings(_env_file=None, database_url=f'sqlite+pysqlite:///{tmp_path / "upload.db"}',
+        blob_root=str(tmp_path / 'blobs')))
+    client = TestClient(app)
+    def forbidden(*args, **kwargs):
+        raise AssertionError('whole-file byte path must not be used')
+    monkeypatch.setattr(app.state.pdf_parser, 'parse', forbidden)
+    raw = _pdf_with_pages(['Grounded research evidence from a PDF upload.'])
+    uploaded = client.post('/api/v1/documents/pdf', files={'file': ('अनुसंधान.pdf', raw, 'application/pdf')})
+    assert uploaded.status_code == 201
+    assert uploaded.json()['byte_count'] == len(raw)
+    admitted = client.post('/api/v2/assets', files={'file': ('अनुसंधान.pdf', raw, 'application/pdf')})
+    assert admitted.status_code == 202
+    monkeypatch.setattr(app.state.blobs, 'get_bytes', forbidden)
+    downloaded = client.get('/api/v2/assets/' + admitted.json()['asset']['id'] + '/content')
+    assert downloaded.status_code == 200
+    assert downloaded.content == raw
+    assert "filename*=UTF-8''" in downloaded.headers['Content-Disposition']

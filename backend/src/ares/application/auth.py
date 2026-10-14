@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import logging
 import secrets
 import time
 from dataclasses import dataclass
@@ -513,6 +514,7 @@ class OidcClient:
             header = json.loads(_b64url_decode(header_b64))
             claims = json.loads(_b64url_decode(payload_b64))
         except Exception as exc:
+            logging.getLogger(__name__).warning("auth: recovery boundary (%s)", type(exc).__name__)
             raise AuthenticationError("OIDC ID token is malformed") from exc
         alg = header.get("alg")
         if alg not in {"RS256", "RS384", "RS512"}:
@@ -551,6 +553,7 @@ class OidcClient:
                 hash_alg,
             )
         except Exception as exc:
+            logging.getLogger(__name__).warning("auth: recovery boundary (%s)", type(exc).__name__)
             raise AuthenticationError("OIDC ID token signature validation failed") from exc
         now = int(time.time())
         if claims.get("iss") != self.issuer:

@@ -17,6 +17,7 @@ from ares.api.dependencies import (
     get_visualizations,
     visualization_storage_ready,
 )
+from ares.api.downloads import content_disposition
 from ares.api.event_stream import stream_run_events
 from ares.api.settings import Settings
 from ares.api.stream_authorization import stream_revalidator
@@ -202,7 +203,7 @@ def export_run_visualization_csv(
         content=content,
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Disposition": content_disposition(filename),
             "Cache-Control": "private, no-store",
             "X-Content-Type-Options": "nosniff",
         },

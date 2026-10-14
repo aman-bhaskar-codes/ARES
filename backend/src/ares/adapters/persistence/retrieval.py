@@ -107,7 +107,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
         name: str,
         mime_type: str,
         text: str,
-        raw_bytes: bytes,
+        raw_bytes: bytes | None,
         blob_key: str | None,
         status: DocumentStatus,
         page_count: int | None,
@@ -115,8 +115,17 @@ class SqlRetrievalRepository(SqlRepositoryBase):
         warnings: list[str],
         parser_version: str | None,
         chunks: list[PreparedChunk],
+        content_hash: str | None = None,
+        byte_count: int | None = None,
     ) -> DocumentView:
-        digest = hashlib.sha256(raw_bytes).hexdigest()
+        if raw_bytes is None:
+            if content_hash is None or byte_count is None:
+                raise ValueError("File ingestion requires content hash and byte count")
+            digest = content_hash
+            size = byte_count
+        else:
+            digest = hashlib.sha256(raw_bytes).hexdigest()
+            size = len(raw_bytes)
         principal = self._request_principal()
         with self._sessions.begin() as session:
             self._ensure_local_identity(session, principal)
@@ -127,7 +136,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                 mime_type=mime_type,
                 text=text,
                 content_hash=digest,
-                byte_count=len(raw_bytes),
+                byte_count=size,
                 blob_key=blob_key,
                 status=status.value,
                 page_count=page_count,

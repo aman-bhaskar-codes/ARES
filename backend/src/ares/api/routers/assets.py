@@ -20,9 +20,11 @@ from fastapi import (
     Response,
     UploadFile,
 )
+from fastapi.responses import FileResponse, StreamingResponse
 
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.api.dependencies import get_asset_admission, get_blobs, get_repository, get_settings
+from ares.api.downloads import content_disposition
 from ares.api.settings import Settings
 from ares.application.asset_ingestion import AssetAdmissionError, AssetAdmissionService
 from ares.application.repository import NotFoundError, Repository
@@ -154,15 +156,15 @@ async def get_asset_content(
         ) from exc
     base_headers = {
         "Accept-Ranges": "bytes",
-        "Content-Disposition": f'''inline; filename="{asset.original_name.replace(chr(34), "")}"''',
+        "Content-Disposition": content_disposition(asset.original_name, inline=True),
         "Cache-Control": "private, no-store",
     }
     if not range_header:
-        content = await asyncio.to_thread(blobs.get_bytes, asset.original_blob_key)
-        return Response(
-            content=content,
+        path = await asyncio.to_thread(blobs.file_path, asset.original_blob_key)
+        return FileResponse(
+            path=path,
             media_type=asset.mime_type,
-            headers={**base_headers, "Content-Length": str(len(content))},
+            headers={**base_headers, "Content-Length": str(size)},
         )
     match = re.fullmatch("bytes=(\\d*)-(\\d*)", range_header.strip())
     if not match or "," in range_header:
@@ -190,15 +192,14 @@ async def get_asset_content(
         return Response(
             status_code=416, headers={**base_headers, "Content-Range": f"bytes */{size}"}
         )
-    content = await asyncio.to_thread(blobs.get_range, asset.original_blob_key, start, end)
-    return Response(
-        content=content,
+    return StreamingResponse(
+        content=blobs.iter_bytes(asset.original_blob_key, start=start, end_inclusive=end),
         status_code=206,
         media_type=asset.mime_type,
         headers={
             **base_headers,
             "Content-Range": f"bytes {start}-{end}/{size}",
-            "Content-Length": str(len(content)),
+            "Content-Length": str(end - start + 1),
         },
     )
 
@@ -212,7 +213,8 @@ async def get_rendition_content(
 ) -> Response:
     try:
         rendition = await asyncio.to_thread(repository.get_rendition_record, rendition_id)
-        content = await asyncio.to_thread(blobs.get_bytes, rendition.blob_key)
+        path = await asyncio.to_thread(blobs.file_path, rendition.blob_key)
+        size = await asyncio.to_thread(blobs.get_size, rendition.blob_key)
     except NotFoundError as exc:
         raise HTTPException(
             status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
@@ -222,11 +224,11 @@ async def get_rendition_content(
             status_code=410,
             detail={"code": "RENDITION_GONE", "message": "rendition bytes are unavailable"},
         ) from exc
-    return Response(
-        content=content,
+    return FileResponse(
+        path=path,
         media_type=rendition.mime_type,
         headers={
-            "Content-Length": str(len(content)),
+            "Content-Length": str(size),
             "Cache-Control": "private, no-store",
             "Content-Disposition": "inline",
         },

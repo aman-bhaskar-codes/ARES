@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import tempfile
 from pathlib import Path
 from typing import Annotated
 from uuid import UUID
@@ -50,29 +51,21 @@ async def create_pdf_document(
                 "message": "PDF upload must use application/pdf",
             },
         )
-    chunks: list[bytes] = []
-    received = 0
-    while True:
-        chunk = await file.read(1024 * 1024)
-        if not chunk:
-            break
-        received += len(chunk)
-        if received > cfg.max_upload_bytes:
-            raise HTTPException(
-                status_code=413,
-                detail={
-                    "code": "UPLOAD_TOO_LARGE",
-                    "message": "PDF exceeds the configured upload limit",
-                },
-            )
-        chunks.append(chunk)
-    raw = b"".join(chunks)
-    try:
-        return await asyncio.to_thread(documents.ingest_pdf, name=name, raw=raw)
-    except PdfParseError as exc:
-        raise HTTPException(
-            status_code=422, detail={"code": "PDF_PARSE_FAILED", "message": str(exc)}
-        ) from exc
+    with tempfile.TemporaryDirectory(prefix="ares-pdf-upload-") as directory:
+        path = Path(directory) / "upload.pdf"
+        received = 0
+        try:
+            with path.open("wb") as handle:
+                while chunk := await file.read(64 * 1024):
+                    received += len(chunk)
+                    if received > cfg.max_upload_bytes:
+                        raise HTTPException(status_code=413, detail={"code": "UPLOAD_TOO_LARGE", "message": "PDF exceeds the configured upload limit"})
+                    await asyncio.to_thread(handle.write, chunk)
+            return await asyncio.to_thread(documents.ingest_pdf_file, name=name, path=path)
+        except PdfParseError as exc:
+            raise HTTPException(status_code=422, detail={"code": "PDF_PARSE_FAILED", "message": str(exc)}) from exc
+        finally:
+            await file.close()
 
 
 @router.delete("/api/v1/documents/{document_id}", status_code=204)

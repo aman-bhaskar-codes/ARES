@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import logging
 import os
 import signal
 import subprocess
@@ -159,7 +160,8 @@ class FasterWhisperTranscriber:
             if cancelled is not None:
                 try:
                     stop_requested = cancelled()
-                except Exception:
+                except Exception as _boundary_error:
+                    logging.getLogger(__name__).warning("faster_whisper: recovery boundary (%s)", type(_boundary_error).__name__)
                     # Deletion/revocation can invalidate the durable ingestion lease
                     # while ASR is active. Always reap the isolated child before the
                     # fencing exception escapes.

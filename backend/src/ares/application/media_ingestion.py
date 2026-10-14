@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import logging
 import math
 import os
 import re
@@ -199,7 +200,8 @@ class FFmpegMediaProcessor:
             if cancelled is not None:
                 try:
                     stop_requested = cancelled()
-                except Exception:
+                except Exception as _boundary_error:
+                    logging.getLogger(__name__).warning("media_ingestion: recovery boundary (%s)", type(_boundary_error).__name__)
                     # A deleted/revoked ingestion invalidates the lease while a local
                     # parser may still be running. Kill the subprocess before surfacing
                     # the fencing error so no orphan decoder survives the request.
@@ -697,6 +699,7 @@ class FFmpegMediaProcessor:
                         bits = (bits << 1) | int(value >= mean)
                     perceptual_hash = f"{bits:016x}"
             except Exception as exc:
+                logging.getLogger(__name__).warning("media_ingestion: recovery boundary (%s)", type(exc).__name__)
                 raise MediaProcessingError("sampled frame could not be validated") from exc
             frames.append(
                 MediaFrameDraft(
