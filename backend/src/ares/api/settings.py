@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     oidc_state_ttl_seconds: int = Field(default=600, ge=60, le=1800)
 
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-3.8-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     gemini_thinking_level: Literal["low", "medium", "high"] = "low"
     gemini_rpm: int | None = Field(default=None, ge=1)
     gemini_tpm: int | None = Field(default=None, ge=1)
@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     local_llm_enabled: bool = False
     local_llm_url: str = "http://127.0.0.1:11434"
     local_llm_model: str = "qwen3:4b"
+    local_llm_context_tokens: int = Field(default=4096, ge=2048, le=65536)
+    local_llm_passage_chars: int = Field(default=900, ge=256, le=8000)
     local_llm_timeout_seconds: float = Field(default=180.0, ge=5.0, le=600.0)
     gemini_timeout_seconds: float = Field(default=60.0, ge=5.0, le=300.0)
     gemini_billing_mode: Literal["free", "paid"] = "free"

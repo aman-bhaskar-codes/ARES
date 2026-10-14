@@ -3,19 +3,18 @@ from __future__ import annotations
 from ares.adapters.arxiv import ArxivAcademicProvider
 from ares.adapters.browser_fetch import BrowserFallbackFetcher, BrowserFetcher
 from ares.adapters.crossref import CrossrefAcademicProvider
-from ares.adapters.gemini import GeminiLLMProvider
 from ares.adapters.gemini_embeddings import GeminiEmbeddingProvider
 from ares.adapters.gemini_semantic import GeminiSemanticClaimChecker
 from ares.adapters.github_software import GitHubSoftwareProvider
 from ares.adapters.jev import JevConfig, JevDecisionProvider
 from ares.adapters.local_embeddings import LocalFastEmbedProvider
 from ares.adapters.local_reranker import LocalCrossEncoderReranker
-from ares.adapters.ollama_synthesis import OllamaLLMProvider
 from ares.adapters.openalex import OpenAlexAcademicProvider
 from ares.adapters.safe_fetch import SafeHttpFetcher
 from ares.adapters.searxng import SearXNGSearchProvider
 from ares.api.settings import Settings
 from ares.application.engine import DemoResearchEngine, ResearchEngine
+from ares.application.model_providers import MODEL_PROVIDERS
 from ares.application.persistent_rag import PersistentDocumentRAG
 from ares.application.planning import DeterministicResearchPlanner
 from ares.application.providers import ProviderRegistry
@@ -121,14 +120,7 @@ def _build_research_runtime(settings: Settings, repository: Repository, *, embed
         )
 
     planner = DeterministicResearchPlanner()
-    writer = (
-        OllamaLLMProvider(settings.local_llm_url, settings.local_llm_model)
-        if settings.local_llm_enabled else GeminiLLMProvider(
-            settings.gemini_api_key, settings.gemini_model,
-            thinking_level=settings.gemini_thinking_level,
-            timeout_seconds=settings.gemini_timeout_seconds,
-        )
-    )
+    writer = MODEL_PROVIDERS.get(MODEL_PROVIDERS.default(settings)).factory(settings)
 
     return ResearchEngine(
         repository,
@@ -178,10 +170,8 @@ def build_research_runtime(settings: Settings, repository: Repository, *, embedd
         return DemoResearchEngine(repository)
     from ares.application.model_routing import ModelRoutingEngine
     engines = {}
-    if settings.gemini_api_key:
-        engines["gemini"] = _build_research_runtime(
-            settings.model_copy(update={"local_llm_enabled": False}), repository,
-            embedding_runtime=embedding_runtime)
-    if settings.local_llm_enabled:
-        engines["qwen"] = _build_research_runtime(settings, repository, embedding_runtime=embedding_runtime)
-    return ModelRoutingEngine(repository, engines, default="qwen" if settings.local_llm_enabled else "gemini")
+    for definition in MODEL_PROVIDERS.providers:
+        if definition.is_available(settings):
+            provider_settings = settings.model_copy(update={"local_llm_enabled": definition.location == "local"})
+            engines[definition.id] = _build_research_runtime(provider_settings, repository, embedding_runtime=embedding_runtime)
+    return ModelRoutingEngine(repository, engines, default=MODEL_PROVIDERS.default(settings))

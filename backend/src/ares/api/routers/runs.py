@@ -23,6 +23,7 @@ from ares.api.stream_authorization import stream_revalidator
 from ares.application.auth import AuthStore
 from ares.application.exports import ExportError, ExportService
 from ares.application.identity import Principal
+from ares.application.model_providers import MODEL_PROVIDERS
 from ares.application.repository import (
     IdempotencyConflictError,
     NotFoundError,
@@ -46,25 +47,7 @@ router = APIRouter()
 
 @router.get("/api/v1/models")
 def available_models(request: Request, *, cfg: Settings = Depends(get_settings)) -> dict[str, object]:
-    return {
-        "default": "qwen" if cfg.local_llm_enabled else "gemini",
-        "models": [
-            {
-                "id": "gemini",
-                "label": "Gemini",
-                "model": cfg.gemini_model,
-                "available": bool(cfg.gemini_api_key),
-                "location": "cloud",
-            },
-            {
-                "id": "qwen",
-                "label": "Qwen",
-                "model": cfg.local_llm_model,
-                "available": cfg.local_llm_enabled,
-                "location": "local",
-            },
-        ],
-    }
+    return MODEL_PROVIDERS.catalog(cfg)
 
 
 @router.post("/api/v1/runs", response_model=RunSnapshot, status_code=202)
@@ -77,19 +60,11 @@ def create_run(
     cfg: Settings = Depends(get_settings),
     repository: Repository = Depends(get_repository),
 ) -> RunSnapshot:
-    provider = payload.model_provider or ("qwen" if cfg.local_llm_enabled else "gemini")
-    if cfg.ares_mode != "demo" and (
-        provider == "gemini"
-        and (not cfg.gemini_api_key)
-        or (provider == "qwen" and (not cfg.local_llm_enabled))
-    ):
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "code": "MODEL_UNAVAILABLE",
-                "message": f"{provider.title()} is not configured on this server.",
-            },
-        )
+    provider = payload.model_provider or MODEL_PROVIDERS.default(cfg)
+    definition = MODEL_PROVIDERS.get(provider)
+    if cfg.ares_mode != "demo" and not definition.is_available(cfg):
+        raise HTTPException(status_code=503, detail={"code": "MODEL_UNAVAILABLE",
+            "message": f"{definition.label} is not configured on this server."})
     payload = payload.model_copy(update={"model_provider": provider})
     try:
         snapshot, created = repository.create_run(

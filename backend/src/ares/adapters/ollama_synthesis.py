@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import json
-import logging
 import re
-from types import SimpleNamespace
 
 import httpx
 
-from ares.adapters.gemini import (
-    GeminiLLMProvider,
+from ares.adapters.grounded_synthesis import (
+    GroundedSynthesisBase,
     ProviderUnavailable,
     _build_synthesis_input,
     _ModelAnswer,
@@ -46,117 +44,65 @@ STRICT INSTRUCTIONS:
 - Format: Set summary_markdown to "". Return strictly valid JSON conforming to the schema."""
 
 
-class OllamaLLMProvider(GeminiLLMProvider):
-    """High-performance local structured synthesizer optimized for Ollama (qwen3:4b and similar).
+class OllamaLLMProvider(GroundedSynthesisBase):
+    """Bounded local transport sharing the same strict citation parser as Gemini."""
 
-    Performance optimizations:
-    1. Bounded evidence: selects top 6-8 ranked passages with compressed text (~4KB context total).
-    2. Lean context window (num_ctx=4096) to eliminate KV-cache bloat and drastically cut prompt evaluation latency.
-    3. Disabled thinking ('think': False) to bypass internal monologue tokens and immediately stream structured claims.
-    4. Bounded output tokens (num_predict=1600) and low temperature for concise, grounded generation.
-    5. Robust index sanitization preventing out-of-bounds index exceptions.
-    """
-
-    def __init__(
-        self,
-        url: str = "http://127.0.0.1:11434",
-        model: str = "qwen3:4b",
-        *,
-        client: httpx.Client | None = None,
-    ):
-        super().__init__("", model=model, client=SimpleNamespace())
+    def __init__(self, url: str = "http://127.0.0.1:11434", model: str = "qwen3:4b", *,
+                 client: httpx.Client | None = None, context_tokens: int = 4096,
+                 passage_chars: int = 900):
+        self._model = model
         self._url = url.rstrip("/")
-        self._http = client or httpx.Client()
+        self._context_tokens = context_tokens
+        self._passage_chars = passage_chars
+        self._http = client or httpx.Client(limits=httpx.Limits(max_connections=4, max_keepalive_connections=2))
 
-    def synthesize(
-        self, query: str, evidence, *, max_output_tokens: int, timeout_seconds: float | None = None
-    ):
+    def synthesize(self, query: str, evidence, *, max_output_tokens: int,
+                   timeout_seconds: float | None = None):
+        import time
         if not evidence:
             raise ProviderUnavailable("Local synthesis requires evidence")
-
-        # Cap evidence count: up to 8 top passages.
-        max_passages = 8
-        if len(evidence) > max_passages:
-            evidence = evidence[:max_passages]
-
-        compressed_evidence = [
-            p.model_copy(update={"text": _compress_evidence_text(p.text, max_chars=900)})
-            for p in evidence
-        ]
-
-        # Clean schema for fast constraint evaluation
+        evidence = evidence[:8]
+        compressed = [p.model_copy(update={"text": _compress_evidence_text(p.text, self._passage_chars)}) for p in evidence]
         schema = _ModelAnswer.model_json_schema()
-        schema["properties"] = {
-            key: value
-            for key, value in schema["properties"].items()
-            if key in {"summary_markdown", "claims", "related_questions", "gaps"}
-        }
+        schema["properties"] = {k: v for k, v in schema["properties"].items()
+                                 if k in {"summary_markdown", "claims", "related_questions", "gaps"}}
         schema["properties"]["claims"]["maxItems"] = 8
         schema["additionalProperties"] = False
-
-        user_content = _build_synthesis_input(query, compressed_evidence)
-
-        effective_timeout = timeout_seconds or 180.0
-        try:
-            response = self._http.post(
-                self._url + "/api/chat",
-                timeout=effective_timeout,
-                json={
-                    "model": self._model,
-                    "stream": False,
-                    "think": False,
-                    "format": schema,
-                    "messages": [
-                        {"role": "system", "content": _LOCAL_SYSTEM_PROMPT},
-                        {"role": "user", "content": user_content},
-                    ],
-                    "options": {
-                        "temperature": 0.1,
-                        "num_predict": min(max_output_tokens, 1600),
-                        "num_ctx": 4096,
-                        "repeat_penalty": 1.1,
-                        "top_p": 0.85,
-                    },
-                    "keep_alive": "30m",
-                },
-            )
-            response.raise_for_status()
-            raw = response.json()["message"]["content"]
-        except (httpx.HTTPError, KeyError, ValueError) as exc:
-            raise ProviderUnavailable("Local writing service is unavailable or timed out") from exc
-
-        # Sanitize evidence indexes in the JSON to guarantee bounds safety
-        try:
-            parsed_data = json.loads(raw)
-            if isinstance(parsed_data, dict) and "claims" in parsed_data:
-                valid_count = len(compressed_evidence)
-                for item in parsed_data["claims"]:
-                    if isinstance(item, dict) and "evidence_indexes" in item:
-                        idxs = [
-                            i for i in item["evidence_indexes"]
-                            if isinstance(i, int) and 0 <= i < valid_count
-                        ]
-                        if not idxs and valid_count > 0:
-                            idxs = [0]
-                        item["evidence_indexes"] = idxs
-                raw = json.dumps(parsed_data)
-        except Exception:
-            logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
-
-        result = self._parse_synthesis_interaction(SimpleNamespace(output_text=raw), compressed_evidence)
-        result.provider_input_tokens = response.json().get("prompt_eval_count")
-        result.provider_output_tokens = response.json().get("eval_count")
-        return result
+        deadline = time.monotonic() + (timeout_seconds or 180.0)
+        for attempt in range(2):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ProviderUnavailable("Local synthesis timed out")
+            try:
+                response = self._http.post(self._url + "/api/chat", timeout=remaining, json={
+                    "model": self._model, "stream": False, "think": False,
+                    "format": schema if attempt == 0 else "json",
+                    "messages": [{"role": "system", "content": _LOCAL_SYSTEM_PROMPT},
+                                 {"role": "user", "content": _build_synthesis_input(query, compressed)}],
+                    "options": {"temperature": 0.1, "num_predict": min(max_output_tokens, 1600),
+                                "num_ctx": self._context_tokens, "repeat_penalty": 1.1, "top_p": 0.85},
+                    "keep_alive": "30m"})
+                response.raise_for_status()
+            except httpx.HTTPError as exc:
+                raise ProviderUnavailable("Local writing service is unavailable or timed out") from exc
+            try:
+                payload = response.json()
+                result = self.parse_output(payload["message"]["content"], compressed)
+                result.provider_input_tokens = payload.get("prompt_eval_count")
+                result.provider_output_tokens = payload.get("eval_count")
+                return result
+            except (ProviderUnavailable, KeyError, ValueError, TypeError) as exc:
+                if attempt == 1:
+                    raise ProviderUnavailable("Local writing returned invalid grounded output after retry") from exc
+        raise ProviderUnavailable("Local writing returned no output")
 
     def manifest(self) -> dict:
-        manifest = super().manifest()
-        manifest.update(
-            adapter="ollama",
-            version="local-grounded-v4",
-            generation_config={"thinking": False, "temperature": 0.1, "num_ctx": 3584},
-        )
-        return manifest
+        import hashlib
+        return {"adapter": "ollama", "version": "local-grounded-v5", "model": self._model,
+                "prompt_digest": hashlib.sha256(_LOCAL_SYSTEM_PROMPT.encode()).hexdigest(),
+                "schema_digest": hashlib.sha256(json.dumps(_ModelAnswer.model_json_schema(), sort_keys=True).encode()).hexdigest(),
+                "generation_config": {"thinking": False, "temperature": 0.1, "num_ctx": self._context_tokens,
+                                      "passage_chars": self._passage_chars}}
 
     def close(self) -> None:
         self._http.close()
-        super().close()
