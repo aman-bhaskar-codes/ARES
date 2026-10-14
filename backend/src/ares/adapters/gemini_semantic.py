@@ -164,7 +164,7 @@ class GeminiSemanticClaimChecker:
                         timeout=timeout_seconds,
                     )
                 )
-            except asyncio.TimeoutError as exc:
+            except TimeoutError as exc:
                 raise SemanticCheckerUnavailable("Gemini semantic assessment timed out") from exc
             except Exception as exc:
                 raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc

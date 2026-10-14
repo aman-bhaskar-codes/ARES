@@ -5,11 +5,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import delete, func, select, text
-
 from ares.adapters.db import (
-    RetrievalProfileRow,
-    RetrievalTraceRow,
     AssetRenditionRow,
     AssetVersionRow,
     DocumentChunkRow,
@@ -19,10 +15,15 @@ from ares.adapters.db import (
     MediaFrameRow,
     MediaTrackRow,
     ResearchCacheRow,
+    RetrievalProfileRow,
+    RetrievalTraceRow,
     RunRow,
     SourceRow,
     UserDocumentRow,
 )
+from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.application.documents import PreparedChunk
+from ares.application.source_identity import source_origin_group
 from ares.domain.models import (
     DocumentStatus,
     DocumentTextCreate,
@@ -32,12 +33,8 @@ from ares.domain.models import (
     SupportStatus,
 )
 from ares.domain.research import EvidenceCandidate, EvidencePacket, RetrievalTrace
-from ares.application.documents import PreparedChunk
-from ares.application.source_identity import source_origin_group
-
-
-from ares.ports.repositories import NotFoundError, RunAuthorizationError, IngestionLease
-from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.ports.repositories import IngestionLease, NotFoundError, RunAuthorizationError
+from sqlalchemy import delete, func, select, text
 
 
 def _hash_request(payload: RunCreate) -> str:

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import re
 import asyncio
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 from ares.domain.models import SynthesisResult, SynthesizedClaim
-from ares.domain.research import EvidencePacket, AnswerOutline, ClaimProposal
+from ares.domain.research import AnswerOutline, ClaimProposal, EvidencePacket
 from ares.ports.errors import LLMProviderError
 
 
@@ -167,7 +167,7 @@ class GeminiLLMProvider:
             # cited indexes and are absent from the source text. Preserve supported arrays.
             source_text = " ".join(evidence[index].text for index in claim.evidence_indexes)
             valid_refs = set(claim.evidence_indexes) | {index + 1 for index in claim.evidence_indexes}
-            def clean_reference(match):
+            def clean_reference(match, valid_refs=valid_refs, source_text=source_text):
                 numbers = {int(value.strip()) for value in match.group(1).split(",")}
                 return "" if numbers <= valid_refs and match.group(0) not in source_text else match.group(0)
             text = re.sub(r"\[(\d+(?:\s*,\s*\d+)*)\]", clean_reference, claim.text)
@@ -208,7 +208,7 @@ class GeminiLLMProvider:
                         timeout=timeout_seconds,
                     )
                 )
-            except asyncio.TimeoutError as exc:
+            except TimeoutError as exc:
                 raise ProviderUnavailable("Gemini synthesis timed out") from exc
             except ProviderUnavailable:
                 raise

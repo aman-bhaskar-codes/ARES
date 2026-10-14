@@ -1,31 +1,34 @@
 from __future__ import annotations
+
 import asyncio
 import logging
 import re
 import time
-from uuid import uuid4
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
+from uuid import uuid4
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import inspect
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
 from ares.adapters.db import Base, build_session_factory
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
-from ares.api.settings import Settings, get_settings
 from ares.api.body_limit import PathAwareRequestBodyLimitMiddleware
-from ares.application.observability import configure_logging, configure_telemetry, request_context
-from ares.application.auth import AuthStore, OidcClient, _sha256
-from ares.application.identity import Principal, local_principal, principal_scope
-from ares.application.documents import DocumentIngestService
+from ares.api.settings import Settings, get_settings
 from ares.application.asset_ingestion import AssetAdmissionService
-from ares.application.media_capabilities import probe_local_media_runtime
+from ares.application.auth import AuthStore, OidcClient, _sha256
+from ares.application.documents import DocumentIngestService
 from ares.application.exports import ExportService
-from ares.application.visualizations import VisualizationService
+from ares.application.identity import Principal, local_principal, principal_scope
+from ares.application.media_capabilities import probe_local_media_runtime
+from ares.application.observability import configure_logging, configure_telemetry, request_context
 from ares.application.repository import Repository
+from ares.application.visualizations import VisualizationService
 
 
 def create_application(settings: Settings | None = None) -> FastAPI:

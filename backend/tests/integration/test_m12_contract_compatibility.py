@@ -1,9 +1,10 @@
+from datetime import UTC, datetime
 from uuid import uuid4
-from datetime import datetime, UTC
+
 import pytest
+from ares.domain.models import EventEnvelope, RunSnapshot
 from pydantic import ValidationError
 
-from ares.domain.models import EventEnvelope, RunSnapshot
 
 def test_legacy_schema_supported():
     payload = {

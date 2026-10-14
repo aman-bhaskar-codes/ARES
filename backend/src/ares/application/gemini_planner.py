@@ -4,10 +4,9 @@ import json
 import re
 from typing import Any
 
-
+from ares.application.planning import DeterministicResearchPlanner
 from ares.domain.models import DateWindow, RunMode
 from ares.domain.research import ResearchPlan
-from ares.application.planning import DeterministicResearchPlanner
 
 _PLAN_SYSTEM_INSTRUCTION = """You are the research planner for ARES.
 Analyze the USER_QUERY and context to produce a structured ResearchPlan.

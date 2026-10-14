@@ -1,24 +1,28 @@
 from __future__ import annotations
-from ares.api.dependencies import get_pdf_parser
-from fastapi import Depends
-from collections.abc import Callable
-from ares.adapters.pdf_parser import BoundedPdfParser
+
 import logging
-from fastapi import HTTPException, Request
-from ares.adapters.filesystem_blob import FilesystemBlobStore
-from ares.api.dependencies import get_settings
-from ares.api.settings import Settings
-from ares.application.repository import Repository
-from fastapi import APIRouter
-from ares.api.dependencies import get_blobs
-from ares.api.dependencies import get_local_media_runtime
-from ares.api.dependencies import get_repository
-from ares.application.engine import DemoResearchEngine
+from collections.abc import Callable
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 from ares.adapters.docling_parser import DoclingSubprocessParser
 from ares.adapters.faster_whisper import FasterWhisperSubprocessTranscriber
-from ares.application.media_ingestion import FFmpegMediaProcessor
+from ares.adapters.filesystem_blob import FilesystemBlobStore
+from ares.adapters.pdf_parser import BoundedPdfParser
+from ares.api.dependencies import (
+    get_blobs,
+    get_local_media_runtime,
+    get_pdf_parser,
+    get_repository,
+    get_settings,
+)
+from ares.api.settings import Settings
 from ares.application.asset_ingestion import AssetIngestionExecutor, BuiltinRichExtractor
+from ares.application.engine import DemoResearchEngine
 from ares.application.indexing import DocumentEmbeddingIndexer
+from ares.application.media_capabilities import LocalMediaRuntimeCapabilities
+from ares.application.media_ingestion import FFmpegMediaProcessor
+from ares.application.repository import Repository
 
 logger = logging.getLogger("ares.api")
 router = APIRouter()
@@ -30,7 +34,7 @@ def run_once(
     request: Request,
     blobs: FilesystemBlobStore = Depends(get_blobs),
     cfg: Settings = Depends(get_settings),
-    local_media_runtime: Callable = Depends(get_local_media_runtime),
+    local_media_runtime: Callable[[], LocalMediaRuntimeCapabilities] = Depends(get_local_media_runtime),
     pdf_parser: BoundedPdfParser = Depends(get_pdf_parser),
     repository: Repository = Depends(get_repository),
 ) -> dict[str, object]:

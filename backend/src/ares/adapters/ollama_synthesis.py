@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from types import SimpleNamespace
 
@@ -9,8 +10,8 @@ import httpx
 from ares.adapters.gemini import (
     GeminiLLMProvider,
     ProviderUnavailable,
-    _ModelAnswer,
     _build_synthesis_input,
+    _ModelAnswer,
 )
 
 
@@ -140,7 +141,7 @@ class OllamaLLMProvider(GeminiLLMProvider):
                         item["evidence_indexes"] = idxs
                 raw = json.dumps(parsed_data)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
 
         result = self._parse_synthesis_interaction(SimpleNamespace(output_text=raw), compressed_evidence)
         result.provider_input_tokens = response.json().get("prompt_eval_count")

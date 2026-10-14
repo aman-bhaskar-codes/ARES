@@ -115,7 +115,8 @@ def chunk_document(
         if chunk_start is None:
             chunk_start, chunk_end = start, end
             continue
-        assert chunk_end is not None
+        if chunk_end is None:
+            raise RuntimeError("Chunk end is unavailable")
         projected = end - chunk_start
         if projected <= config.target_chars or (chunk_end - chunk_start) < config.min_chunk_chars:
             chunk_end = end

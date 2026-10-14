@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from uuid import uuid4
-from fastapi.testclient import TestClient
 
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from fastapi.testclient import TestClient
 
 
 def test_text_document_can_be_ingested_and_referenced_by_run(tmp_path):

@@ -1,11 +1,12 @@
 from __future__ import annotations
-from fastapi import Depends
+
 import logging
 from uuid import UUID
-from fastapi import HTTPException, Request
-from ares.application.repository import NotFoundError, Repository
-from fastapi import APIRouter
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 from ares.api.dependencies import get_repository
+from ares.application.repository import NotFoundError, Repository
 from ares.domain.models import EvidenceView
 
 logger = logging.getLogger("ares.api")

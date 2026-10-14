@@ -7,8 +7,8 @@ import signal
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from ares.ports.transcription import TranscriptionResult, TranscriptionSegment
 

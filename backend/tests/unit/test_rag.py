@@ -65,10 +65,11 @@ def test_semantic_and_lexical_retrievers_fuse_by_rank_not_raw_scale():
             # Make the second candidate semantically strongest with a very different raw scale.
             return [[0.0, 1.0], [1.0, 0.0]]
 
-    from ares.application.rag import HybridRAGRetriever, RAGConfig
-    from ares.domain.models import FetchedDocument
     from datetime import UTC, datetime
     from uuid import uuid4
+
+    from ares.application.rag import HybridRAGRetriever, RAGConfig
+    from ares.domain.models import FetchedDocument
 
     docs = [
         FetchedDocument(

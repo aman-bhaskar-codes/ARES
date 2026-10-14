@@ -1,5 +1,5 @@
-from pathlib import Path
 import importlib.util
+from pathlib import Path
 
 
 def test_production_mounts_no_development_search_secret():

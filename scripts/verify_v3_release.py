@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
-from pathlib import Path
-import subprocess
 import logging
+import re
+import subprocess
+from pathlib import Path
 
 try:
     from generate_sbom import build_sbom  # noqa: F401

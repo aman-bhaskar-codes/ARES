@@ -1,19 +1,22 @@
 from __future__ import annotations
-from fastapi import Depends
-from sqlalchemy import Engine
-from collections.abc import Callable
-import logging
-from fastapi import HTTPException, Request
-from ares.api.dependencies import get_settings
-from ares.api.settings import Settings
-from ares.application.repository import Repository
-from sqlalchemy import text
+
 import importlib.util
-from fastapi import APIRouter
-from ares.api.dependencies import get_db_engine
-from ares.api.dependencies import get_local_media_runtime
-from ares.api.dependencies import get_repository
-from ares.api.dependencies import visualization_storage_ready
+import logging
+from collections.abc import Callable
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import Engine, text
+
+from ares.api.dependencies import (
+    get_db_engine,
+    get_local_media_runtime,
+    get_repository,
+    get_settings,
+    visualization_storage_ready,
+)
+from ares.api.settings import Settings
+from ares.application.media_capabilities import LocalMediaRuntimeCapabilities
+from ares.application.repository import Repository
 
 logger = logging.getLogger("ares.api")
 router = APIRouter()
@@ -62,7 +65,7 @@ def system_status(
     request: Request,
     cfg: Settings = Depends(get_settings),
     engine: Engine = Depends(get_db_engine),
-    local_media_runtime: Callable = Depends(get_local_media_runtime),
+    local_media_runtime: Callable[[], LocalMediaRuntimeCapabilities] = Depends(get_local_media_runtime),
     repository: Repository = Depends(get_repository),
 ) -> dict[str, object]:
     postgres = cfg.database_url.startswith("postgresql")

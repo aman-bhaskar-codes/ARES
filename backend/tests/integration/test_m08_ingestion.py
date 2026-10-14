@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi.testclient import TestClient
-
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.api.app import create_app
@@ -16,6 +14,7 @@ from ares.application.asset_ingestion import (
 )
 from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.persistent_rag import PersistentDocumentRAG
+from fastapi.testclient import TestClient
 
 
 class FakeEmbedder:

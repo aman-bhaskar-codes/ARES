@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.application.providers import DiscoveryProvider, ProviderCapabilities, ProviderMetadata
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.domain.research import SearchRequest
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError

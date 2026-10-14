@@ -3,9 +3,8 @@ from uuid import uuid4
 
 import httpx
 import pytest
-
-from ares.adapters.ollama_synthesis import OllamaLLMProvider
 from ares.adapters.gemini import ProviderUnavailable
+from ares.adapters.ollama_synthesis import OllamaLLMProvider
 from ares.domain.research import EvidencePacket
 
 

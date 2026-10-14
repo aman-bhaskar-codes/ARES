@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, as_completed, wait
+from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
-from typing import Callable
 
-from ares.application.run_context import RunContext, RunDeadlineExceeded
 from ares.application.observability import RunTelemetry
 from ares.application.repository import (
     JobLease,
     RunBudgetExceededError,
 )
+from ares.application.run_context import RunContext, RunDeadlineExceeded
 from ares.domain.models import (
     FetchedDocument,
     SearchHit,
@@ -553,7 +553,7 @@ class DiscoveryStage:
                 "max_pages": self.engine.academic_full_text_max_pages,
             }
 
-            def compute():
+            def compute(full_text_url=full_text_url, metadata_document=metadata_document, hit=hit):
                 self.engine._check_cancel(lease, context)
                 timeout = context.clamp_timeout(self.engine.academic_full_text_timeout_seconds)
                 with self.engine._resource_slot(

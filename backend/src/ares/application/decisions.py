@@ -16,7 +16,6 @@ from ares.domain.decisions import (
 from ares.domain.research import EvidencePacket
 from ares.ports.decisions import DecisionProvider
 
-
 _TOKEN = re.compile(r"[\w'-]+", re.UNICODE)
 _QUANTITY = re.compile(
     r"(?<![\w.])(?P<number>[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)"

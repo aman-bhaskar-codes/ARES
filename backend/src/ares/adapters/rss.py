@@ -1,8 +1,11 @@
-import httpx
-from datetime import datetime, timezone
 import logging
 import xml.etree.ElementTree as ET
-from ares.domain.tools import ToolSpec, ToolContext, ToolResult
+from datetime import UTC, datetime
+
+import httpx
+
+from ares.adapters.safe_xml import parse_xml
+from ares.domain.tools import ToolContext, ToolResult, ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -69,15 +72,14 @@ class RSSTool:
             if response.status_code == 304:
                 return ToolResult(
                     payload={"entries": [], "etag": inputs.get("etag", ""), "last_modified": inputs.get("last_modified", "")},
-                    retrieval_timestamp=datetime.now(timezone.utc),
-                    capture_timestamp=datetime.now(timezone.utc),
+                    retrieval_timestamp=datetime.now(UTC),
+                    capture_timestamp=datetime.now(UTC),
                 )
             
             response.raise_for_status()
             
             # Safe XML parsing (defusedxml is recommended in prod, we'll use basic ET here but avoid external entities)
-            parser = ET.XMLParser()
-            root = ET.fromstring(response.text, parser=parser)
+            root = parse_xml(response.text)
             
             entries = []
             # Very basic RSS 2.0 / Atom parser stub
@@ -99,8 +101,8 @@ class RSSTool:
             
             return ToolResult(
                 payload={"entries": entries, "etag": new_etag, "last_modified": new_last_modified},
-                retrieval_timestamp=datetime.now(timezone.utc),
-                capture_timestamp=datetime.now(timezone.utc),
+                retrieval_timestamp=datetime.now(UTC),
+                capture_timestamp=datetime.now(UTC),
                 license="Feed owner copyright",
                 attribution="RSS Feed"
             )

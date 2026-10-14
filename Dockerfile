@@ -8,7 +8,7 @@ WORKDIR /src
 ENV COREPACK_HOME=/tmp/corepack
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/package.json
-RUN corepack enable && corepack prepare pnpm@12.8.1 --activate \
+RUN corepack enable && corepack prepare "$(node -p 'require("./package.json").packageManager')" --activate \
     && pnpm install --frozen-lockfile --filter @ares/web...
 COPY apps/web apps/web
 RUN pnpm --filter @ares/web typecheck \

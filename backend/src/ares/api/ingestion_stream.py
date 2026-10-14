@@ -68,7 +68,7 @@ async def stream_ingestion_events(
             last_auth = now
         try:
             items = await asyncio.to_thread(
-                lambda: scoped(
+                lambda cursor=cursor: scoped(
                     lambda: repository.list_ingestion_events(
                         ingestion_id, after=cursor, limit=page_size
                     )

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from ares.api.schema_revision import schema_head
-
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from ares.api.schema_revision import schema_head
 
 
 class Settings(BaseSettings):

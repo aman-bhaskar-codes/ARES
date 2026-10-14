@@ -7,22 +7,22 @@ import signal
 import socket
 import threading
 import time
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
 
 from ares.adapters.db import Base, build_session_factory
 from ares.adapters.docling_parser import DoclingSubprocessParser
+from ares.adapters.faster_whisper import FasterWhisperSubprocessTranscriber
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
-from ares.adapters.faster_whisper import FasterWhisperSubprocessTranscriber
 from ares.api.settings import get_settings
-from ares.application.repository import IngestionLease, JobLease, Repository, StaleLeaseError
-from ares.application.observability import configure_logging, configure_telemetry
-from ares.application.runtime import build_embedding_runtime, build_research_runtime
 from ares.application.asset_ingestion import AssetIngestionExecutor, BuiltinRichExtractor
 from ares.application.indexing import DocumentEmbeddingIndexer
-from ares.application.media_ingestion import FFmpegMediaProcessor
 from ares.application.media_capabilities import probe_local_media_runtime
+from ares.application.media_ingestion import FFmpegMediaProcessor
+from ares.application.observability import configure_logging, configure_telemetry
+from ares.application.repository import IngestionLease, JobLease, Repository, StaleLeaseError
+from ares.application.runtime import build_embedding_runtime, build_research_runtime
 from ares.application.visualizations import VisualizationService
 
 logger = logging.getLogger("ares.worker")
@@ -41,7 +41,7 @@ class LeaseKeepAlive:
     def lease_lost(self) -> bool:
         return self._lost.is_set()
 
-    def __enter__(self) -> "LeaseKeepAlive":
+    def __enter__(self) -> LeaseKeepAlive:
         self._thread.start()
         return self
 
@@ -85,7 +85,7 @@ class IngestionLeaseKeepAlive:
     def lease_lost(self) -> bool:
         return self._lost.is_set()
 
-    def __enter__(self) -> "IngestionLeaseKeepAlive":
+    def __enter__(self) -> IngestionLeaseKeepAlive:
         self._thread.start()
         return self
 

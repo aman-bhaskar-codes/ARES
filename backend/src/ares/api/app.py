@@ -1,23 +1,25 @@
 """API factory: lifecycle/security bootstrap plus explicitly owned routers."""
 
 from pathlib import Path
+
 from fastapi import FastAPI
-from ares.api.spa_static import SpaStaticFiles
+
 from ares.api.bootstrap import create_application
-from ares.api.settings import Settings
 from ares.api.routers import (
-    auth,
-    system,
-    conversations,
-    assets,
-    ingestions,
-    segments,
-    documents,
-    runs,
-    evidence,
     artifacts,
+    assets,
+    auth,
+    conversations,
+    documents,
+    evidence,
+    ingestions,
     internal,
+    runs,
+    segments,
+    system,
 )
+from ares.api.settings import Settings
+from ares.api.spa_static import SpaStaticFiles
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:

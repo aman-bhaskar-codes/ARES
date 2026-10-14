@@ -9,7 +9,8 @@ from uuid import uuid4
 
 import httpx
 
-from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.adapters.safe_xml import parse_xml
+from ares.application.providers import DiscoveryProvider, ProviderCapabilities, ProviderMetadata
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -109,8 +110,8 @@ class ArxivAcademicProvider(DiscoveryProvider):
         if response.status_code >= 400:
             raise SearchProviderError(f"arXiv returned HTTP {response.status_code}")
         try:
-            root = ET.fromstring(response.text)
-        except ET.ParseError as exc:
+            root = parse_xml(response.text)
+        except (ET.ParseError, ValueError) as exc:
             raise SearchProviderError("arXiv returned invalid Atom XML") from exc
 
         results: list[tuple[SearchHit, FetchedDocument]] = []

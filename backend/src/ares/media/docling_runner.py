@@ -63,11 +63,18 @@ def run(
     language: str,
     artifacts_path: Path,
 ) -> None:
-    from docling.datamodel.base_models import InputFormat  # type: ignore[import-not-found]
-    from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions  # type: ignore[import-not-found]
-    from docling.document_converter import DocumentConverter, ImageFormatOption, PdfFormatOption  # type: ignore[import-not-found]
-    from docling_core.types.doc import TableItem  # type: ignore[import-not-found]
     import docling  # type: ignore[import-not-found]
+    from docling.datamodel.base_models import InputFormat  # type: ignore[import-not-found]
+    from docling.datamodel.pipeline_options import (  # type: ignore[import-not-found]
+        PdfPipelineOptions,
+        RapidOcrOptions,
+    )
+    from docling.document_converter import (  # type: ignore[import-not-found]
+        DocumentConverter,
+        ImageFormatOption,
+        PdfFormatOption,
+    )
+    from docling_core.types.doc import TableItem  # type: ignore[import-not-found]
 
     if mime_type == "application/pdf":
         input_format = InputFormat.PDF

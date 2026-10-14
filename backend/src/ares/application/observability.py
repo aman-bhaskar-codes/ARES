@@ -5,9 +5,9 @@ import importlib.util
 import json
 import logging
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from typing import Iterator
 
 from ares.application.repository import JobLease, Repository
 
@@ -55,7 +55,7 @@ def configure_logging(*, json_logs: bool = True, level: int = logging.INFO) -> N
     )
     root.handlers.clear()
     root.addHandler(handler)
-    setattr(root, "_ares_configured", True)
+    root._ares_configured = True
 
 
 @contextmanager
@@ -95,13 +95,13 @@ def optional_span(name: str, **attributes: object) -> Iterator[None]:
         try:
             span_context.__exit__(type(exc), exc, exc.__traceback__)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
         raise
     else:
         try:
             span_context.__exit__(None, None, None)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
 
 _stage_duration_histogram = None
 
@@ -146,7 +146,7 @@ class RunTelemetry:
                 try:
                     histogram.record(duration_ms, {"stage": name, "outcome": outcome})
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
             payload: dict[str, object] = {
                 "stage": name,
                 "duration_ms": duration_ms,
@@ -210,15 +210,15 @@ def configure_telemetry(
     if not endpoint:
         return lambda: None
     try:
-        from opentelemetry import trace, metrics
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry import metrics, trace
         from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
         from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
-        from opentelemetry.sdk.metrics import MeterProvider
-        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
         current = trace.get_tracer_provider()
         if isinstance(current, TracerProvider):

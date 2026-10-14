@@ -6,17 +6,17 @@ import json
 import math
 import os
 import re
-import signal
 import shutil
+import signal
 import subprocess
+import sys
 import tempfile
 import time
 import wave
 from array import array
-import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 from uuid import UUID
 
 from ares.domain.assets import (
@@ -27,7 +27,6 @@ from ares.domain.assets import (
     TimeRangeLocator,
 )
 from ares.ports.transcription import TranscriptionProvider, TranscriptionResult
-
 
 AUDIO_MIME_TYPES = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/webm", "audio/ogg"}
 VIDEO_MIME_TYPES = {"video/mp4", "video/webm"}

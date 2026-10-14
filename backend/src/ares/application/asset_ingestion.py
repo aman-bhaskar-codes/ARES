@@ -4,11 +4,12 @@ import csv
 import hashlib
 import io
 import json
+import logging
 import mimetypes
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 from uuid import UUID
 
 from ares.adapters.pdf_parser import BoundedPdfParser
@@ -667,7 +668,7 @@ class AssetIngestionExecutor:
                 # Cleanup is best-effort here; the authoritative DB transaction is
                 # already fenced. Operators can reconcile orphaned content-addressed
                 # blobs without risking deletion of referenced media.
-                pass
+                logging.getLogger(__name__).debug("Unreferenced blob cleanup failed", exc_info=True)
 
     def _enrich_video_frames(
         self,

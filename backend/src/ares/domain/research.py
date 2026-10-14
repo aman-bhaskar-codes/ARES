@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, UTC
-from typing import Literal, Any
+from datetime import UTC, datetime
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, HttpUrl, model_validator

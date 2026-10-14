@@ -9,7 +9,6 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine, text
 
-
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")
 
@@ -17,7 +16,7 @@ def test_m12_backup_and_restore_rehearsal() -> None:
     assert POSTGRES_URL is not None
     engine = create_engine(POSTGRES_URL)
     
-    from ares.adapters.db import Base, WorkspaceRow, UserRow, ConversationRow, RunRow, SourceRow
+    from ares.adapters.db import Base, ConversationRow, RunRow, SourceRow, UserRow, WorkspaceRow
     from sqlalchemy.orm import Session
     
     Base.metadata.create_all(engine)
@@ -45,7 +44,7 @@ def test_m12_backup_and_restore_rehearsal() -> None:
             idempotency_key="abc",
         ))
         session.flush()
-        from datetime import datetime, UTC
+        from datetime import UTC, datetime
         session.add(SourceRow(
             id=doc_id,
             run_id=run_id,

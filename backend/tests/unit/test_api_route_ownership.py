@@ -1,11 +1,10 @@
-from collections import Counter
 import warnings
+from collections import Counter
 from pathlib import Path
-
-from fastapi.routing import APIRoute
 
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from fastapi.routing import APIRoute
 
 
 def test_routes_and_openapi_operations_have_single_owner(tmp_path):

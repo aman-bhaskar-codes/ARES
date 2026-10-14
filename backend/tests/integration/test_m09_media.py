@@ -11,8 +11,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
-
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.api.app import create_app
@@ -22,11 +20,12 @@ from ares.application.asset_ingestion import (
     AssetIngestionExecutor,
     BuiltinRichExtractor,
 )
-from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.identity import Principal, WorkspaceRole, principal_scope
+from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.media_ingestion import FFmpegMediaProcessor
 from ares.application.repository import NotFoundError
 from ares.ports.transcription import TranscriptionResult, TranscriptionSegment
+from fastapi.testclient import TestClient
 
 
 class FakeTranscriber:

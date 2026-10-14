@@ -5,8 +5,6 @@ import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import delete, func, or_, select, text
-
 from ares.adapters.db import (
     ConversationRow,
     JobRow,
@@ -14,20 +12,28 @@ from ares.adapters.db import (
     RunEventRow,
     RunRow,
     UserDocumentRow,
-    WorkspaceMembershipRow,
     WorkerInstanceRow,
+    WorkspaceMembershipRow,
 )
+from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.domain.budgets import BUDGET_VERSION, BUDGETS
 from ares.domain.models import (
     ConversationView,
     RunCreate,
     RunSnapshot,
     RunStatus,
 )
-from ares.domain.budgets import BUDGETS, BUDGET_VERSION
-
-
-from ares.ports.repositories import NotFoundError, IdempotencyConflictError, RunAdmissionError, RunBudgetExceededError, RunAuthorizationError, ResourceCapacityError, JobLease, ResourceLease
-from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.ports.repositories import (
+    IdempotencyConflictError,
+    JobLease,
+    NotFoundError,
+    ResourceCapacityError,
+    ResourceLease,
+    RunAdmissionError,
+    RunAuthorizationError,
+    RunBudgetExceededError,
+)
+from sqlalchemy import delete, func, or_, select, text
 
 
 def _hash_request(payload: RunCreate) -> str:
@@ -77,7 +83,7 @@ class SqlJobRepository(SqlRepositoryBase):
         request_hash = _hash_request(request)
         principal = self._request_principal()
         scoped_key = hashlib.sha256(
-            f"{principal.workspace_id}\0{idempotency_key}".encode("utf-8")
+            f"{principal.workspace_id}\0{idempotency_key}".encode()
         ).hexdigest()
         with self._sessions.begin() as session:
             self._ensure_local_identity(session, principal)

@@ -4,13 +4,11 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import text
-
 from ares.adapters.db import build_session_factory
 from ares.application.documents import PreparedChunk
 from ares.application.repository import Repository
 from ares.domain.models import DocumentStatus
-
+from sqlalchemy import text
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")

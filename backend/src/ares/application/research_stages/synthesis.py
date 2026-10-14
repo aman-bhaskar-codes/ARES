@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from ares.application.run_context import RunContext, RunDeadlineExceeded
 from ares.application.observability import RunTelemetry
+from ares.application.run_context import RunContext, RunDeadlineExceeded
 from ares.domain.budgets import calculate_provider_cost
 from ares.domain.models import (
     FetchedDocument,

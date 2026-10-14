@@ -4,8 +4,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-from sqlalchemy import delete, select
-
 from ares.adapters.db import Base, JobRow, WorkspaceMembershipRow, build_session_factory
 from ares.application.repository import (
     Repository,
@@ -17,6 +15,7 @@ from ares.application.repository import (
 from ares.application.run_context import RunContext, RunDeadlineExceeded
 from ares.domain.budgets import BUDGETS
 from ares.domain.models import DateWindow, RunCreate, RunMode
+from sqlalchemy import delete, select
 
 
 def repository_for(tmp_path: Path) -> tuple[Repository, object]:

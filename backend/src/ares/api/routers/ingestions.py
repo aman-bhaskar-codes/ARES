@@ -1,18 +1,17 @@
 from __future__ import annotations
-from fastapi import Depends
+
 import logging
 from uuid import UUID
-from fastapi import HTTPException, Query, Request
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from ares.api.dependencies import get_settings
-from ares.api.settings import Settings
+
+from ares.api.dependencies import get_auth_store, get_repository, get_settings
 from ares.api.ingestion_stream import stream_ingestion_events
+from ares.api.settings import Settings
 from ares.application.auth import AuthStore
 from ares.application.identity import Principal
 from ares.application.repository import NotFoundError, Repository
-from fastapi import APIRouter
-from ares.api.dependencies import get_auth_store
-from ares.api.dependencies import get_repository
 from ares.domain.assets import IngestionView
 
 logger = logging.getLogger("ares.api")

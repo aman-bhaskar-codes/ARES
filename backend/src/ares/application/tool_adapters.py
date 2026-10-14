@@ -1,5 +1,6 @@
-from ares.domain.tools import ToolSpec, ToolContext, ToolResult
 import logging
+
+from ares.domain.tools import ToolContext, ToolResult, ToolSpec
 
 logger = logging.getLogger(__name__)
 

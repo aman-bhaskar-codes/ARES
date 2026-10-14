@@ -3,11 +3,10 @@ from __future__ import annotations
 import os
 
 import pytest
-from fastapi.testclient import TestClient
-
 from ares.api.app import create_app
-from ares.api.settings import Settings
 from ares.api.schema_revision import schema_head
+from ares.api.settings import Settings
+from fastapi.testclient import TestClient
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")

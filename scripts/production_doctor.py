@@ -4,8 +4,8 @@ import argparse
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from ares.api.settings import Settings
 from ares.api.schema_revision import schema_head
+from ares.api.settings import Settings
 
 
 def main() -> int:

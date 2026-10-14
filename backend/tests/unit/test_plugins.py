@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from ares.domain.models import RunCreate, RunMode
 from ares.application.code_interpreter import CodeInterpreter
+from ares.domain.models import RunCreate, RunMode
 
 
 def test_run_create_plugin_validation() -> None:

@@ -1,11 +1,10 @@
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from ares.api.app import create_app
 from ares.api.settings import Settings
 from ares.api.spa_static import SpaStaticFiles
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 def _client(tmp_path: Path) -> TestClient:

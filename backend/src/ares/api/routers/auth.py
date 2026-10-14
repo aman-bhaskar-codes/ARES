@@ -1,17 +1,15 @@
 from __future__ import annotations
-from fastapi import Depends
-from ares.application.auth import OidcClient
-import httpx
+
 import logging
-from fastapi import HTTPException, Request, Response
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
-from ares.api.dependencies import get_settings
+
+from ares.api.dependencies import get_auth_store, get_oidc, get_settings
 from ares.api.settings import Settings
-from ares.application.auth import AuthStore, AuthenticationError
+from ares.application.auth import AuthenticationError, AuthStore, OidcClient
 from ares.application.identity import Principal
-from fastapi import APIRouter
-from ares.api.dependencies import get_auth_store
-from ares.api.dependencies import get_oidc
 from ares.domain.models import AuthMeView, WorkspaceSwitchRequest, WorkspaceView
 
 logger = logging.getLogger("ares.api")

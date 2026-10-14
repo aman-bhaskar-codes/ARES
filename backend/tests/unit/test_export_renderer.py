@@ -2,7 +2,6 @@ import builtins
 from types import SimpleNamespace
 
 import pytest
-
 from ares.application.exports import ExportError, ExportService
 from ares.domain.models import RunMode, RunStatus
 

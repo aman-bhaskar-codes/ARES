@@ -17,7 +17,7 @@ def _pdf_with_pages(texts: list[str]) -> bytes:
     objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
     objects.append(f"<< /Type /Pages /Kids [{kids}] /Count {len(texts)} >>".encode())
     objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
-    for page_id, content_id, text in zip(page_ids, content_ids, texts, strict=True):
+    for _page_id, content_id, text in zip(page_ids, content_ids, texts, strict=True):
         escaped = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
         stream = f"BT /F1 12 Tf 72 720 Td ({escaped}) Tj ET".encode()
         objects.append(

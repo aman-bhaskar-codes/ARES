@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from datetime import UTC, datetime
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 

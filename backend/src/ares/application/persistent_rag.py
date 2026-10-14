@@ -4,10 +4,10 @@ from collections import defaultdict
 from dataclasses import dataclass
 from uuid import UUID
 
-from ares.application.repository import QuotaExceededError, Repository
-from ares.domain.research import EvidenceCandidate
 from ares.application.rag import EmbeddingProvider
+from ares.application.repository import QuotaExceededError, Repository
 from ares.domain.budgets import calculate_provider_cost
+from ares.domain.research import EvidenceCandidate
 
 
 @dataclass(frozen=True, slots=True)

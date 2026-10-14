@@ -1,39 +1,51 @@
 from __future__ import annotations
-from fastapi import Depends
-from sqlalchemy import Engine
-from ares.api.stream_authorization import stream_revalidator
+
 import asyncio
 import logging
 from uuid import UUID
-from fastapi import Header, HTTPException, Query, Request, Response
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
-from ares.api.dependencies import get_settings
-from ares.api.settings import Settings
+from sqlalchemy import Engine
+
+from ares.api.dependencies import (
+    get_auth_store,
+    get_db_engine,
+    get_exports,
+    get_repository,
+    get_settings,
+    get_visualizations,
+    visualization_storage_ready,
+)
 from ares.api.event_stream import stream_run_events
+from ares.api.settings import Settings
+from ares.api.stream_authorization import stream_revalidator
 from ares.application.auth import AuthStore
-from ares.application.identity import Principal
 from ares.application.exports import ExportError, ExportService
-from ares.application.visualizations import VisualizationService
-from ares.application.repository import NotFoundError, Repository
-from ares.domain.models import ArtifactView, ExportCreate
-from fastapi import APIRouter
-from ares.api.dependencies import get_auth_store
-from ares.api.dependencies import get_db_engine
-from ares.api.dependencies import get_exports
-from ares.api.dependencies import get_repository
-from ares.api.dependencies import get_visualizations
-from ares.api.dependencies import visualization_storage_ready
-from ares.domain.models import EvidenceView, RunCreate, RunQualityView, RunSnapshot
+from ares.application.identity import Principal
+from ares.application.repository import (
+    IdempotencyConflictError,
+    NotFoundError,
+    Repository,
+    RunAdmissionError,
+)
+from ares.application.visualizations import VisualizationExportError, VisualizationService
+from ares.domain.models import (
+    ArtifactView,
+    EvidenceView,
+    ExportCreate,
+    RunCreate,
+    RunQualityView,
+    RunSnapshot,
+)
 from ares.domain.visualizations import VisualizationView
-from ares.application.repository import IdempotencyConflictError, RunAdmissionError
-from ares.application.visualizations import VisualizationExportError
 
 logger = logging.getLogger("ares.api")
 router = APIRouter()
 
 
 @router.get("/api/v1/models")
-def available_models(request: Request, *, cfg: Settings = Depends(get_settings)):
+def available_models(request: Request, *, cfg: Settings = Depends(get_settings)) -> dict[str, object]:
     return {
         "default": "qwen" if cfg.local_llm_enabled else "gemini",
         "models": [

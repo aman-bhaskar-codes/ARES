@@ -1,27 +1,22 @@
 from __future__ import annotations
 
-import threading
+import logging
 import re
+import threading
 from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
-from ares.application.planning import DeterministicResearchPlanner, ResearchPlanner
 from ares.application.checkpoints import CheckpointStore
-from ares.application.run_context import RunCancelled, RunContext, RunDeadlineExceeded
+from ares.application.decisions import ResilientDecisionProvider
 from ares.application.finalization import compose_checked_markdown
 from ares.application.observability import RunTelemetry
-from ares.application.security import RemoteContentRiskScanner
-from ares.application.decisions import ResilientDecisionProvider
-from ares.application.rag import HybridRAGRetriever
-from ares.application.research_cache import RunResearchCache
-from ares.application.providers import ProviderRegistry
-from ares.ports.reranking import CandidateReranker
 from ares.application.persistent_rag import PersistentDocumentRAG
-from ares.application.research_stages.discovery import DiscoveryStage
-from ares.application.research_stages.synthesis import SynthesisStage
+from ares.application.planning import DeterministicResearchPlanner, ResearchPlanner
+from ares.application.providers import ProviderRegistry
+from ares.application.rag import HybridRAGRetriever
 from ares.application.repository import (
     JobLease,
     QuotaExceededError,
@@ -30,6 +25,11 @@ from ares.application.repository import (
     RunAuthorizationError,
     RunBudgetExceededError,
 )
+from ares.application.research_cache import RunResearchCache
+from ares.application.research_stages.discovery import DiscoveryStage
+from ares.application.research_stages.synthesis import SynthesisStage
+from ares.application.run_context import RunCancelled, RunContext, RunDeadlineExceeded
+from ares.application.security import RemoteContentRiskScanner
 from ares.domain.budgets import BUDGETS, calculate_provider_cost
 from ares.domain.models import (
     AssessmentState,
@@ -40,9 +40,10 @@ from ares.domain.models import (
     SupportStatus,
     SynthesisResult,
 )
-from ares.ports.errors import LLMProviderError, SearchProviderError
-from ares.ports.research import AcademicFullTextFetcher, Fetcher, LLMProvider, SearchProvider
 from ares.ports.decisions import DecisionProvider
+from ares.ports.errors import LLMProviderError, SearchProviderError
+from ares.ports.reranking import CandidateReranker
+from ares.ports.research import AcademicFullTextFetcher, Fetcher, LLMProvider, SearchProvider
 from ares.ports.semantic import SemanticClaimChecker
 
 
@@ -221,7 +222,7 @@ class ResearchEngine:
         gemini_max_daily_spend_usd: float | None = None,
         planner: ResearchPlanner | None = None,
         retriever: HybridRAGRetriever | None = None,
-        candidate_reranker: "CandidateReranker | None" = None,
+        candidate_reranker: CandidateReranker | None = None,
         global_http_concurrency: int = 4,
         gemini_concurrency: int = 1,
         provider_http_timeout_seconds: float = 20.0,
@@ -318,7 +319,7 @@ class ResearchEngine:
                 raise RunCancelled("run cancellation requested")
         except RunCancelled:
             self.repository.set_status(lease.run_id, RunStatus.CANCELLED, lease_token=lease.token)
-            raise CancelledRun
+            raise CancelledRun from None
 
     @contextmanager
     def _resource_slot(
@@ -1147,7 +1148,7 @@ class ResearchEngine:
             try:
                 self.repository.set_status(run_id, RunStatus.CANCELLED, lease_token=lease.token)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
         except RunAuthorizationError as exc:
             self.repository.fail_run(run_id, "ACCESS_REVOKED", str(exc), lease_token=lease.token)
         except RunDeadlineExceeded as exc:

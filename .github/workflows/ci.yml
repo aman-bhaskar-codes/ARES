@@ -2,8 +2,9 @@ name: ci
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
-    branches: [v3-development]
+    branches: [main, v3-development]
 
 permissions:
   contents: read
@@ -30,11 +31,11 @@ jobs:
       DATABASE_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
       ARES_TEST_POSTGRES_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - name: Verify backend lock
         run: uv lock --project backend --check
       - name: Install backend
@@ -42,7 +43,7 @@ jobs:
       - name: Lint
         run: uv run --project backend ruff check backend/src backend/tests evals scripts
       - name: Typecheck
-        run: uv run --project backend mypy backend/src/ares/domain backend/src/ares/ports
+        run: uv run --project backend mypy backend/src/ares/domain backend/src/ares/ports backend/src/ares/application backend/src/ares/api
       - name: Secret-shaped material gate
         run: python scripts/check_secrets.py
       - name: Validate keyless integration configuration
@@ -66,8 +67,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22.16.0'
       - name: Require committed frontend lock
@@ -88,7 +89,7 @@ jobs:
     timeout-minutes: 25
     needs: [backend, frontend-lock-gate]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build production images
         run: |
           docker build --target runtime --tag ares:ci .
@@ -114,6 +115,7 @@ jobs:
           GEMINI_TPM=1000
           GEMINI_RPD=10
           EOF
+          SEARXNG_SECRET=ci-search-placeholder-32-characters \
           ARES_IMAGE=ares:ci \
           ARES_MEDIA_IMAGE=ares-media:ci \
           ARES_ENV_FILE=/tmp/ares-ci.env \

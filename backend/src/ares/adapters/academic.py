@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import SearchProviderError
 

@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-from ares.adapters.local_reranker import LocalCrossEncoderReranker
-from ares.adapters.ollama_synthesis import OllamaLLMProvider
-from ares.application.planning import DeterministicResearchPlanner
 from ares.adapters.arxiv import ArxivAcademicProvider
+from ares.adapters.browser_fetch import BrowserFallbackFetcher, BrowserFetcher
 from ares.adapters.crossref import CrossrefAcademicProvider
 from ares.adapters.gemini import GeminiLLMProvider
-from ares.adapters.gemini_semantic import GeminiSemanticClaimChecker
 from ares.adapters.gemini_embeddings import GeminiEmbeddingProvider
-from ares.adapters.local_embeddings import LocalFastEmbedProvider
+from ares.adapters.gemini_semantic import GeminiSemanticClaimChecker
 from ares.adapters.github_software import GitHubSoftwareProvider
 from ares.adapters.jev import JevConfig, JevDecisionProvider
+from ares.adapters.local_embeddings import LocalFastEmbedProvider
+from ares.adapters.local_reranker import LocalCrossEncoderReranker
+from ares.adapters.ollama_synthesis import OllamaLLMProvider
 from ares.adapters.openalex import OpenAlexAcademicProvider
 from ares.adapters.safe_fetch import SafeHttpFetcher
-from ares.adapters.browser_fetch import BrowserFallbackFetcher, BrowserFetcher
 from ares.adapters.searxng import SearXNGSearchProvider
 from ares.api.settings import Settings
 from ares.application.engine import DemoResearchEngine, ResearchEngine
 from ares.application.persistent_rag import PersistentDocumentRAG
+from ares.application.planning import DeterministicResearchPlanner
 from ares.application.providers import ProviderRegistry
 from ares.application.rag import HybridRAGRetriever
 from ares.application.repository import Repository

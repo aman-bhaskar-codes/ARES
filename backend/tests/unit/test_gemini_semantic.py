@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-
 from ares.adapters.gemini_semantic import GeminiSemanticClaimChecker, SemanticCheckerUnavailable
 from ares.domain.models import AssessmentState
 from ares.domain.research import EvidencePacket

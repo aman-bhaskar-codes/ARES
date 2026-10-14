@@ -2,10 +2,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from fastapi.testclient import TestClient
-
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from fastapi.testclient import TestClient
 
 
 def test_production_cannot_start_without_authentication():

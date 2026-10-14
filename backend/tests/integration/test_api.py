@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from fastapi.testclient import TestClient
 
 
 def test_keyless_demo_api_end_to_end(tmp_path: Path) -> None:

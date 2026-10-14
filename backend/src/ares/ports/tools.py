@@ -1,5 +1,7 @@
-from typing import Protocol, Any
-from ares.domain.tools import ToolSpec, ToolContext, ToolResult
+from typing import Any, Protocol
+
+from ares.domain.tools import ToolContext, ToolResult, ToolSpec
+
 
 class Tool(Protocol):
     def get_spec(self) -> ToolSpec:

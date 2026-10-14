@@ -1,22 +1,20 @@
 from __future__ import annotations
-from fastapi import Depends
+
 import asyncio
 import logging
-from uuid import UUID
 from pathlib import Path
 from typing import Annotated
-from fastapi import File, HTTPException, Request, Response, UploadFile
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import PdfParseError
-from ares.api.dependencies import get_settings
+from ares.api.dependencies import get_blobs, get_documents, get_repository, get_settings
 from ares.api.settings import Settings
 from ares.application.documents import DocumentIngestService
 from ares.application.repository import NotFoundError, Repository
 from ares.domain.models import DocumentTextCreate, DocumentView
-from fastapi import APIRouter
-from ares.api.dependencies import get_blobs
-from ares.api.dependencies import get_documents
-from ares.api.dependencies import get_repository
 
 logger = logging.getLogger("ares.api")
 router = APIRouter()

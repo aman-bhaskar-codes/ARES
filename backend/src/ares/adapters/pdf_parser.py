@@ -45,7 +45,8 @@ def _parse_worker(
 ) -> None:
     try:
         _apply_resource_limits(memory_bytes, cpu_seconds)
-        from pypdf import PdfReader, __version__ as pypdf_version
+        from pypdf import PdfReader
+        from pypdf import __version__ as pypdf_version
 
         reader = PdfReader(BytesIO(payload), strict=False)
         if reader.is_encrypted:

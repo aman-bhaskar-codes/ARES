@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
+
 from ares.domain.research import AnswerOutline, RunAssessment
 
 KNOWN_PLUGINS: tuple[str, ...] = ("speed", "accuracy", "code")
@@ -75,7 +76,7 @@ class DateWindow(BaseModel):
     timezone: str = "UTC"
 
     @model_validator(mode="after")
-    def validate_window(self) -> "DateWindow":
+    def validate_window(self) -> DateWindow:
         try:
             zone = ZoneInfo(self.timezone)
         except ZoneInfoNotFoundError as exc:
