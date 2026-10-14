@@ -8,13 +8,29 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")
 
-def test_m12_backup_and_restore_rehearsal() -> None:
+@pytest.fixture
+def recovery_database_url():
     assert POSTGRES_URL is not None
-    engine = create_engine(POSTGRES_URL)
+    database = f"ares_recovery_{uuid.uuid4().hex}"
+    admin = create_engine(POSTGRES_URL, isolation_level="AUTOCOMMIT")
+    with admin.connect() as connection:
+        connection.execute(text(f'CREATE DATABASE "{database}"'))  # noqa: S608 -- UUID-generated identifier.
+    try:
+        yield str(make_url(POSTGRES_URL).set(database=database).render_as_string(hide_password=False))
+    finally:
+        with admin.connect() as connection:
+            connection.execute(text(f'DROP DATABASE "{database}" WITH (FORCE)'))  # noqa: S608 -- only fixture-created database.
+        admin.dispose()
+
+
+def test_m12_backup_and_restore_rehearsal(recovery_database_url: str) -> None:
+    assert POSTGRES_URL is not None
+    engine = create_engine(recovery_database_url)
     
     from ares.adapters.db import Base, ConversationRow, RunRow, SourceRow, UserRow, WorkspaceRow
     from sqlalchemy.orm import Session
@@ -41,7 +57,7 @@ def test_m12_backup_and_restore_rehearsal() -> None:
             mode="research",
             status="completed",
             request_hash="abc",
-            idempotency_key="abc",
+            idempotency_key=f"recovery-{run_id}",
         ))
         session.flush()
         from datetime import UTC, datetime
@@ -63,7 +79,7 @@ def test_m12_backup_and_restore_rehearsal() -> None:
         env = os.environ.copy()
         
         # pg_dump
-        pg_dump_url = POSTGRES_URL.replace("postgresql+psycopg://", "postgresql://").replace("postgresql+psycopg2://", "postgresql://")
+        pg_dump_url = recovery_database_url.replace("postgresql+psycopg://", "postgresql://").replace("postgresql+psycopg2://", "postgresql://")
         try:
             subprocess.run(
                 ["pg_dump", "--format=custom", "--no-owner", "--no-acl", "--file", str(dump_path), pg_dump_url],

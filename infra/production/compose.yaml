@@ -82,15 +82,10 @@ services:
     depends_on:
       provision-db-roles:
         condition: service_completed_successfully
-      search-valkey:
-    image: valkey/valkey:8.1-alpine
-    restart: unless-stopped
-    networks: [data]
-
-  searxng:
+      searxng:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2).read()"]
+      test: ["CMD", "python", "-m", "ares.api.health_probe", "--path", "/health/ready"]
       interval: 20s
       timeout: 3s
       retries: 5
@@ -118,12 +113,7 @@ services:
     depends_on:
       provision-db-roles:
         condition: service_completed_successfully
-      search-valkey:
-    image: valkey/valkey:8.1-alpine
-    restart: unless-stopped
-    networks: [data]
-
-  searxng:
+      searxng:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "test -s /app/data/research-worker-health && grep -Eq '^(active|draining)$' /app/data/research-worker-health"]
