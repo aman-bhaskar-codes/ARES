@@ -15,16 +15,18 @@
 Production disabled auth; stale readiness revisions; failed optional providers; interrupted streams; Unicode download filenames.
 
 ## Ordered execution
-- [ ] 1. Startup validation and production documentation exposure; regression tests in integration API security tests.
-- [ ] 2. Alembic-derived schema head with optional override; readiness mismatch tests.
-- [ ] 3. Production-only SearXNG configuration and compose secret scan.
-- [ ] 4. Thin factory, explicit dependency injection, shared stream authorization, unique route tests, regenerated schema.
-- [ ] 5. Remove tracked artifacts and rename persistence module; keep summary only.
-- [ ] 6. Pinned actions, dependency review, incremental lint/type gates and single pnpm source.
-- [ ] 7. Accurate README, architecture, methodology and security policy.
-- [ ] 8. Shared synthesis codec, model registry, bounded configurable Ollama client and retry tests.
-- [ ] 9. Streaming downloads, spooled uploads, safe Unicode headers, identifier matching, version and boundary logging.
-- [ ] 10. Hidden source maps, lazy heavy views, reconnect/auth/CSRF tests.
-- [ ] 11. Expanded labeled eval corpus and held-out manifest, support/retrieval metrics, repeated-run variance and CI gates.
+- [x] 1. Startup validation and production documentation exposure; regression tests in integration API security tests.
+- [x] 2. Alembic-derived schema head with optional override; readiness mismatch tests.
+- [x] 3. Production-only SearXNG configuration and compose secret scan.
+- [x] 4. Thin factory, explicit dependency injection, shared stream authorization, unique route tests, regenerated schema.
+- [x] 5. Remove tracked artifacts and rename persistence module; keep summary only.
+- [x] 6. Pinned actions, dependency review, incremental lint/type gates and single pnpm source.
+- [x] 7. Accurate README, architecture, methodology and security policy.
+- [x] 8. Shared synthesis codec, model registry, bounded configurable Ollama client and retry tests.
+- [x] 9. Streaming downloads, spooled uploads, safe Unicode headers, identifier matching, version and boundary logging.
+- [x] 10. Hidden source maps, lazy heavy views, reconnect/auth/CSRF tests.
+- [x] 11. Expanded labeled eval corpus and held-out manifest, support/retrieval metrics, repeated-run variance and CI gates.
 
 For each behavior: reproduce with a failing test, implement, run the four required gates, then commit only that task's files. Record commits and results in the final hardening report.
+
+Implementation commits and limits are recorded in [HARDENING_PASS_1.md](../../HARDENING_PASS_1.md). Remote CI, database-gated checks and live-provider E2E remain unverified; see that record before release.
