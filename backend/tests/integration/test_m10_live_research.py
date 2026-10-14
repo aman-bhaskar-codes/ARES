@@ -507,20 +507,20 @@ def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cach
             RunCreate(
                 conversation_id=conversation.id,
                 query="academic full text",
-                mode=RunMode.QUICK,
+                mode=RunMode.RESEARCH,
                 source_scope=["academic"],
             ),
             idempotency_key=f"m10-fulltext-{index}",
         )
         lease = repository.claim_next_job()
         assert lease is not None
-        context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
+        context = RunContext.create(repository, lease, BUDGETS[RunMode.RESEARCH])
         # Academic documents are returned as the second discovery track result.
         _, academic_rows, _, _ = engine.discovery._discover_tracks(
             lease,
             context,
             repository.get_run(run.id),
-            BUDGETS[RunMode.QUICK],
+            BUDGETS[RunMode.RESEARCH],
             RunTelemetry(repository, lease),
         )
         assert academic_rows[0][1].extraction_method == "academic-pdf:fixture"

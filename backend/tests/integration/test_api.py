@@ -133,6 +133,11 @@ def test_security_headers_and_request_size_limit(tmp_path: Path) -> None:
         database_url=f"sqlite+pysqlite:///{tmp_path / 'headers.sqlite3'}",
         max_request_body_bytes=1024,
         max_upload_bytes=1024,
+        max_image_bytes=1024,
+        audio_enabled=False,
+        microphone_enabled=False,
+        cloud_media_enabled=False,
+        video_enabled=False,
     )
     client = TestClient(create_app(settings))
     response = client.get("/api/v1/system/status")

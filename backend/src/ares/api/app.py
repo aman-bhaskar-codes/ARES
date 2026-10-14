@@ -62,6 +62,7 @@ from ares.domain.models import ArtifactView, DocumentTextCreate, DocumentView, E
 
 def create_app(settings: Settings | None=None) -> FastAPI:
     cfg = settings or get_settings()
+    cfg.validate_security_mode()
     configure_logging(json_logs=cfg.json_logs)
     logger = logging.getLogger('ares.api')
     telemetry_shutdown = configure_telemetry(endpoint=cfg.otel_exporter_otlp_endpoint, service_name=f'{cfg.otel_service_name}-api', sample_ratio=cfg.otel_trace_sample_ratio, export_timeout_seconds=cfg.otel_export_timeout_seconds)
@@ -73,7 +74,6 @@ def create_app(settings: Settings | None=None) -> FastAPI:
     auth_store = AuthStore(sessions)
     oidc = None
     if cfg.auth_mode == 'oidc':
-        cfg.validate_security_mode()
         oidc = OidcClient(issuer=cfg.oidc_issuer, client_id=cfg.oidc_client_id, client_secret=cfg.oidc_client_secret, redirect_uri=f"{cfg.public_base_url.rstrip('/')}/api/v1/auth/callback", scopes=cfg.oidc_scopes, state_ttl_seconds=cfg.oidc_state_ttl_seconds, session_ttl_hours=cfg.session_ttl_hours, store=auth_store)
     blobs = FilesystemBlobStore(cfg.blob_root)
     pdf_parser = BoundedPdfParser(max_bytes=cfg.max_upload_bytes, max_pages=cfg.max_pdf_pages, timeout_seconds=cfg.pdf_parse_timeout_seconds)
@@ -111,7 +111,10 @@ def create_app(settings: Settings | None=None) -> FastAPI:
             await oidc.close()
         await asyncio.to_thread(telemetry_shutdown)
         await asyncio.to_thread(engine.dispose)
-    app = FastAPI(title='ARES API', version='0.11.0', lifespan=lifespan)
+    app = FastAPI(title='ARES API', version='0.11.0', lifespan=lifespan,
+        docs_url=None if cfg.deployment_environment == 'production' else '/docs',
+        redoc_url=None if cfg.deployment_environment == 'production' else '/redoc',
+        openapi_url=None if cfg.deployment_environment == 'production' else '/openapi.json')
     app.state.settings = cfg
     app.state.repository = repository
     app.state.db_engine = engine

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from uuid import uuid4
-import pytest
 
 from ares.domain.models import RunCreate, RunMode
-from ares.application.code_interpreter import CodeInterpreter, CodeExecutionResult
+from ares.application.code_interpreter import CodeInterpreter
 
 
 def test_run_create_plugin_validation() -> None:
