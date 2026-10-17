@@ -88,7 +88,7 @@ def upgrade() -> None:
                 episode_id UUID NOT NULL REFERENCES memory_episodes(id) ON DELETE CASCADE,
                 model_id VARCHAR(160) NOT NULL,
                 dimensions INTEGER NOT NULL,
-                embedding vector NOT NULL,
+                embedding vector(384) NOT NULL,
                 PRIMARY KEY (episode_id, model_id, dimensions)
             )
             """
