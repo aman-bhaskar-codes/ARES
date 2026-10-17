@@ -33,7 +33,7 @@ def upgrade() -> None:
 
     # 2. Build HNSW index for sub-linear ANN lookup.
     op.execute(
-        f"""
+        """
         CREATE INDEX IF NOT EXISTS ix_document_embeddings_pg_hnsw
         ON document_embeddings_pg USING hnsw (embedding vector_cosine_ops)
         WITH (m = 16, ef_construction = 64)
