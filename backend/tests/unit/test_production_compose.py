@@ -2,8 +2,11 @@ import json
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_production_compose_parses_and_keeps_search_dependencies(tmp_path):
@@ -16,8 +19,10 @@ def test_production_compose_parses_and_keeps_search_dependencies(tmp_path):
         'ARES_ENV_FILE': str(env_file), 'MIGRATION_DATABASE_URL': 'postgresql://admin:test@postgres/ares',
         'POSTGRES_ADMIN_USER': 'admin', 'POSTGRES_ADMIN_PASSWORD': 'test',
         'SEARXNG_SECRET': 'test-only-search-secret-32-characters'}
-    result = subprocess.run([docker, 'compose', '-f', 'infra/production/compose.yaml',
-        'config', '--format', 'json'], env=env, capture_output=True, text=True, check=False)
+    compose_file = str(REPO_ROOT / 'infra' / 'production' / 'compose.yaml')
+    result = subprocess.run([docker, 'compose', '-f', compose_file,
+        'config', '--format', 'json'], env=env, capture_output=True, text=True, check=False,
+        cwd=str(REPO_ROOT))
     assert result.returncode == 0, result.stderr
     services = json.loads(result.stdout)['services']
     for name in ['api', 'worker']:

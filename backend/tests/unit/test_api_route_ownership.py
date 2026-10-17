@@ -6,6 +6,8 @@ from ares.api.app import create_app
 from ares.api.settings import Settings
 from fastapi.routing import APIRoute
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_routes_and_openapi_operations_have_single_owner(tmp_path):
     app = create_app(Settings(_env_file=None, database_url=f'sqlite+pysqlite:///{tmp_path / "routes.db"}'))
@@ -21,4 +23,5 @@ def test_routes_and_openapi_operations_have_single_owner(tmp_path):
            for operation in path.values() if isinstance(operation, dict) and 'operationId' in operation]
     assert len(ids) == len(set(ids))
     assert {"get", "post"} <= schema["paths"]["/api/v2/assets"].keys()
-    assert len(Path('backend/src/ares/api/app.py').read_text().splitlines()) < 150
+    app_py = REPO_ROOT / 'backend' / 'src' / 'ares' / 'api' / 'app.py'
+    assert len(app_py.read_text().splitlines()) < 150

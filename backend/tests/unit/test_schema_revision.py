@@ -4,10 +4,13 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 from ares.api.settings import Settings
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_default_schema_revision_tracks_alembic_head(monkeypatch):
     monkeypatch.delenv('REQUIRED_SCHEMA_REVISION', raising=False)
-    head = ScriptDirectory.from_config(Config(str(Path('backend/alembic.ini').resolve()))).get_current_head()
+    alembic_ini = REPO_ROOT / 'backend' / 'alembic.ini'
+    head = ScriptDirectory.from_config(Config(str(alembic_ini))).get_current_head()
     assert Settings(_env_file=None).required_schema_revision == head
 
 

@@ -4,9 +4,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_frozen_evaluation_cases_and_provenance_are_populated():
-    root = Path('evals/datasets')
+    root = REPO_ROOT / 'evals' / 'datasets'
     assert len(json.loads((root / 'claim_cases.json').read_text())) >= 100
     retrieval = json.loads((root / 'retrieval_cases.json').read_text())
     assert len(retrieval) >= 50
@@ -19,9 +21,11 @@ def test_frozen_evaluation_cases_and_provenance_are_populated():
 
 def test_repeated_offline_regression_emits_variance_and_passes_thresholds(tmp_path):
     report = tmp_path / 'report.json'
-    result = subprocess.run([sys.executable, 'evals/run_suite.py', '--suite', 'all',
-        '--repeats', '2', '--report', str(report)], env={**os.environ, 'PYTHONPATH': 'backend/src'},
-        capture_output=True, text=True, check=False)
+    run_suite = str(REPO_ROOT / 'evals' / 'run_suite.py')
+    backend_src = str(REPO_ROOT / 'backend' / 'src')
+    result = subprocess.run([sys.executable, run_suite, '--suite', 'all',
+        '--repeats', '2', '--report', str(report)], env={**os.environ, 'PYTHONPATH': backend_src},
+        capture_output=True, text=True, check=False, cwd=str(REPO_ROOT))
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(report.read_text())
     assert payload['gate_passed']
