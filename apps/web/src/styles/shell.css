@@ -1,18 +1,18 @@
 .app-shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
 }
 
 .nav-rail {
-  height: 100vh;
+  height: 100dvh;
   position: sticky;
   top: 0;
   display: flex;
   flex-direction: column;
-  padding: 18px 14px;
+  padding: 24px 14px 16px;
   border-right: 1px solid var(--line);
-  background: #edf2f2;
+  background: var(--sidebar);
   z-index: 30;
 }
 
@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 6px 20px;
+  padding: 0 6px 30px;
 }
 
 .brand-mark {
@@ -29,8 +29,8 @@
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent-soft);
+  color: var(--accent);
   font:
     600 18px Georgia,
     serif;
@@ -38,8 +38,9 @@
 
 .brand-row strong {
   display: block;
-  letter-spacing: 0.16em;
-  font-size: 13px;
+  letter-spacing: -0.045em;
+  font-size: 29px;
+  font-weight: 650;
 }
 
 .brand-row span {
@@ -48,13 +49,12 @@
 }
 
 .topbar {
-  height: 62px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(243, 246, 246, 0.87);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   position: sticky;
@@ -64,7 +64,7 @@
 
 /* Milestone 6: authenticated workspace, roles and session states. */
 .auth-gate {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -81,7 +81,7 @@
 }
 
 .account-chip {
-  min-height: 38px;
+  min-height: 44px;
   max-width: 250px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -114,7 +114,7 @@
 .account-menu {
   position: absolute;
   right: 0;
-  top: 46px;
+  top: 52px;
   width: min(310px, calc(100vw - 28px));
   z-index: 35;
   border: 1px solid var(--line);
@@ -165,7 +165,7 @@
 }
 
 .account-menu select {
-  min-height: 38px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface-2);
@@ -196,3 +196,17 @@
 .account-area {
   margin-left: 0;
 }
+
+.workspace-breadcrumb { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--muted); font-size: 13px; }
+.workspace-breadcrumb > svg { flex-shrink: 0; }
+.breadcrumb-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+.primary-nav { display: grid; margin-top: 8px; }
+.primary-nav button { min-height: 44px; border: 0; background: transparent; padding: 0 12px; display: flex; align-items: center; gap: 10px; text-align: left; border-radius: 10px; cursor: pointer; color: var(--muted); font-size: 14px; }
+.primary-nav button:hover, .primary-nav button.active { color: var(--ink); background: var(--surface); }
+.account-chip small { display: none; }
+.account-chip { border: 0; background: transparent; }
+.account-chip > svg { color: var(--accent); }
+.account-chip:hover, .icon-button:hover { background: var(--surface-2); }
+.topbar > .stream-state { margin-left: auto; padding-left: 12px; }
+.topbar .theme-toggle { margin-left: 12px; }
+.brand-row > .brand-mark { width: 38px; height: 38px; background: transparent; }

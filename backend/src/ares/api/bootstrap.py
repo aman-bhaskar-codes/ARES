@@ -45,7 +45,7 @@ def create_application(settings: Settings | None = None) -> FastAPI:
     )
     Path(".data").mkdir(exist_ok=True)
     engine, sessions = build_session_factory(cfg.database_url)
-    if cfg.ares_mode == "demo" and cfg.database_url.startswith("sqlite"):
+    if cfg.database_url.startswith("sqlite"):
         Base.metadata.create_all(engine)
     repository = Repository(sessions)
     auth_store = AuthStore(sessions)

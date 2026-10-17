@@ -1,30 +1,30 @@
 import type { ModelProvider } from '../../lib/api/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Info,
+  Compass,
+  Search,
+  ChevronRight,
+  MessageSquare,
   AlertTriangle,
-  BookOpenText,
   Brain,
   Download,
   GitCompareArrows,
   FileStack,
-  ListTree,
   Menu,
   Moon,
   Plus,
   RotateCcw,
   Check,
   Settings2,
-  Sparkles,
   Sun,
   LogOut,
   UserRound,
   Trash2,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ApiError, api } from '../../lib/api/client'
+import { api } from '../../lib/api/client'
 import { parseResearchLocation, researchConversationUrl, researchRunUrl, type ResearchView } from '../../lib/researchRoutes'
 import type { Evidence, RunMode, RunSnapshot, SourceScope } from '../../lib/api/types'
 import { Answer } from '../research/Answer'
@@ -39,6 +39,7 @@ import { CompactResearchProgress } from '../research/CompactResearchProgress'
 import { RunQualityPanel } from '../research/RunQualityPanel'
 import { VisualizationWorkspace } from '../research/VisualizationWorkspace'
 import { useRunStream } from '../research/useRunStream'
+import { uploadAccept } from './uploadPolicy'
 import { WorkspacePanel } from '../workspace/WorkspacePanel'
 import { MemoryPanel } from '../workspace/MemoryPanel'
 import { RunHeader } from '../research/RunHeader'
@@ -57,6 +58,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
   const routeEvidenceId = researchLocation.evidenceId
   const activeView = researchLocation.view
   const [conversationId, setConversationId] = useState<string>()
+  const [draftVersion, setDraftVersion] = useState(0)
   const [run, setRun] = useState<RunSnapshot>()
   const [modelProvider, setModelProvider] = useState<ModelProvider>(() => window.localStorage.getItem('ares-model') === 'gemini' ? 'gemini' : 'qwen')
   const modelCatalog = useQuery({ queryKey: ['models'], queryFn: api.models })
@@ -70,11 +72,41 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
   const [evidence, setEvidence] = useState<Evidence>()
   const [navOpen, setNavOpen] = useState(false)
+  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 900px)').matches)
+  const navigation = useRef<HTMLElement>(null)
+  const menuButton = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 900px)')
+    const update = () => setNarrow(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+  useEffect(() => {
+    if (!navOpen || !narrow) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    navigation.current?.querySelector<HTMLButtonElement>('.mobile-close')?.focus()
+    return () => { document.body.style.overflow = previousOverflow; menuButton.current?.focus() }
+  }, [navOpen, narrow])
   const [workspace, setWorkspace] = useState<'documents' | 'memory' | 'system'>()
   const [uiError, setUiError] = useState<string>()
   const [exporting, setExporting] = useState<'markdown' | 'json'>()
   const [uploading, setUploading] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const accountArea = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const dismiss = (event: PointerEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent) {
+        if (event.key !== 'Escape') return
+        setNavOpen(false)
+        setAccountOpen(false)
+        if (accountArea.current?.contains(event.target as Node)) accountArea.current.querySelector('button')?.focus()
+      } else if (!accountArea.current?.contains(event.target as Node)) setAccountOpen(false)
+    }
+    document.addEventListener('keydown', dismiss)
+    document.addEventListener('pointerdown', dismiss)
+    return () => { document.removeEventListener('keydown', dismiss); document.removeEventListener('pointerdown', dismiss) }
+  }, [])
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = window.localStorage.getItem('ares-theme')
     if (saved === 'light' || saved === 'dark') return saved
@@ -262,12 +294,12 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
   }
 
   const submit = async (text: string) => {
-    if (!canWrite) { setUiError('Your workspace role is read-only.'); return }
+    if (!canWrite) { setUiError('Your workspace role is read-only.'); throw new Error('Read only') }
     setUiError(undefined)
     if (sourceScope.includes('documents') && selectedDocuments.length === 0) {
       setUiError('Select at least one ready document, or turn off the Documents source.')
       setWorkspace('documents')
-      return
+      throw new Error('Select a document first')
     }
     try {
       let activeConversation = conversationId
@@ -291,6 +323,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
       navigate(researchRunUrl(snapshot.conversation_id, snapshot.id, 'answer'))
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Could not start research')
+      throw error
     }
   }
 
@@ -346,18 +379,27 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
           queryClient.invalidateQueries({ queryKey: ['ingestions'] }),
         ])
       } else if (isPdf) {
-        await api.uploadPdf(file)
+        const document = await api.uploadPdf(file)
+        if (['ready', 'partial'].includes(document.status)) { setSelectedDocuments(ids => [...new Set([...ids, document.id])]); setSourceScope(scopes => [...new Set([...scopes, 'documents' as const])]) }
       } else if (isCsv || isImage || isAudio || isVideo) {
         throw new Error('Rich ingestion is not ready on the current media-worker profile. PDF/text compatibility upload is still available.')
       } else {
         const text = await file.text()
         const mime = isMarkdown ? 'text/markdown' : 'text/plain'
-        await api.createTextDocument(file.name, text, mime)
+        const document = await api.createTextDocument(file.name, text, mime)
+        if (['ready', 'partial'].includes(document.status)) { setSelectedDocuments(ids => [...new Set([...ids, document.id])]); setSourceScope(scopes => [...new Set([...scopes, 'documents' as const])]) }
       }
       await queryClient.invalidateQueries({ queryKey: ['documents'] })
     } finally {
       setUploading(false)
     }
+  }
+
+  const uploadFiles = async (files: File[]) => {
+    setUiError(undefined)
+    setWorkspace('documents')
+    try { for (const file of files) await uploadDocument(file) }
+    catch (error) { setUiError(error instanceof Error ? error.message : 'Upload failed') }
   }
 
   const cancelIngestion = async (ingestionId: string) => {
@@ -414,16 +456,23 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
 
   return (
     <div className={`app-shell ${evidence || workspace ? 'with-drawer' : ''}`}>
-      <aside className={`nav-rail ${navOpen ? 'open' : ''}`}>
+      <aside ref={navigation} role={narrow && navOpen ? 'dialog' : undefined} aria-modal={narrow && navOpen ? true : undefined} aria-label="Workspace navigation" onKeyDown={(event) => {
+        if (!narrow || !navOpen || event.key !== 'Tab') return
+        const controls = Array.from(navigation.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])
+        const first = controls[0], last = controls[controls.length - 1]
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+        if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+      }} inert={narrow && !navOpen} className={`nav-rail ${navOpen ? 'open' : ''}`}>
         <div className="brand-row">
-          <div className="brand-mark">A</div>
-          <div><strong>ARES</strong><span>Research & evidence</span></div>
+          <div className="brand-mark"><Compass size={26} strokeWidth={1.6} aria-hidden="true" /></div>
+          <div><strong>ARES</strong><span>Follow your curiosity</span></div>
           <button className="icon-button mobile-close" onClick={() => setNavOpen(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>
-        <button className="new-research" disabled={!canWrite} onClick={() => { setConversationId(undefined); setRun(undefined); setUiError(undefined); setNavOpen(false); navigate('/') }}>
-          <Plus size={17} /> New research
+        <button className="new-research" disabled={!canWrite} onClick={() => { setConversationId(undefined); setRun(undefined); setUiError(undefined); setEvidence(undefined); setWorkspace(undefined); setDraftVersion((value) => value + 1); setNavOpen(false); navigate('/') }}>
+          <Plus size={19} /> New search
         </button>
-        <div className="nav-section-label">Recent</div>
+        <nav className="primary-nav" aria-label="Workspace"><button className={workspace === 'documents' ? 'active' : ''} onClick={() => { setWorkspace('documents'); setNavOpen(false) }}><FileStack size={18} /> Library {selectedDocuments.length > 0 && <span className="nav-count">{selectedDocuments.length}</span>}</button></nav>
+        <div className="nav-section-label"><MessageSquare size={14} /> Your threads</div>
         <nav className="thread-list" aria-label="Conversation history">
           {conversations.data?.map((conversation) => (
             <div className="thread-row" key={conversation.id}>
@@ -448,23 +497,24 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
             ><Trash2 size={16} aria-hidden="true" /></button>}
             </div>
           ))}
-          {!conversations.data?.length && <div className="empty-nav">Your research threads will appear here.</div>}
+          {conversations.isLoading && <div className="empty-nav">Loading your threads…</div>}
+          {conversations.isError && <div className="empty-nav">Couldn't load your threads.<button onClick={() => void conversations.refetch()}>Try again</button></div>}
+          {conversations.isSuccess && !conversations.data.length && <div className="empty-nav">Start a search.<br />Pick it up here anytime.</div>}
         </nav>
         <div className="nav-bottom">
-          <button onClick={() => { setWorkspace('documents'); setNavOpen(false) }}><FileStack size={16} /> Documents {selectedDocuments.length > 0 && <span className="nav-count">{selectedDocuments.length}</span>}</button>
-          <button onClick={() => { setWorkspace('memory'); setNavOpen(false) }}><Brain size={16} /> Memory</button>
-          <button onClick={() => { setWorkspace('system'); setNavOpen(false) }}><Settings2 size={16} /> System</button>
+          <button onClick={() => { setWorkspace('memory'); setNavOpen(false) }}><Brain size={18} /> Memory</button>
+          <button onClick={() => { setWorkspace('system'); setNavOpen(false) }}><Settings2 size={18} /> Settings</button>
         </div>
       </aside>
 
-      <main className="main-view">
+      <main className="main-view" inert={narrow && navOpen}>
         <header className="topbar">
-          <button className="icon-button mobile-menu" onClick={() => setNavOpen(true)} aria-label="Open navigation"><Menu size={20} /></button>
-          <div className="demo-pill"><span />{system.data?.mode === 'local_live' ? 'Live · strict free' : 'Recorded demo · keyless'}</div>
-          <div className="stream-state">{busy ? (connected ? 'Live progress' : 'Reconnecting…') : canWrite ? 'Ready' : 'Read only'}</div>
+          <button ref={menuButton} aria-expanded={navOpen} className="icon-button mobile-menu" onClick={() => setNavOpen(true)} aria-label="Open navigation"><Menu size={20} /></button>
+          <div className="workspace-breadcrumb"><Compass size={17} /><span>{run ? 'Research' : 'Search'}</span>{run && <><ChevronRight size={13} /><span className="breadcrumb-title">{run.query}</span></>}</div>
+          <div className="stream-state">{busy ? (connected ? 'Researching…' : 'Reconnecting…') : !canWrite ? 'Read only' : system.data?.mode === 'demo' ? 'Demo workspace' : ''}</div>
           <button className="icon-button theme-toggle" onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? <Sun size={17}/> : <Moon size={17}/>}</button>
-          <div className="account-area">
-            <button className="account-chip" onClick={() => setAccountOpen((value) => !value)} aria-expanded={accountOpen}>
+          <div className="account-area" ref={accountArea}>
+            <button className="account-chip" aria-label="Account and workspace" onClick={() => setAccountOpen((value) => !value)} aria-expanded={accountOpen}>
               <UserRound size={15}/><span>{authData.display_name || authData.email || 'Researcher'}</span><small>{authData.role}</small>
             </button>
             {accountOpen && <div className="account-menu">
@@ -476,14 +526,20 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
         </header>
 
         {!canWrite && <div className="readonly-banner">Viewer access · research, uploads, exports, cancellation, and other mutations are disabled.</div>}
-        {uiError && <div className="global-error" role="alert"><AlertTriangle size={16} /><span>{uiError}</span><button onClick={() => setUiError(undefined)} aria-label="Dismiss error"><X size={15} /></button></div>}
+        {uiError && workspace !== 'documents' && <div className="global-error" role="alert"><AlertTriangle size={16} /><span>{uiError}</span><button onClick={() => setUiError(undefined)} aria-label="Dismiss error"><X size={15} /></button></div>}
 
         {!run ? (
           <div className="home-state">
-            <div className="hero-badge"><Sparkles size={16} /> evidence-first research</div>
-            <h1>Research you can<br /><em>trace back.</em></h1>
+            <div className="home-compass" aria-hidden="true"><Compass size={34} strokeWidth={1.4} /></div>
+            <h1>Where will curiosity take you?</h1>
+            <p>Ask a question. Get an answer with sources you can explore.</p>
             <Composer
+              key={draftVersion}
               busy={false}
+              showSuggestions
+              onUpload={uploadFiles}
+              uploadAccept={uploadAccept(system.data, richIngestionReady)}
+              uploading={uploading}
               readOnly={!canWrite}
               modelProvider={modelProvider}
               onModelProvider={setModelProvider}
@@ -498,31 +554,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
               onSubmit={submit}
               onStop={() => undefined}
             />
-            <div className="example-grid">
-              {[
-                { id: 'speed', label: 'Speed Boost', desc: 'Accelerates retrieval and reduces token overhead.' },
-                { id: 'accuracy', label: 'Deep Verification', desc: 'Cross-checks every claim against multiple sources.' },
-                { id: 'code', label: 'Code Interpreter', desc: 'Executes Python for technical math and logic.' }
-              ].map(p => (
-                <button 
-                  key={p.id} 
-                  disabled={!canWrite}
-                  className={activePlugins.includes(p.id) ? 'active-plugin' : ''}
-                  onClick={() => setActivePlugins(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}
-                  style={{ 
-                    textAlign: 'left', 
-                    border: activePlugins.includes(p.id) ? '1px solid var(--brand)' : '1px solid var(--border)',
-                    background: activePlugins.includes(p.id) ? 'var(--brand-surface)' : 'var(--bg)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 600, color: activePlugins.includes(p.id) ? 'var(--brand)' : 'var(--text)' }}>{p.label}</span>
-                    {activePlugins.includes(p.id) && <Check size={14} color="var(--brand)" />}
-                  </div>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{p.desc}</span>
-                </button>
-              ))}
-            </div>
+
           </div>
         ) : (
           <div className="thread-view">
@@ -531,18 +563,22 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
             <ResearchViewNav 
               activeView={activeView} 
               onSelectView={selectView} 
-              evidenceCount={runEvidence.data?.length} 
+              evidenceCount={runEvidence.data ? new Set(runEvidence.data.map((item) => item.source.id || item.id)).size : undefined}
             />
 
             {activeView === 'answer' && <>
               {run.answer_blocks.map((block) => <Answer key={block.id} block={block} runEvidence={runEvidence.data} onReviewSources={() => navigate(runUrl('sources'))} onEvidence={openEvidence} />)}
 
+              {['completed', 'partial'].includes(run.status) && <div className="answer-actions"><button className="quiet-button" disabled={!canWrite || Boolean(exporting)} onClick={() => void exportRun('markdown')}><Download size={16} />{exporting ? 'Exporting…' : 'Export answer'}</button></div>}
               <ResearchGaps gaps={run.gaps} runStatus={run.status} />
-              <RelatedQuestions questions={run.related_questions} onAsk={submit} />
+              <RelatedQuestions disabled={!canWrite || busy} questions={run.related_questions} onAsk={(question) => { void submit(question).catch(() => undefined) }} />
               {run.status === 'failed' && <section className="failure-card"><div><AlertTriangle size={18} /><strong>{run.error_code ?? 'Research failed'}</strong><p>{run.error_message}</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry as new run</button></section>}
               {run.status === 'cancelled' && <section className="failure-card calm"><div><strong>Research stopped</strong><p>Completed work was preserved. Retry starts a new run with the same source policy.</p></div><button disabled={!canWrite} onClick={() => void retry()}><RotateCcw size={16} /> Retry</button></section>}
               <div className="followup">
                 <FollowUpComposer
+                  onUpload={uploadFiles}
+                  uploadAccept={uploadAccept(system.data, richIngestionReady)}
+                  uploading={uploading}
                   busy={busy}
                   readOnly={!canWrite}
                   modelProvider={modelProvider}
@@ -574,17 +610,16 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
       ) : workspace ? (
         <WorkspacePanel
           view={workspace}
+          uploading={uploading}
+          uploadError={uiError}
           documents={documents.data ?? []}
           assets={assets.data ?? []}
           ingestions={ingestions.data ?? []}
           system={system.data}
           selected={selectedDocuments}
-          busyUpload={uploading}
-          richIngestionReady={richIngestionReady}
           readOnly={!canWrite}
           onClose={() => setWorkspace(undefined)}
           onSelect={(ids) => { setSelectedDocuments(ids); if (ids.length > 0 && !sourceScope.includes('documents')) setSourceScope([...sourceScope, 'documents']) }}
-          onUpload={uploadDocument}
           onDelete={deleteDocument}
           onCancelIngestion={cancelIngestion}
           onRetryIngestion={retryIngestion}

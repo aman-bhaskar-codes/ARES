@@ -1,4 +1,5 @@
-import { Copy } from 'lucide-react'
+import { Check, Copy } from 'lucide-react'
+import { useState } from 'react'
 import type { AnswerBlock, Evidence } from '../../lib/api/types'
 import { SafeMarkdown } from './SafeMarkdown'
 import { answerPresentationMode, buildCitedAnswerText } from './answerPresentation'
@@ -18,6 +19,13 @@ export function Answer({
   onReviewSources: () => void 
 }) {
   const mode = answerPresentationMode(block)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const copyAnswer = async () => {
+    try {
+      await navigator.clipboard.writeText(buildCitedAnswerText(block))
+      setCopyStatus('copied')
+    } catch { setCopyStatus('failed') }
+  }
 
   return (
     <article className="answer-card">
@@ -25,11 +33,14 @@ export function Answer({
         <span className="answer-label">Answer</span>
         <button
           className="quiet-button"
-          onClick={() => navigator.clipboard.writeText(buildCitedAnswerText(block))}
+          onClick={() => { void copyAnswer() }}
         >
-          <Copy size={15} /> Copy
+          {copyStatus === 'copied' ? <Check size={15} /> : <Copy size={15} />} {copyStatus === 'copied' ? 'Copied' : 'Copy'}
         </button>
       </div>
+
+      <span className="sr-only" role="status">{copyStatus === 'copied' ? 'Answer copied with citations.' : copyStatus === 'failed' ? 'Could not copy the answer. Try selecting the text.' : ''}</span>
+      {copyStatus === 'failed' && <p className="copy-error">Could not copy. Select the answer text to copy it.</p>}
 
       {block.claims?.some((claim) => claim.assessment_state !== 'semantic_assessed') && (
         <p className="answer-verification-note">Based on retrieved sources. AI semantic verification has not been performed; review the citations for important details.</p>

@@ -111,7 +111,8 @@ def _parse_worker(
                     f"extracted PDF text exceeds the {max_text_chars:,}-character limit"
                 )
 
-        text = "".join(parts).strip()
+        # Page offsets refer to this exact concatenation, including blank-page separators.
+        text = "".join(parts)
         scanned_pages = [idx for idx, ptype in page_types.items() if ptype == "scanned"]
         meaningful_pages = page_count - empty_pages
         if len(scanned_pages) == page_count or not text or meaningful_pages == 0:
@@ -192,19 +193,29 @@ class BoundedPdfParser:
             },
             daemon=True,
         )
-        process.start()
-        process.join(self.timeout_seconds)
-        if process.is_alive():
-            process.terminate()
-            process.join(3)
-            raise PdfParseError("PDF parsing exceeded its time limit")
         try:
-            result = result_queue.get(timeout=1)
-        except Empty as exc:
-            raise PdfParseError(
-                f"PDF parser exited without a result (exit={process.exitcode})"
-            ) from exc
+            process.start()
+            # Drain the result before joining: Queue's child feeder cannot exit while a
+            # text-heavy result is blocked in the OS pipe waiting for this reader.
+            try:
+                result = result_queue.get(timeout=self.timeout_seconds)
+            except Empty as exc:
+                if process.exitcode is not None:
+                    raise PdfParseError(
+                        f"PDF parser exited without a result (exit={process.exitcode})"
+                    ) from exc
+                raise PdfParseError("PDF parsing exceeded its time limit") from exc
         finally:
+            if process.pid is not None:
+                process.join(0.2)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(1)
+                if process.is_alive():
+                    process.kill()
+                    process.join(1)
+                if not process.is_alive():
+                    process.close()
             result_queue.close()
         if not result.get("ok"):
             raise PdfParseError(str(result.get("error", "PDF parsing failed")))

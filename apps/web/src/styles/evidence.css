@@ -219,3 +219,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.source-search { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 46px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; color: var(--muted); }
+.source-search input { width: 100%; border: 0; background: transparent; color: var(--ink); min-height: 44px; font-size: 14px; }
+.source-filter-disclosure { margin: 12px 0 24px; }
+.source-filter-disclosure > summary { display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; color: var(--muted); font-size: 12px; min-height: 44px; width: fit-content; }
+.source-filter-disclosure > summary::-webkit-details-marker { display: none; }
+.source-filter-disclosure .evidence-filters { margin-top: 8px; }
+.evidence-source-group { margin-bottom: 28px; }
+.source-group-head { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.source-group-head h3 { margin: 0; font-size: 16px; font-weight: 550; line-height: 1.6; overflow-wrap: anywhere; }
+.source-group-head > div { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.source-group-evidence { display: grid; gap: 10px; }
+.source-group-evidence .evidence-index-row { width: 100%; display: flex; align-items: flex-start; text-align: left; justify-content: space-between; gap: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.evidence-index-main { min-width: 0; display: grid; gap: 10px; }
+.evidence-index-main .passage-preview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink); font-size: 14px; line-height: 1.65; }
+.evidence-index-main small { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; white-space: normal; }
+.evidence-index-main .passage-open { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); white-space: nowrap; margin: 0; font-size: 11px; }
+.copy-error { color: var(--danger); font-size: 12px; }

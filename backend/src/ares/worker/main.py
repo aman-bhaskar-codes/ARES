@@ -238,7 +238,7 @@ def main() -> None:
     settings.validate_security_mode()
     worker_database_url = settings.worker_database_url or settings.database_url
     engine, sessions = build_session_factory(worker_database_url)
-    if settings.ares_mode == "demo" and worker_database_url.startswith("sqlite"):
+    if worker_database_url.startswith("sqlite"):
         Base.metadata.create_all(engine)
     repository = Repository(sessions)
     embedder = None
