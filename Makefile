@@ -1,4 +1,4 @@
-.PHONY: doctor connectivity-doctor connectivity-doctor-strict infra migrate verify-migrations production-doctor test test-postgres test-media test-compile openapi eval-routing eval-regression eval-multimodal eval-m10-retrieval eval-m11-heldout lint security-scan lock-check sbom verify-m11-release release-m11 test-e2e check api worker install-media worker-media provision-whisper web load-smoke perf-baseline perf-m10
+.PHONY: doctor connectivity-doctor connectivity-doctor-strict infra migrate verify-migrations production-doctor test test-postgres test-media test-compile openapi eval-routing eval-regression eval-multimodal eval-m10-retrieval eval-m11-heldout lint security-scan lock-check sbom verify-m11-release release-m11 test-e2e check api worker install-media worker-media provision-whisper provision-ocr eval-ocr web dev load-smoke perf-baseline perf-m10
 
 doctor:
 	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/doctor.py
@@ -57,6 +57,12 @@ provision-whisper:
 	@test -n "$$WHISPER_MODEL_REVISION" || (echo "WHISPER_MODEL_REVISION must be an exact commit SHA" && exit 1)
 	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/provision_whisper_model.py \
 		--revision "$$WHISPER_MODEL_REVISION" --license-reviewed
+
+provision-ocr:
+	PYTHONPATH=backend/src uv run --project backend python scripts/provision_ocr_models.py --license-reviewed
+
+eval-ocr:
+	PYTHONPATH=backend/src uv run --project backend python evals/eval_ocr.py
 
 test-compile:
 	PYTHONPATH=backend/src uv run --project backend python -m compileall -q backend/src backend/tests scripts
@@ -124,6 +130,16 @@ worker-media:
 
 web:
 	pnpm --filter @ares/web dev
+
+dev: infra migrate
+	@echo "=========================================================="
+	@echo "  ARES Autonomous Research Engine - Development Stack     "
+	@echo "=========================================================="
+	@echo "  Postgres & SearXNG containers: Ready                     "
+	@echo "  Database schema migrations: Applied to HEAD revision    "
+	@echo "  API endpoint:   http://127.0.0.1:8000                   "
+	@echo "  Web interface:  http://127.0.0.1:3000                   "
+	@echo "=========================================================="
 
 perf-m10:
 	PYTHONPATH=backend/src uv run --project backend uv run --project backend python scripts/perf_m10_discovery.py --runs 30

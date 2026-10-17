@@ -19,6 +19,13 @@ class EmbeddingProvider(Protocol):
     def embed_documents(self, texts: list[str]) -> list[list[float]]: ...
 
 
+class MultimodalEmbeddingProvider(Protocol):
+    """Cross-modal vector embedding provider (e.g. SigLIP / CLIP)."""
+    def embed_text(self, text: str) -> list[float]: ...
+    def embed_image(self, image_bytes: bytes) -> list[float]: ...
+    def embed_multimodal(self, items: list[str | bytes]) -> list[list[float]]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class RAGConfig:
     target_chars: int = 1_400

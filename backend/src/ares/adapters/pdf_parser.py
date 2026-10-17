@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import multiprocessing as mp
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
 from queue import Empty
@@ -21,6 +21,8 @@ class ParsedPdf:
     status: str
     warnings: list[str]
     parser_version: str
+    page_types: dict[int, str] = field(default_factory=dict)
+    scanned_pages: list[int] = field(default_factory=list)
 
 
 def _apply_resource_limits(memory_bytes: int, cpu_seconds: int) -> None:
@@ -67,6 +69,7 @@ def _parse_worker(
 
         parts: list[str] = []
         page_map: list[dict[str, int]] = []
+        page_types: dict[int, str] = {}
         warnings: list[str] = []
         empty_pages = 0
         cursor = 0
@@ -77,6 +80,23 @@ def _parse_worker(
                 logging.getLogger(__name__).warning("pdf_parser: recovery boundary (%s)", type(exc).__name__)
                 page_text = ""
                 warnings.append(f"Page {index} could not be extracted ({type(exc).__name__}).")
+
+            has_images = False
+            try:
+                images_attr = getattr(page, "images", None)
+                if images_attr is not None:
+                    has_images = len(images_attr) > 0
+            except Exception:
+                has_images = False
+
+            # Classify page: text length >= 40 chars indicates high-fidelity digital text
+            if len(page_text) >= 40:
+                page_types[index] = "digital"
+            elif has_images or not page_text:
+                page_types[index] = "scanned"
+            else:
+                page_types[index] = "digital"
+
             if not page_text:
                 empty_pages += 1
             if parts:
@@ -92,10 +112,16 @@ def _parse_worker(
                 )
 
         text = "".join(parts).strip()
+        scanned_pages = [idx for idx, ptype in page_types.items() if ptype == "scanned"]
         meaningful_pages = page_count - empty_pages
-        if not text or meaningful_pages == 0:
+        if len(scanned_pages) == page_count or not text or meaningful_pages == 0:
             status = "needs_ocr"
             warnings.append("No usable text layer was detected; OCR is required before research.")
+        elif scanned_pages:
+            status = "mixed"
+            warnings.append(
+                f"{len(scanned_pages)} of {page_count} pages are scanned or contain raster images requiring OCR."
+            )
         elif empty_pages:
             status = "partial"
             warnings.append(f"{empty_pages} of {page_count} pages had no extractable text.")
@@ -109,6 +135,8 @@ def _parse_worker(
                 "page_count": page_count,
                 "status": status,
                 "warnings": warnings,
+                "page_types": page_types,
+                "scanned_pages": scanned_pages,
                 "parser_version": f"pypdf-{pypdf_version}",
             }
         )
@@ -187,4 +215,6 @@ class BoundedPdfParser:
             status=str(result["status"]),
             warnings=list(result["warnings"]),
             parser_version=str(result["parser_version"]),
+            page_types=dict(result.get("page_types", {})),
+            scanned_pages=list(result.get("scanned_pages", [])),
         )

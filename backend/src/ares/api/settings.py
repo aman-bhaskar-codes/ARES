@@ -117,6 +117,13 @@ class Settings(BaseSettings):
     docling_timeout_seconds: float = Field(default=120.0, ge=10.0, le=600.0)
     docling_model_cache_dir: str = ".data/models/docling"
     ocr_language: str = "iso:en"
+    ocr_languages: list[str] = Field(default_factory=lambda: ["en", "hi", "de"])
+    ocr_preprocessing_enabled: bool = True
+    ocr_vlm_fallback_enabled: bool = False
+    ocr_vlm_provider: Literal["ollama", "gemini", "none"] = "none"
+    ocr_vlm_confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_vision_model: str = "qwen2.5-vl:latest"
     max_image_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
     max_image_pixels: int = Field(default=20_000_000, ge=1_000_000, le=100_000_000)
     max_csv_rows: int = Field(default=5_000, ge=1, le=100_000)

@@ -271,3 +271,24 @@ def configure_telemetry(
             "OpenTelemetry exporter initialization failed; continuing without export"
         )
         return lambda: None
+
+
+def configure_llm_tracing(
+    *,
+    phoenix_endpoint: str | None = None,
+    langfuse_host: str | None = None,
+    service_name: str = "ares",
+    sample_ratio: float = 1.0,
+    export_timeout_seconds: float = 5.0,
+) -> None:
+    """Configure LLM tracing for Phoenix or Langfuse via standard OTLP / OpenTelemetry."""
+    target_endpoint = phoenix_endpoint or (
+        f"{langfuse_host.rstrip('/')}/api/public/otel" if langfuse_host else None
+    )
+    if target_endpoint:
+        configure_telemetry(
+            endpoint=target_endpoint,
+            service_name=service_name,
+            sample_ratio=sample_ratio,
+            export_timeout_seconds=export_timeout_seconds,
+        )

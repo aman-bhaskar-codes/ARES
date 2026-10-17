@@ -12,6 +12,7 @@ from ares.adapters.db import (
     DocumentEmbeddingRow,
     DocumentVersionRow,
     EvidenceRow,
+    EvidenceSegmentRow,
     MediaFrameRow,
     MediaTrackRow,
     ResearchCacheRow,
@@ -708,6 +709,41 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                     )
                 elif evidence.segment_id is None and candidate.segment_id is not None:
                     evidence.segment_id = candidate.segment_id
+
+                modality_val = "text"
+                loc_data = None
+                bbox_val = None
+                time_val = None
+                if evidence.segment_id is not None:
+                    seg = session.get(EvidenceSegmentRow, evidence.segment_id)
+                    if seg is not None:
+                        if seg.modality in {"image", "image_region", "page_region"}:
+                            modality_val = "image_region"
+                        elif seg.modality in {"table", "table_cell"}:
+                            modality_val = "table"
+                        elif seg.modality == "audio":
+                            modality_val = "audio_segment"
+                        elif seg.modality == "video_frame":
+                            modality_val = "video_frame"
+                        else:
+                            modality_val = "text"
+
+                        loc_data = seg.locator_json
+                        if isinstance(loc_data, dict):
+                            raw_bbox = loc_data.get("bbox")
+                            if isinstance(raw_bbox, (list, tuple)) and len(raw_bbox) == 4:
+                                bbox_val = (
+                                    float(raw_bbox[0]),
+                                    float(raw_bbox[1]),
+                                    float(raw_bbox[2]),
+                                    float(raw_bbox[3]),
+                                )
+                            if "start_ms" in loc_data and "end_ms" in loc_data:
+                                time_val = (int(str(loc_data["start_ms"])), int(str(loc_data["end_ms"])))
+                            elif "presentation_time_ms" in loc_data:
+                                p_time = int(str(loc_data["presentation_time_ms"]))
+                                time_val = (p_time, p_time)
+
                 packets.append(
                     EvidencePacket(
                         evidence_id=evidence.id,
@@ -720,6 +756,10 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                         locator=evidence.locator,
                         captured_at=evidence.captured_at,
                         content_hash=version.content_hash,
+                        modality=modality_val,
+                        locator_data=loc_data,
+                        bbox=bbox_val,
+                        timestamp_ms=time_val,
                     )
                 )
             return packets
