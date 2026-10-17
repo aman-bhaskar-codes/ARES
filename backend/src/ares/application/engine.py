@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
+from pydantic import HttpUrl
+
 from ares.application.checkpoints import CheckpointStore
 from ares.application.decisions import ResilientDecisionProvider
 from ares.application.finalization import compose_checked_markdown
@@ -16,7 +18,7 @@ from ares.application.observability import RunTelemetry
 from ares.application.persistent_rag import PersistentDocumentRAG
 from ares.application.planning import DeterministicResearchPlanner, ResearchPlanner
 from ares.application.providers import ProviderRegistry
-from ares.application.rag import HybridRAGRetriever
+from ares.application.rag import HybridRAGRetriever, reciprocal_rank_fusion
 from ares.application.repository import (
     JobLease,
     QuotaExceededError,
@@ -40,6 +42,7 @@ from ares.domain.models import (
     SupportStatus,
     SynthesisResult,
 )
+from ares.domain.research import EvidenceCandidate
 from ares.ports.decisions import DecisionProvider
 from ares.ports.errors import LLMProviderError, SearchProviderError
 from ares.ports.reranking import CandidateReranker
@@ -662,25 +665,57 @@ class ResearchEngine:
                         run.query, [document for _, document in document_docs], limit=pool_size
                     )
 
-            # Interleave source classes instead of comparing incomparable raw score scales.
-            ranked = []
-            for index in range(max(len(network_ranked), len(document_ranked))):
-                if index < len(network_ranked):
-                    ranked.append(network_ranked[index])
-                if index < len(document_ranked):
-                    ranked.append(document_ranked[index])
-                if len(ranked) >= pool_size:
-                    break
-            
-            # Deduplicate by candidate_id
-            seen = set()
-            deduped = []
-            for candidate in ranked:
-                if candidate.candidate_id not in seen:
-                    seen.add(candidate.candidate_id)
-                    deduped.append(candidate)
-            ranked = deduped[:60]
-            
+            memory_candidates: list[EvidenceCandidate] = []
+            if run.workspace_id:
+                try:
+                    facts = self.repository.search_memory_facts(run.workspace_id, run.query, limit=5)
+                    episodes = self.repository.search_memory_episodes(run.workspace_id, run.query, limit=3)
+                    for fact, fscore in facts:
+                        memory_candidates.append(
+                            EvidenceCandidate(
+                                source_id=uuid4(),
+                                title=f"Memory Fact: {fact.subject}",
+                                url=HttpUrl("https://ares.local/memory/fact"),
+                                text=f"{fact.subject} {fact.predicate}: {fact.fact}",
+                                locator="semantic memory",
+                                char_start=0,
+                                char_end=len(fact.fact),
+                                combined_score=fscore,
+                            )
+                        )
+                    for ep, escore in episodes:
+                        memory_candidates.append(
+                            EvidenceCandidate(
+                                source_id=uuid4(),
+                                title=f"Memory Episode: {ep.title}",
+                                url=HttpUrl("https://ares.local/memory/episode"),
+                                text=f"{ep.title}: {ep.summary}",
+                                locator="episodic memory",
+                                char_start=0,
+                                char_end=len(ep.summary),
+                                combined_score=escore,
+                            )
+                        )
+                    if memory_candidates:
+                        self.repository.record_event(
+                            run_id,
+                            "retrieval.memory",
+                            {
+                                "facts_retrieved": len(facts),
+                                "episodes_retrieved": len(episodes),
+                            },
+                            lease_token=lease.token,
+                        )
+                except Exception as _mem_read_exc:
+                    logging.getLogger(__name__).warning("Memory retrieval skipped: %s", _mem_read_exc)
+
+            # Reciprocal Rank Fusion combines source streams using rank-calibrated weighting
+            source_streams = [lst for lst in [network_ranked, document_ranked, memory_candidates] if lst]
+            if source_streams:
+                ranked = reciprocal_rank_fusion(source_streams, k=60, limit=60)
+            else:
+                ranked = []
+
             if self.candidate_reranker and len(ranked) > 0:
                 ranked = self.candidate_reranker.rerank(run.query, ranked, max_results=30)
                 
@@ -1141,6 +1176,47 @@ class ResearchEngine:
                 assessment=run_assessment,
                 lease_token=lease.token,
             )
+
+            # Store run in episodic memory and verified claims in semantic memory
+            if run.workspace_id and run.created_by_user_id:
+                try:
+                    from ares.domain.memory import EpisodeCreate, FactCreate
+                    supported = [c for c in persisted_claims if c.support_status is SupportStatus.SUPPORTED]
+                    findings = [c.text for c in supported][:8]
+                    summary_text = (
+                        (result.outline.summary if result.outline and result.outline.summary else checked_markdown[:500])
+                        if checked_markdown else run.query
+                    )
+                    self.repository.create_memory_episode(
+                        run.workspace_id,
+                        run.created_by_user_id,
+                        EpisodeCreate(
+                            title=run.query,
+                            summary=summary_text,
+                            key_findings=findings,
+                            importance=0.7 if run.mode.value == "deep" else 0.5,
+                            conversation_id=run.conversation_id,
+                            run_id=run_id,
+                        ),
+                    )
+                    # Only store claims that passed citation-integrity check
+                    for claim in persisted_claims:
+                        if claim.support_status in (SupportStatus.SUPPORTED, SupportStatus.PARTIALLY_SUPPORTED):
+                            src = next(iter(claim.evidence_rationales.values()), None)
+                            self.repository.create_memory_fact(
+                                run.workspace_id,
+                                run.created_by_user_id,
+                                FactCreate(
+                                    subject=run.query[:120],
+                                    predicate="supported_claim",
+                                    fact=claim.text,
+                                    evidence_source=src,
+                                    confidence=1.0 if claim.support_status is SupportStatus.SUPPORTED else 0.75,
+                                ),
+                            )
+                except Exception as _mem_exc:
+                    logging.getLogger(__name__).warning("Failed to persist run memory: %s", _mem_exc)
+
             self.repository.set_status(run_id, RunStatus.COMPLETED, lease_token=lease.token)
         except CancelledRun:
             return

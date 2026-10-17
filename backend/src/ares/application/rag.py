@@ -5,6 +5,7 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Literal, Protocol
+from uuid import UUID
 
 from ares.domain.models import FetchedDocument
 from ares.domain.research import EvidenceCandidate
@@ -71,6 +72,47 @@ def _normalize(values: list[float]) -> list[float]:
     if math.isclose(low, high):
         return [1.0 if high > 0 else 0.0 for _ in values]
     return [(value - low) / (high - low) for value in values]
+
+
+def reciprocal_rank_fusion(
+    ranked_lists: list[list[EvidenceCandidate]],
+    weights: list[float] | None = None,
+    k: int = 60,
+    limit: int | None = None,
+) -> list[EvidenceCandidate]:
+    """Fuse multiple ranked candidate lists using Reciprocal Rank Fusion (RRF).
+
+    score(c) = sum(w_i / (k + rank_i(c)))
+    Preserves top items and appropriately boosts items retrieved across multiple streams.
+    """
+    if not ranked_lists:
+        return []
+    if weights is None:
+        weights = [1.0] * len(ranked_lists)
+    elif len(weights) != len(ranked_lists):
+        raise ValueError("weights count must match ranked_lists count")
+
+    candidate_by_id: dict[UUID, EvidenceCandidate] = {}
+    rrf_scores: defaultdict[UUID, float] = defaultdict(float)
+
+    for list_idx, candidate_list in enumerate(ranked_lists):
+        w = weights[list_idx]
+        for rank, candidate in enumerate(candidate_list, start=1):
+            key = candidate.candidate_id
+            if key not in candidate_by_id:
+                candidate_by_id[key] = candidate
+            rrf_scores[key] += w / (k + rank)
+
+    sorted_keys = sorted(candidate_by_id.keys(), key=lambda key: rrf_scores[key], reverse=True)
+    fused: list[EvidenceCandidate] = []
+    for key in sorted_keys:
+        candidate = candidate_by_id[key]
+        candidate.combined_score = rrf_scores[key]
+        fused.append(candidate)
+
+    if limit is not None:
+        return fused[:limit]
+    return fused
 
 
 def chunk_document(

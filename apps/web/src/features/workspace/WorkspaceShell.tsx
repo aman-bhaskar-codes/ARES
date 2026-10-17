@@ -4,6 +4,7 @@ import {
   Info,
   AlertTriangle,
   BookOpenText,
+  Brain,
   Download,
   GitCompareArrows,
   FileStack,
@@ -39,6 +40,7 @@ import { RunQualityPanel } from '../research/RunQualityPanel'
 import { VisualizationWorkspace } from '../research/VisualizationWorkspace'
 import { useRunStream } from '../research/useRunStream'
 import { WorkspacePanel } from '../workspace/WorkspacePanel'
+import { MemoryPanel } from '../workspace/MemoryPanel'
 import { RunHeader } from '../research/RunHeader'
 import { ResearchViewNav } from '../research/ResearchViewNav'
 
@@ -68,7 +70,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
   const [evidence, setEvidence] = useState<Evidence>()
   const [navOpen, setNavOpen] = useState(false)
-  const [workspace, setWorkspace] = useState<'documents' | 'system'>()
+  const [workspace, setWorkspace] = useState<'documents' | 'memory' | 'system'>()
   const [uiError, setUiError] = useState<string>()
   const [exporting, setExporting] = useState<'markdown' | 'json'>()
   const [uploading, setUploading] = useState(false)
@@ -450,6 +452,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
         </nav>
         <div className="nav-bottom">
           <button onClick={() => { setWorkspace('documents'); setNavOpen(false) }}><FileStack size={16} /> Documents {selectedDocuments.length > 0 && <span className="nav-count">{selectedDocuments.length}</span>}</button>
+          <button onClick={() => { setWorkspace('memory'); setNavOpen(false) }}><Brain size={16} /> Memory</button>
           <button onClick={() => { setWorkspace('system'); setNavOpen(false) }}><Settings2 size={16} /> System</button>
         </div>
       </aside>
@@ -566,7 +569,9 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
       </main>
 
       {evidence && <EvidenceDrawer evidence={evidence} onClose={closeEvidence} />}
-      {workspace && (
+      {workspace === 'memory' ? (
+        <MemoryPanel readOnly={!canWrite} onClose={() => setWorkspace(undefined)} />
+      ) : workspace ? (
         <WorkspacePanel
           view={workspace}
           documents={documents.data ?? []}
@@ -585,7 +590,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
           onRetryIngestion={retryIngestion}
           onDeleteAsset={deleteAsset}
         />
-      )}
+      ) : null}
       {navOpen && <button className="nav-scrim" aria-label="Close navigation" onClick={() => setNavOpen(false)} />}
     </div>
   )

@@ -193,6 +193,8 @@ class RunSnapshot(BaseModel):
     model_provider: Literal["gemini", "qwen"] | None = None
     id: UUID
     conversation_id: UUID
+    workspace_id: UUID | None = None
+    created_by_user_id: UUID | None = None
     query: str
     mode: RunMode
     source_scope: list[str] = Field(default_factory=list)

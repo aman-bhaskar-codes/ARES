@@ -967,6 +967,8 @@ class SqlRepositoryBase:
             model_provider=row.model_provider,
             id=row.id,
             conversation_id=row.conversation_id,
+            workspace_id=row.workspace_id,
+            created_by_user_id=row.created_by_user_id,
             query=row.query,
             mode=RunMode(row.mode),
             source_scope=list(row.source_scope or []),

@@ -130,7 +130,7 @@ def _build_research_runtime(settings: Settings, repository: Repository, *, embed
         source_fetcher,
         writer,
         planner=planner,
-        candidate_reranker=LocalCrossEncoderReranker(),
+        candidate_reranker=LocalCrossEncoderReranker(model_name=settings.local_reranker_model),
         gemini_model=settings.local_llm_model if settings.local_llm_enabled else settings.gemini_model,
         gemini_rpm=60 if settings.local_llm_enabled else settings.gemini_rpm or 1,
         gemini_tpm=100_000 if settings.local_llm_enabled else settings.gemini_tpm or 1,

@@ -106,6 +106,10 @@ class Settings(BaseSettings):
     local_embeddings_enabled: bool = False
     local_embedding_model: str = "BAAI/bge-small-en-v1.5"
     local_embedding_dimensions: int = Field(default=384, ge=128, le=3072)
+    multilingual_embedding_enabled: bool = False
+    multilingual_embedding_model: str = "BAAI/bge-m3"
+    multilingual_embedding_dimensions: int = Field(default=1024, ge=128, le=3072)
+    local_reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
     local_embedding_cache_dir: str = ".data/models/fastembed"
     local_embedding_threads: int | None = Field(default=None, ge=1, le=32)
     local_embedding_batch_size: int = Field(default=32, ge=1, le=256)

@@ -7,6 +7,7 @@ import json
 from ares.adapters.persistence.artifacts import SqlArtifactRepository
 from ares.adapters.persistence.ingestion import SqlIngestionRepository
 from ares.adapters.persistence.jobs import SqlJobRepository
+from ares.adapters.persistence.memory import SqlMemoryRepository
 from ares.adapters.persistence.retrieval import SqlRetrievalRepository
 from ares.adapters.persistence.views import SqlViewRepository
 from ares.domain.models import (
@@ -61,5 +62,6 @@ class Repository(
     SqlRetrievalRepository,
     SqlIngestionRepository,
     SqlJobRepository,
+    SqlMemoryRepository,
 ):
     pass
