@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     oidc_scopes: str = "openid email profile"
     oidc_state_ttl_seconds: int = Field(default=600, ge=60, le=1800)
 
+    # Per-client API rate limiting (off-by-default only in demo mode)
+    rate_limit_enabled: bool | None = None
+    rate_limit_write_rpm: int = Field(default=60, ge=1, le=1000)
+    rate_limit_upload_rpm: int = Field(default=30, ge=1, le=1000)
+    rate_limit_runs_rpm: int = Field(default=20, ge=1, le=1000)
+
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash-lite"
     gemini_thinking_level: Literal["low", "medium", "high"] = "low"
@@ -324,6 +330,12 @@ class Settings(BaseSettings):
                 )
             if public.path not in {"", "/"} or frontend.path not in {"", "/"}:
                 raise ValueError("production public origins must not contain path prefixes")
+
+    @property
+    def is_rate_limiting_active(self) -> bool:
+        if self.rate_limit_enabled is not None:
+            return self.rate_limit_enabled
+        return self.ares_mode != "demo"
 
 
 @lru_cache(maxsize=1)
