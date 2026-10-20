@@ -11,6 +11,26 @@ def test_unicode_download_filename_is_ascii_header_with_utf8_name():
     header.encode('latin-1')
     assert unquote(header.split("filename*=UTF-8''", 1)[1]) == 'अनुसंधान.pdf'
     assert '\r' not in content_disposition('bad\r\nname.pdf')
+    assert '\n' not in content_disposition('bad\r\nname.pdf')
+
+
+def test_content_disposition_sanitizes_quotes_and_traversal():
+    header_quotes = content_disposition('attack"injection";evil.pdf')
+    header_quotes.encode('latin-1')
+    assert '"attack_injection_evil.pdf"' in header_quotes or '"attack_injection__evil.pdf"' in header_quotes
+    assert '\r' not in header_quotes and '\n' not in header_quotes
+
+    header_crlf = content_disposition('file\r\nSet-Cookie: evil=1\r\n.pdf')
+    header_crlf.encode('latin-1')
+    assert '\r' not in header_crlf and '\n' not in header_crlf
+
+    header_traversal = content_disposition('../../secret/report.pdf')
+    assert '..' not in header_traversal.split('filename="', 1)[1].split('"', 1)[0]
+    assert '/' not in header_traversal.split('filename="', 1)[1].split('"', 1)[0]
+
+    header_emoji = content_disposition('research_report_🚀.pdf')
+    header_emoji.encode('latin-1')
+    assert unquote(header_emoji.split("filename*=UTF-8''", 1)[1]) == 'research_report_🚀.pdf'
 
 
 def test_prose_slashes_are_not_github_identifiers():

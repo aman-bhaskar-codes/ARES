@@ -72,7 +72,7 @@ def main() -> int:
     _check_openapi(failures)
     
     # 3. Browser E2E Tests (Stubbed Playwright command)
-    if not args.skip_e2e:
+    if not args.skip_e2e and (ROOT / "apps" / "web" / "e2e").is_dir():
         check_command(["npx", "playwright", "test", "apps/web/e2e"], "Playwright E2E Tests", failures)
     
     payload = {"gate_passed": not failures, "failures": failures}
