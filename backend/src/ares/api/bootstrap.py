@@ -19,6 +19,7 @@ from ares.adapters.db import Base, build_session_factory
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.api.body_limit import PathAwareRequestBodyLimitMiddleware
+from ares.api.security_headers import SecurityHeadersMiddleware
 from ares.api.settings import Settings, get_settings
 from ares.application.asset_ingestion import AssetAdmissionService
 from ares.application.auth import AuthStore, OidcClient, _sha256
@@ -150,6 +151,10 @@ def create_application(settings: Settings | None = None) -> FastAPI:
     app.state.visualizations = visualizations
     app.state.local_media_runtime = local_media_runtime
     app.state.pdf_parser = pdf_parser
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        enable_hsts=bool(cfg.session_cookie_secure or cfg.deployment_environment == "production"),
+    )
     app.add_middleware(
         PathAwareRequestBodyLimitMiddleware,
         default_max_body_size=cfg.max_request_body_bytes,
