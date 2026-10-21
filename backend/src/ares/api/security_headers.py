@@ -16,6 +16,7 @@ DEFAULT_CSP = (
     "object-src 'none'; "
     "base-uri 'self';"
 )
+API_CSP = "default-src 'none'; frame-ancestors 'none'"
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -24,10 +25,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         app,
         *,
         csp: str = DEFAULT_CSP,
+        api_csp: str = API_CSP,
         enable_hsts: bool = False,
     ) -> None:
         super().__init__(app)
         self.csp = csp
+        self.api_csp = api_csp
         self.enable_hsts = enable_hsts
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -35,7 +38,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-        response.headers.setdefault("Content-Security-Policy", self.csp)
+        response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-site")
+
+        path = request.url.path
+        if path.startswith("/api/") or path.startswith("/health/"):
+            response.headers.setdefault("Content-Security-Policy", self.api_csp)
+        else:
+            response.headers.setdefault("Content-Security-Policy", self.csp)
+
         if self.enable_hsts:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
