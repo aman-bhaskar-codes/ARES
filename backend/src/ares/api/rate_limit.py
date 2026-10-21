@@ -1,52 +1,47 @@
-"""In-memory sliding-window rate limiter for write, upload, and run-creation endpoints."""
+"""Per-client token bucket / sliding window rate limiting middleware."""
 from __future__ import annotations
 
 import time
 from collections import defaultdict
+from collections.abc import Mapping
 from typing import ClassVar
 
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 
 class SlidingWindowRateLimiter:
-    """Thread-safe in-memory sliding window rate limiter."""
+    """Sliding-window request rate limiter in seconds."""
 
-    def __init__(self, rpm: int, window_seconds: float = 60.0) -> None:
-        self.rpm = rpm
-        self.window_seconds = window_seconds
-        self._requests: dict[str, list[float]] = defaultdict(list)
+    def __init__(self, requests_per_minute: int) -> None:
+        self.capacity = requests_per_minute
+        self.window_seconds = 60.0
+        self.history: dict[str, list[float]] = defaultdict(list)
 
-    def is_allowed(self, client_id: str, now: float | None = None) -> tuple[bool, float]:
-        """Returns (allowed, retry_after_seconds)."""
-        if now is None:
-            now = time.monotonic()
+    def is_allowed(self, client_key: str) -> tuple[bool, float]:
+        now = time.monotonic()
+        timestamps = self.history[client_key]
         cutoff = now - self.window_seconds
-        timestamps = self._requests[client_id]
+
+        # Prune expired timestamps
         while timestamps and timestamps[0] <= cutoff:
             timestamps.pop(0)
 
-        if len(timestamps) >= self.rpm:
-            retry_after = max(1.0, (timestamps[0] + self.window_seconds) - now)
-            return False, retry_after
+        if len(timestamps) < self.capacity:
+            timestamps.append(now)
+            return True, 0.0
 
-        timestamps.append(now)
-        return True, 0.0
-
-    def cleanup(self, max_idle_seconds: float = 300.0) -> None:
-        """Prune client entries with no recent requests."""
-        now = time.monotonic()
-        cutoff = now - max_idle_seconds
-        idle_clients = [k for k, v in self._requests.items() if not v or v[-1] < cutoff]
-        for k in idle_clients:
-            del self._requests[k]
+        oldest = timestamps[0]
+        retry_after = max(1.0, self.window_seconds - (now - oldest))
+        return False, retry_after
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Protects mutation, upload, and run-creation endpoints against abuse."""
+    """Enforce rate limits per client IP on sensitive mutating and compute endpoints."""
 
-    PROTECTED_ROUTES: ClassVar[dict[str, str]] = {
+    PROTECTED_ROUTES: ClassVar[Mapping[str, str]] = {
         "/api/v1/runs": "runs",
         "/api/v1/documents": "upload",
         "/api/v2/assets": "upload",
@@ -55,7 +50,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         *,
         enabled: bool = True,
         runs_rpm: int = 20,
@@ -76,9 +71,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return forwarded.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if not self.enabled or request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
-            return await call_next(request)
+            res: Response = await call_next(request)
+            return res
 
         path = request.url.path
         category = None
@@ -106,4 +102,5 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     headers={"Retry-After": str(int(retry_after))},
                 )
 
-        return await call_next(request)
+        default_res: Response = await call_next(request)
+        return default_res

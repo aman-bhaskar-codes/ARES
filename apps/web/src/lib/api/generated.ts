@@ -243,6 +243,164 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/memory/episodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Episodes */
+        get: operations["list_episodes_api_v1_memory_episodes_get"];
+        put?: never;
+        /** Create Episode */
+        post: operations["create_episode_api_v1_memory_episodes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/episodes/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Episodes */
+        get: operations["search_episodes_api_v1_memory_episodes_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/episodes/{episode_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Episode */
+        get: operations["get_episode_api_v1_memory_episodes__episode_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Episode */
+        delete: operations["delete_episode_api_v1_memory_episodes__episode_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Facts */
+        get: operations["list_facts_api_v1_memory_facts_get"];
+        put?: never;
+        /** Create Fact */
+        post: operations["create_fact_api_v1_memory_facts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/facts/consolidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Consolidate Facts */
+        post: operations["consolidate_facts_api_v1_memory_facts_consolidate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/facts/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Facts */
+        get: operations["search_facts_api_v1_memory_facts_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/facts/{fact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Fact */
+        get: operations["get_fact_api_v1_memory_facts__fact_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Fact */
+        delete: operations["delete_fact_api_v1_memory_facts__fact_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/facts/{fact_id}/supersede": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Supersede Fact */
+        post: operations["supersede_fact_api_v1_memory_facts__fact_id__supersede_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/memory/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preferences */
+        get: operations["get_preferences_api_v1_memory_preferences_get"];
+        /** Update Preferences */
+        put: operations["update_preferences_api_v1_memory_preferences_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/models": {
         parameters: {
             query?: never;
@@ -1008,6 +1166,24 @@ export interface components {
             /** Warnings */
             warnings?: string[];
         };
+        /** EpisodeCreate */
+        EpisodeCreate: {
+            /** Conversation Id */
+            conversation_id?: string | null;
+            /**
+             * Importance
+             * @default 0.5
+             */
+            importance: number;
+            /** Key Findings */
+            key_findings?: string[];
+            /** Run Id */
+            run_id?: string | null;
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+        };
         /** EvidenceView */
         EvidenceView: {
             /** Asset Content Url */
@@ -1060,6 +1236,24 @@ export interface components {
              * @enum {string}
              */
             format: "markdown" | "json" | "html" | "pdf";
+        };
+        /** FactCreate */
+        FactCreate: {
+            /**
+             * Confidence
+             * @default 1
+             */
+            confidence: number;
+            /** Evidence Source */
+            evidence_source?: string | null;
+            /** Fact */
+            fact: string;
+            /** Predicate */
+            predicate: string;
+            /** Subject */
+            subject: string;
+            /** Superseded By Id */
+            superseded_by_id?: string | null;
         };
         /** FrameRegionLocator */
         FrameRegionLocator: {
@@ -1273,6 +1467,144 @@ export interface components {
             /** Width */
             width?: number | null;
         };
+        /** MemoryEpisode */
+        MemoryEpisode: {
+            /** Conversation Id */
+            conversation_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Importance
+             * @default 0.5
+             */
+            importance: number;
+            /** Key Findings */
+            key_findings?: string[];
+            /** Run Id */
+            run_id?: string | null;
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /** MemoryFact */
+        MemoryFact: {
+            /**
+             * Confidence
+             * @default 1
+             */
+            confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Evidence Source */
+            evidence_source?: string | null;
+            /** Fact */
+            fact: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /** Predicate */
+            predicate: string;
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "superseded" | "contradiction";
+            /** Subject */
+            subject: string;
+            /** Superseded By Id */
+            superseded_by_id?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /** MemoryPreference */
+        MemoryPreference: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Custom Instructions */
+            custom_instructions?: string | null;
+            /**
+             * Depth
+             * @default standard
+             * @enum {string}
+             */
+            depth: "quick" | "standard" | "deep";
+            /** Excluded Domains */
+            excluded_domains?: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /** Preferred Domains */
+            preferred_domains?: string[];
+            /**
+             * Tone
+             * @default academic
+             * @enum {string}
+             */
+            tone: "academic" | "brief" | "technical" | "general";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
         /** PageRegionLocator */
         PageRegionLocator: {
             /** Bbox */
@@ -1300,6 +1632,19 @@ export interface components {
              * @default 0
              */
             rotation_degrees: number;
+        };
+        /** PreferenceUpdate */
+        PreferenceUpdate: {
+            /** Custom Instructions */
+            custom_instructions?: string | null;
+            /** Depth */
+            depth?: ("quick" | "standard" | "deep") | null;
+            /** Excluded Domains */
+            excluded_domains?: string[] | null;
+            /** Preferred Domains */
+            preferred_domains?: string[] | null;
+            /** Tone */
+            tone?: ("academic" | "brief" | "technical" | "general") | null;
         };
         /** RunCreate */
         RunCreate: {
@@ -1456,6 +1801,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Created By User Id */
+            created_by_user_id?: string | null;
             date_window?: components["schemas"]["DateWindow"] | null;
             /** Deadline At */
             deadline_at?: string | null;
@@ -1498,12 +1845,26 @@ export interface components {
             usage_ledger?: {
                 [key: string]: number;
             };
+            /** Workspace Id */
+            workspace_id?: string | null;
         };
         /**
          * RunStatus
          * @enum {string}
          */
         RunStatus: "queued" | "planning" | "discovering" | "reading" | "extracting" | "checking" | "synthesizing" | "completed" | "partial" | "failed" | "cancelled";
+        /** ScoredEpisode */
+        ScoredEpisode: {
+            episode: components["schemas"]["MemoryEpisode"];
+            /** Score */
+            score: number;
+        };
+        /** ScoredFact */
+        ScoredFact: {
+            fact: components["schemas"]["MemoryFact"];
+            /** Score */
+            score: number;
+        };
         /** SegmentView */
         SegmentView: {
             /**
@@ -1599,6 +1960,14 @@ export interface components {
              * Format: uri
              */
             url: string;
+        };
+        /** SupersedeRequest */
+        SupersedeRequest: {
+            /**
+             * Superseded By Id
+             * Format: uuid
+             */
+            superseded_by_id: string;
         };
         /**
          * SupportStatus
@@ -2264,6 +2633,433 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvidenceView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_episodes_api_v1_memory_episodes_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryEpisode"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_episode_api_v1_memory_episodes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EpisodeCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryEpisode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_episodes_api_v1_memory_episodes_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+                half_life_days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoredEpisode"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_episode_api_v1_memory_episodes__episode_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryEpisode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_episode_api_v1_memory_episodes__episode_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_facts_api_v1_memory_facts_get: {
+        parameters: {
+            query?: {
+                subject?: string | null;
+                status?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryFact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_fact_api_v1_memory_facts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FactCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryFact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    consolidate_facts_api_v1_memory_facts_consolidate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+        };
+    };
+    search_facts_api_v1_memory_facts_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoredFact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_fact_api_v1_memory_facts__fact_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryFact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_fact_api_v1_memory_facts__fact_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    supersede_fact_api_v1_memory_facts__fact_id__supersede_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupersedeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_preferences_api_v1_memory_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryPreference"];
+                };
+            };
+        };
+    };
+    update_preferences_api_v1_memory_preferences_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferenceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryPreference"];
                 };
             };
             /** @description Validation Error */

@@ -1,9 +1,10 @@
 """Security headers middleware enforcing standard OWASP defense headers."""
 from __future__ import annotations
 
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
+from starlette.types import ASGIApp
 
 DEFAULT_CSP = (
     "default-src 'self'; "
@@ -22,7 +23,7 @@ API_CSP = "default-src 'none'; frame-ancestors 'none'"
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         *,
         csp: str = DEFAULT_CSP,
         api_csp: str = API_CSP,
@@ -33,7 +34,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.api_csp = api_csp
         self.enable_hsts = enable_hsts
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response: Response = await call_next(request)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
