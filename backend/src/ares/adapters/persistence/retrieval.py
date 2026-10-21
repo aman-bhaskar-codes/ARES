@@ -288,6 +288,8 @@ class SqlRetrievalRepository(SqlRepositoryBase):
         dialect = engine.dialect.name if engine is not None else "unknown"
         with self._sessions() as session:
             if dialect == "postgresql":
+                # Safe: placeholders string only contains generated named bind variables (:doc_0, :doc_1, ...).
+                # All document ID values are securely passed via the params dictionary.
                 placeholders = ",".join(f":doc_{index}" for index in range(len(document_ids)))
                 params: dict[str, object] = {"query": query, "limit": limit}
                 params.update({f"doc_{index}": value for index, value in enumerate(document_ids)})
@@ -469,6 +471,9 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                 if profile_id:
                     params["profile_id"] = profile_id
                 
+                # Safe: placeholders string only contains generated named bind variables (:doc_0, :doc_1, ...).
+                # All document IDs and embedding values are securely passed via the params dictionary.
+                # profile_condition is either empty string or static parameter condition "AND p.profile_id = :profile_id".
                 params.update({f"doc_{index}": doc_id for index, doc_id in enumerate(document_ids)})
                 
                 profile_condition = "AND p.profile_id = :profile_id" if profile_id else ""
