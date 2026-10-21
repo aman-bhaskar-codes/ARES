@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -110,6 +111,7 @@ class GeminiSemanticClaimChecker:
         try:
             parsed = _SemanticAssessment.model_validate_json(raw)
         except Exception as exc:
+            logging.getLogger(__name__).warning("gemini_semantic: recovery boundary (%s)", type(exc).__name__)
             raise SemanticCheckerUnavailable(
                 "Gemini semantic checker returned invalid structured output"
             ) from exc
@@ -164,9 +166,10 @@ class GeminiSemanticClaimChecker:
                         timeout=timeout_seconds,
                     )
                 )
-            except asyncio.TimeoutError as exc:
+            except TimeoutError as exc:
                 raise SemanticCheckerUnavailable("Gemini semantic assessment timed out") from exc
             except Exception as exc:
+                logging.getLogger(__name__).warning("gemini_semantic: recovery boundary (%s)", type(exc).__name__)
                 raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
 
         payload = {
@@ -200,6 +203,7 @@ class GeminiSemanticClaimChecker:
                 },
             )
         except Exception as exc:
+            logging.getLogger(__name__).warning("gemini_semantic: recovery boundary (%s)", type(exc).__name__)
             raise SemanticCheckerUnavailable("Gemini semantic assessment failed") from exc
             
         return self._parse_assessment(interaction, evidence)

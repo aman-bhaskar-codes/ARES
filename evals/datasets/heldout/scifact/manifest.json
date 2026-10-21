@@ -1,0 +1,1421 @@
+{
+  "dataset_id": "scifact-dev-first-100-evidence-labeled",
+  "version": 1,
+  "frozen_at": "2026-10-14",
+  "source": "https://github.com/allenai/scifact",
+  "archive_url": "https://scifact.s3-us-west-2.amazonaws.com/release/latest/data.tar.gz",
+  "archive_sha256": "11c621288d41ac144d29b13b0f8503b3820b7d6e8b1f6ff24dff335c196d76be",
+  "authoring": {
+    "independent_from_implementation": true,
+    "method": "Expert-written SciFact annotations; first 100 published dev records with evidence, preserving sorted source order. No ARES tuning on these records."
+  },
+  "license_and_rights": "Claims and evidence annotations: CC BY 4.0; abstracts: S2ORC ODC-By 1.0. Attribution: Wadden et al., Fact or Fiction: Verifying Scientific Claims, EMNLP 2020. See https://github.com/allenai/scifact/blob/master/LICENSE.md",
+  "limitations": [
+    "This is a bounded candidate reranking sample, not full-corpus BEIR retrieval.",
+    "Single academic modality; does not satisfy the M11 multimodal held-out release gate.",
+    "Dev labels are public and may occur in model pretraining. No claim of model-level contamination freedom.",
+    "CONTRADICT maps to ARES abstention when no supporting evidence exists. Original labels are preserved."
+  ],
+  "cases": [
+    {
+      "id": "scifact-dev-3",
+      "query": "1,000 genomes project enables mapping of genetic sequence variation consisting of rare variants with larger penetrance effects than common variants.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#3"
+    },
+    {
+      "id": "scifact-dev-5",
+      "query": "1/2000 in UK have abnormal PrP positivity.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#5"
+    },
+    {
+      "id": "scifact-dev-42",
+      "query": "A high microerythrocyte count raises vulnerability to severe anemia in homozygous alpha (+)- thalassemia trait subjects.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#42"
+    },
+    {
+      "id": "scifact-dev-48",
+      "query": "A total of 1,000 people in the UK are asymptomatic carriers of vCJD infection.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#48"
+    },
+    {
+      "id": "scifact-dev-49",
+      "query": "ADAR1 binds to Dicer to cleave pre-miRNA.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#49"
+    },
+    {
+      "id": "scifact-dev-50",
+      "query": "AIRE is expressed in some skin tumors.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#50"
+    },
+    {
+      "id": "scifact-dev-51",
+      "query": "ALDH1 expression is associated with better breast cancer outcomes.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#51"
+    },
+    {
+      "id": "scifact-dev-53",
+      "query": "ALDH1 expression is associated with poorer prognosis in breast cancer.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#53"
+    },
+    {
+      "id": "scifact-dev-54",
+      "query": "AMP-activated protein kinase (AMPK) activation increases inflammation-related fibrosis in the lungs.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#54"
+    },
+    {
+      "id": "scifact-dev-56",
+      "query": "APOE4 expression in iPSC-derived neurons increases AlphaBeta production and tau phosphorylation causing GABA neuron degeneration.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#56"
+    },
+    {
+      "id": "scifact-dev-57",
+      "query": "APOE4 expression in iPSC-derived neurons increases AlphaBeta production and tau phosphorylation, delaying GABA neuron degeneration.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#57"
+    },
+    {
+      "id": "scifact-dev-70",
+      "query": "Activation of PPM1D suppresses p53 function.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#70"
+    },
+    {
+      "id": "scifact-dev-100",
+      "query": "All hematopoietic stem cells segregate their chromosomes randomly.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#100"
+    },
+    {
+      "id": "scifact-dev-113",
+      "query": "Angiotensin converting enzyme inhibitors are associated with increased risk for functional renal insufficiency.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#113"
+    },
+    {
+      "id": "scifact-dev-115",
+      "query": "Anthrax spores can be disposed of easily after they are dispersed.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#115"
+    },
+    {
+      "id": "scifact-dev-118",
+      "query": "Antibiotic induced alterations in the gut microbiome reduce resistance against Clostridium difficile",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#118"
+    },
+    {
+      "id": "scifact-dev-124",
+      "query": "Antiretroviral therapy reduces rates of tuberculosis across a broad range of CD4 strata.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#124"
+    },
+    {
+      "id": "scifact-dev-129",
+      "query": "Articles published in open access format are less likely to be cited than traditional journals.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#129"
+    },
+    {
+      "id": "scifact-dev-130",
+      "query": "Articles published in open access format are more likely to be cited than traditional journals.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#130"
+    },
+    {
+      "id": "scifact-dev-133",
+      "query": "Assembly of invadopodia is triggered by focal generation of phosphatidylinositol-3,4-biphosphate and the activation of the nonreceptor tyrosine kinase Src.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#133"
+    },
+    {
+      "id": "scifact-dev-137",
+      "query": "Asymptomatic visual impairment screening in elderly populations does not lead to improved vision.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#137"
+    },
+    {
+      "id": "scifact-dev-141",
+      "query": "Auditory entrainment is strengthened when people see congruent visual and auditory information.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#141"
+    },
+    {
+      "id": "scifact-dev-142",
+      "query": "Autologous transplantation of mesenchymal stem cells causes a higher rate of opportunistic infections than induction therapy with anti-interleukin-2 receptor antibodies.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#142"
+    },
+    {
+      "id": "scifact-dev-143",
+      "query": "Autologous transplantation of mesenchymal stem cells causes fewer opportunistic infections than induction therapy with anti-interleukin-2 receptor antibodies.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#143"
+    },
+    {
+      "id": "scifact-dev-146",
+      "query": "Autologous transplantation of mesenchymal stem cells has lower rates of rejection than induction therapy with anti-interleukin-2 receptor antibodies.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#146"
+    },
+    {
+      "id": "scifact-dev-148",
+      "query": "Autophagy declines in aged organisms.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#148"
+    },
+    {
+      "id": "scifact-dev-163",
+      "query": "Bariatric surgery has a positive impact on mental health.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#163"
+    },
+    {
+      "id": "scifact-dev-171",
+      "query": "Basophils counteract disease development in patients with systemic lupus erythematosus (SLE).",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#171"
+    },
+    {
+      "id": "scifact-dev-179",
+      "query": "Birth-weight is positively associated with breast cancer.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#179"
+    },
+    {
+      "id": "scifact-dev-180",
+      "query": "Blocking the interaction between TDP-43 and respiratory complex I proteins ND3 and ND6 leads to increased TDP-43-induced neuronal loss.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#180"
+    },
+    {
+      "id": "scifact-dev-183",
+      "query": "Bone marrow cells contribute to adult macrophage compartments.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#183"
+    },
+    {
+      "id": "scifact-dev-185",
+      "query": "Breast cancer development is determined exclusively by genetic factors.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#185"
+    },
+    {
+      "id": "scifact-dev-208",
+      "query": "CHEK2 is not associated with breast cancer.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#208"
+    },
+    {
+      "id": "scifact-dev-212",
+      "query": "CR is associated with higher methylation age.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#212"
+    },
+    {
+      "id": "scifact-dev-216",
+      "query": "CX3CR1 on the Th2 cells impairs T cell survival",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#216"
+    },
+    {
+      "id": "scifact-dev-217",
+      "query": "CX3CR1 on the Th2 cells promotes T cell survival",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#217"
+    },
+    {
+      "id": "scifact-dev-218",
+      "query": "CX3CR1 on the Th2 cells promotes airway inflammation.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#218"
+    },
+    {
+      "id": "scifact-dev-219",
+      "query": "CX3CR1 on the Th2 cells suppresses airway inflammation.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#219"
+    },
+    {
+      "id": "scifact-dev-230",
+      "query": "Carriers of the alcohol aldehyde dehydrogenase deficiency mutation drink less that non-carries.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#230"
+    },
+    {
+      "id": "scifact-dev-233",
+      "query": "Cell autonomous sex determination in somatic cells does not occur in Galliformes.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#233"
+    },
+    {
+      "id": "scifact-dev-236",
+      "query": "Cell autonomous sex determination in somatic cells occurs in Passeriformes.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#236"
+    },
+    {
+      "id": "scifact-dev-239",
+      "query": "Cellular aging closely links to an older appearance.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#239"
+    },
+    {
+      "id": "scifact-dev-248",
+      "query": "Chenodeosycholic acid treatment increases whole-body energy expenditure.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#248"
+    },
+    {
+      "id": "scifact-dev-249",
+      "query": "Chenodeosycholic acid treatment reduces whole-body energy expenditure.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#249"
+    },
+    {
+      "id": "scifact-dev-261",
+      "query": "Chronic aerobic exercise alters endothelial function, improving vasodilating mechanisms mediated by NO.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#261"
+    },
+    {
+      "id": "scifact-dev-274",
+      "query": "Combination nicotine replacement therapies with varenicline or bupropion lead to significantly higher long-term abstinence rates at 52 weeks than varenicline monotherapy.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#274"
+    },
+    {
+      "id": "scifact-dev-275",
+      "query": "Combining phosphatidylinositide 3-kinase and MEK 1/2 inhibitors is effective at treating KRAS mutant tumors.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#275"
+    },
+    {
+      "id": "scifact-dev-279",
+      "query": "Commelina yellow mottle virus' (ComYMV) genome consists of 7489 baise pairs.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#279"
+    },
+    {
+      "id": "scifact-dev-295",
+      "query": "Crosstalk between dendritic cells (DCs) and innate lymphoid cells (ILCs) is important in the regulation of intestinal homeostasis.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#295"
+    },
+    {
+      "id": "scifact-dev-298",
+      "query": "Cytochrome c is released from the mitochondrial intermembrane space to cytosol during apoptosis.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#298"
+    },
+    {
+      "id": "scifact-dev-314",
+      "query": "Deamination of cytidine to uridine on the minus strand of viral DNA results in catastrophic G-to-A mutations in the viral genome.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#314"
+    },
+    {
+      "id": "scifact-dev-327",
+      "query": "Deletion of \u03b1v\u03b28 does not result in a spontaneous inflammatory phenotype.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#327"
+    },
+    {
+      "id": "scifact-dev-338",
+      "query": "Dexamethasone decreases risk of postoperative bleeding.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#338"
+    },
+    {
+      "id": "scifact-dev-343",
+      "query": "Diabetic patients with acute coronary syndrome experience increased short-term and long-term risk for bleeding events.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#343"
+    },
+    {
+      "id": "scifact-dev-380",
+      "query": "Enhanced early production of inflammatory chemokines improves viral control in the lung.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#380"
+    },
+    {
+      "id": "scifact-dev-385",
+      "query": "Epigenetic modulating agents (EMAs) modulate antitumor immune response in a cancer model system.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#385"
+    },
+    {
+      "id": "scifact-dev-386",
+      "query": "Errors in peripheral IV drug administration are most common during bolus administration and multiple-step medicine preparations.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#386"
+    },
+    {
+      "id": "scifact-dev-399",
+      "query": "Exposure to fine particulate air pollution is relate to anxiety prevalence.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#399"
+    },
+    {
+      "id": "scifact-dev-415",
+      "query": "Female carriers of the Apolipoprotein E4 (APOE4) allele have increased risk for dementia.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#415"
+    },
+    {
+      "id": "scifact-dev-431",
+      "query": "FoxO3a activation in neuronal death is mediated by reactive oxygen species (ROS).",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#431"
+    },
+    {
+      "id": "scifact-dev-436",
+      "query": "Free histones are degraded by a Rad53-dependent mechanism once DNA has been replicated.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#436"
+    },
+    {
+      "id": "scifact-dev-443",
+      "query": "GATA-3 is important for hematopoietic stem cell (HSC) function.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#443"
+    },
+    {
+      "id": "scifact-dev-452",
+      "query": "Gene expression does not vary appreciably across genetically identical cells.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#452"
+    },
+    {
+      "id": "scifact-dev-475",
+      "query": "Glycolysis is one of the primary glycometabolic pathways in cells.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#475"
+    },
+    {
+      "id": "scifact-dev-501",
+      "query": "Headaches are not correlated with cognitive impairment.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#501"
+    },
+    {
+      "id": "scifact-dev-513",
+      "query": "High cardiopulmonary fitness causes increased mortality rate.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#513"
+    },
+    {
+      "id": "scifact-dev-516",
+      "query": "High levels of CRP reduces the risk of exacerbations in chronic obstructive pulmonary disease (COPD).",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#516"
+    },
+    {
+      "id": "scifact-dev-521",
+      "query": "High-sensitivity cardiac troponin T (HSCT-T) dosage may not be diagnostic if the onset of symptoms occurs less than 3 hours before acute myocardial injury (AMI).",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#521"
+    },
+    {
+      "id": "scifact-dev-525",
+      "query": "Histone demethylase recruitment and a transient decrease in histone methylation is necessary for ligand-dependent induction of transcription by nuclear receptors.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#525"
+    },
+    {
+      "id": "scifact-dev-528",
+      "query": "Human T-lymphotropic virus type-I-associated myelopathy / tropical spastic paraparesis (HAM/TSP) patients produce Immunoglobulin G (IgG) antibodies which cross-react with an immunodominant epitope in Tax.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#528"
+    },
+    {
+      "id": "scifact-dev-532",
+      "query": "Hyperfibrinogenemia decreases rates of femoropopliteal bypass thrombosis.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#532"
+    },
+    {
+      "id": "scifact-dev-533",
+      "query": "Hyperfibrinogenemia increases rates of femoropopliteal bypass thrombosis.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#533"
+    },
+    {
+      "id": "scifact-dev-536",
+      "query": "Hypocretin neurones induce panicprone state in rats.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#536"
+    },
+    {
+      "id": "scifact-dev-539",
+      "query": "Hypoglycemia increases the risk of dementia.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#539"
+    },
+    {
+      "id": "scifact-dev-540",
+      "query": "Hypothalamic glutamate neurotransmission is crucial to energy balance.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#540"
+    },
+    {
+      "id": "scifact-dev-549",
+      "query": "IRG1 has antiviral effects against neurotropic viruses.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#549"
+    },
+    {
+      "id": "scifact-dev-569",
+      "query": "In adult tissue, most T cells are memory T cells.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#569"
+    },
+    {
+      "id": "scifact-dev-578",
+      "query": "In mouse models, the loss of CSF1R facilitates MOZ-TIF2-induced leuekmogenesis.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#578"
+    },
+    {
+      "id": "scifact-dev-589",
+      "query": "In young and middle-aged adults, current or remote uses of ADHD medications do not increase the risk of serious cardiovascular events.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#589"
+    },
+    {
+      "id": "scifact-dev-593",
+      "query": "Incidence of heart failure decreased by 10% in women since 1979.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#593"
+    },
+    {
+      "id": "scifact-dev-597",
+      "query": "Incidence rates of cervical cancer have decreased.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#597"
+    },
+    {
+      "id": "scifact-dev-598",
+      "query": "Incidence rates of cervical cancer have increased due to nationwide screening programs based primarily on cytology to detect uterine cervical cancer.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#598"
+    },
+    {
+      "id": "scifact-dev-613",
+      "query": "Increased microtubule acetylation repairs LRRK2 Roc-COR domain mutation induced locomotor deficits.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#613"
+    },
+    {
+      "id": "scifact-dev-619",
+      "query": "Increased vessel density along with a reduction in fibrosis decreases the efficacy of chemotherapy treatments.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#619"
+    },
+    {
+      "id": "scifact-dev-636",
+      "query": "Inositol lipid 3-phosphatase PTEN converts Ptdlns(3,4)P 2 into phosphatidylinositol 4-phosphate.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#636"
+    },
+    {
+      "id": "scifact-dev-641",
+      "query": "Insomnia can be effectively treated with cognitive behavioral therapy.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#641"
+    },
+    {
+      "id": "scifact-dev-674",
+      "query": "LDL cholesterol has no involvement in the development of cardiovascular disease.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#674"
+    },
+    {
+      "id": "scifact-dev-692",
+      "query": "Leuko-increased blood increases infectious complications in red blood cell transfusion.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#692"
+    },
+    {
+      "id": "scifact-dev-693",
+      "query": "Leuko-reduced blood reduces infectious complications in red blood cell transfusion.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#693"
+    },
+    {
+      "id": "scifact-dev-718",
+      "query": "Low nucleosome occupancy correlates with low methylation levels across species.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#718"
+    },
+    {
+      "id": "scifact-dev-721",
+      "query": "Lupus-prone mice infected with curliproducing bacteria have higher autoantibody titers compared to controls.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#721"
+    },
+    {
+      "id": "scifact-dev-723",
+      "query": "Ly49Q directs the organization of neutrophil migration to inflammation sites by regulating membrane raft functions.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#723"
+    },
+    {
+      "id": "scifact-dev-728",
+      "query": "Ly6C hi monocytes have a lower inflammatory capacity than Ly6C lo monocytes.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#728"
+    },
+    {
+      "id": "scifact-dev-729",
+      "query": "Lymphadenopathy is observed in knockin mouse lacking the SHP-2 MAPK pathway.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#729"
+    },
+    {
+      "id": "scifact-dev-742",
+      "query": "Macrolides have no protective effect against myocardial infarction.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#742"
+    },
+    {
+      "id": "scifact-dev-743",
+      "query": "Macrolides protect against myocardial infarction.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#743"
+    },
+    {
+      "id": "scifact-dev-744",
+      "query": "Macropinocytosis contributes to a cell's supply of amino acids via the intracellular uptake of protein.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#744"
+    },
+    {
+      "id": "scifact-dev-756",
+      "query": "Many proteins in human cells can be post-translationally modified at lysine residues via acetylation.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#756"
+    },
+    {
+      "id": "scifact-dev-759",
+      "query": "Mathematical models predict that using Artemisinin-based combination therapy over nongametocytocidal drugs have a dramatic impact in reducing malaria transmission.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": true,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#759"
+    },
+    {
+      "id": "scifact-dev-770",
+      "query": "Metastatic colorectal cancer treated with a single agent fluoropyrimidines resulted in reduced efficacy and lower quality of life when compared with oxaliplatin-based chemotherapy in elderly patients.",
+      "modality": "academic",
+      "tags": [
+        "scientific_claim_support"
+      ],
+      "required_facets": [
+        "claim support"
+      ],
+      "expected_abstention": false,
+      "asset_refs": [],
+      "annotation_ref": "claim_cases.json#770"
+    }
+  ]
+}

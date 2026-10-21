@@ -3,9 +3,8 @@ from uuid import uuid4
 
 import httpx
 import pytest
-
-from ares.adapters.ollama_synthesis import OllamaLLMProvider
 from ares.adapters.gemini import ProviderUnavailable
+from ares.adapters.ollama_synthesis import OllamaLLMProvider
 from ares.domain.research import EvidencePacket
 
 
@@ -65,4 +64,39 @@ def test_local_writer_outage_is_a_provider_error():
     )
     with pytest.raises(ProviderUnavailable):
         provider.synthesize("What color?", [packet], max_output_tokens=256, timeout_seconds=10)
+    provider.close()
+
+
+def test_local_writer_retries_invalid_output_without_inventing_citations():
+    import json
+    bodies = []
+    packet = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='T',
+        url='https://example.com', domain='example.com', text='The color is blue.',
+        locator='T', captured_at=datetime.now(UTC), content_hash='a' * 64)
+    def respond(request):
+        bodies.append(json.loads(request.content))
+        content = '{"summary_markdown":"","claims":[{"text":"Blue.","evidence_indexes":[99]}]}' if len(bodies) == 1 else '{"summary_markdown":"","claims":[{"text":"Blue.","evidence_indexes":[0]}]}'
+        return httpx.Response(200, json={'message': {'content': content}})
+    provider = OllamaLLMProvider(client=httpx.Client(transport=httpx.MockTransport(respond)),
+        context_tokens=8192, passage_chars=1200)
+    result = provider.synthesize('Color?', [packet], max_output_tokens=256, timeout_seconds=10)
+    assert len(bodies) == 2
+    assert bodies[0]['options']['num_ctx'] == 8192
+    assert bodies[1]['format'] == 'json'
+    assert result.claims[0].evidence_ids == [packet.evidence_id]
+    provider.close()
+
+
+def test_local_writer_never_repairs_an_unknown_evidence_index():
+    packet = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='T',
+        url='https://example.com', domain='example.com', text='Blue.', locator='T',
+        captured_at=datetime.now(UTC), content_hash='a' * 64)
+    calls = []
+    def respond(request):
+        calls.append(request)
+        return httpx.Response(200, json={'message': {'content': '{"summary_markdown":"","claims":[{"text":"Blue.","evidence_indexes":[99]}]}'}})
+    provider = OllamaLLMProvider(client=httpx.Client(transport=httpx.MockTransport(respond)))
+    with pytest.raises(ProviderUnavailable):
+        provider.synthesize('Color?', [packet], max_output_tokens=256, timeout_seconds=10)
+    assert len(calls) == 2
     provider.close()

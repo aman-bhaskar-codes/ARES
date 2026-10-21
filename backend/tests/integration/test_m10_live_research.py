@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import threading
-import pytest
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
 from ares.adapters.db import Base, build_session_factory
 from ares.application.engine import ResearchEngine
 from ares.application.observability import RunTelemetry
-from ares.application.providers import ProviderRegistry
-from ares.application.providers import ProviderCapabilities, ProviderMetadata
+from ares.application.providers import ProviderCapabilities, ProviderMetadata, ProviderRegistry
 from ares.application.repository import Repository
 from ares.application.run_context import RunContext
 from ares.domain.budgets import BUDGETS
@@ -21,8 +20,8 @@ from ares.domain.models import (
     RunMode,
     RunStatus,
     SearchHit,
-    SynthesizedClaim,
     SynthesisResult,
+    SynthesizedClaim,
 )
 from ares.domain.research import EvidencePacket, ResearchPlan, SearchRequest
 
@@ -264,9 +263,9 @@ def test_workspace_scoped_cache_avoids_duplicate_provider_and_source_calls(tmp_p
 def test_claim_evidence_edges_persist_relation_rationale_and_checker_version(
     tmp_path: Path,
 ) -> None:
-    from sqlalchemy import select
     from ares.adapters.db import ClaimEvidenceRow
     from ares.domain.models import FinalizedClaim, SupportStatus
+    from sqlalchemy import select
 
     repository = repository_for(tmp_path)
     conversation = repository.create_conversation("M10 edges")
@@ -507,20 +506,20 @@ def test_academic_open_full_text_replaces_metadata_but_keeps_provenance_and_cach
             RunCreate(
                 conversation_id=conversation.id,
                 query="academic full text",
-                mode=RunMode.QUICK,
+                mode=RunMode.RESEARCH,
                 source_scope=["academic"],
             ),
             idempotency_key=f"m10-fulltext-{index}",
         )
         lease = repository.claim_next_job()
         assert lease is not None
-        context = RunContext.create(repository, lease, BUDGETS[RunMode.QUICK])
+        context = RunContext.create(repository, lease, BUDGETS[RunMode.RESEARCH])
         # Academic documents are returned as the second discovery track result.
         _, academic_rows, _, _ = engine.discovery._discover_tracks(
             lease,
             context,
             repository.get_run(run.id),
-            BUDGETS[RunMode.QUICK],
+            BUDGETS[RunMode.RESEARCH],
             RunTelemetry(repository, lease),
         )
         assert academic_rows[0][1].extraction_method == "academic-pdf:fixture"

@@ -49,7 +49,7 @@ class TextLocator(BaseModel):
     char_end: int = Field(gt=0)
 
     @model_validator(mode="after")
-    def validate_offsets(self) -> "TextLocator":
+    def validate_offsets(self) -> TextLocator:
         if self.char_end <= self.char_start:
             raise ValueError("char_end must be greater than char_start")
         return self
@@ -63,7 +63,7 @@ class PageRegionLocator(BaseModel):
     rotation_degrees: int = 0
 
     @model_validator(mode="after")
-    def validate_bbox(self) -> "PageRegionLocator":
+    def validate_bbox(self) -> PageRegionLocator:
         left, top, right, bottom = self.bbox
         if not all(0.0 <= value <= 1.0 for value in self.bbox):
             raise ValueError("normalized bbox values must be between 0 and 1")
@@ -82,7 +82,7 @@ class TableCellsLocator(BaseModel):
     page: int | None = Field(default=None, ge=1)
 
     @model_validator(mode="after")
-    def validate_cells(self) -> "TableCellsLocator":
+    def validate_cells(self) -> TableCellsLocator:
         if any(value < 0 for value in self.rows + self.columns):
             raise ValueError("table row/column indexes cannot be negative")
         return self
@@ -95,7 +95,7 @@ class TimeRangeLocator(BaseModel):
     track: Literal["audio", "video"] = "audio"
 
     @model_validator(mode="after")
-    def validate_range(self) -> "TimeRangeLocator":
+    def validate_range(self) -> TimeRangeLocator:
         if self.end_ms <= self.start_ms:
             raise ValueError("end_ms must be greater than start_ms")
         return self
@@ -109,7 +109,7 @@ class FrameRegionLocator(BaseModel):
     frame_id: UUID | None = None
 
     @model_validator(mode="after")
-    def validate_bbox(self) -> "FrameRegionLocator":
+    def validate_bbox(self) -> FrameRegionLocator:
         left, top, right, bottom = self.bbox
         if not all(0.0 <= value <= 1.0 for value in self.bbox):
             raise ValueError("normalized bbox values must be between 0 and 1")

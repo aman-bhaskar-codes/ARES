@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Protocol
+from typing import Literal, Protocol
 
 from ares.domain.models import DateWindow, RunMode
 from ares.domain.research import ResearchPlan
@@ -48,12 +48,12 @@ class DeterministicResearchPlanner:
                 unique.append(variant)
                 seen.add(key)
 
-        time_range = None
+        time_range: Literal["day", "week", "month", "year"] | None = None
         if date_window is None and not _YEAR.search(cleaned):
             if any(term in lower for term in ("today", "latest", "current", "recent", "this week")):
                 time_range = "month"
 
-        intent = "narrow"
+        intent: Literal["exact", "narrow", "comparison", "multi-hop", "temporal", "analysis"] = "narrow"
         # Exact DOI/arXiv/repository/quoted-string queries retain deterministic priority.
         if '"' in cleaned or "doi.org" in lower or "arxiv:" in lower or "github.com" in lower:
             intent = "exact"

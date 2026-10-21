@@ -4,11 +4,12 @@ import csv
 import hashlib
 import io
 import json
+import logging
 import mimetypes
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 from uuid import UUID
 
 from ares.adapters.pdf_parser import BoundedPdfParser
@@ -210,7 +211,8 @@ class AssetAdmissionService:
                 blob_key=blob_key,
                 cloud_media_allowed=allow_cloud_media,
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("asset_ingestion: recovery boundary (%s)", type(_boundary_error).__name__)
             if not self.repository.is_blob_referenced(blob_key):
                 self.blobs.delete(blob_key)
             raise
@@ -625,6 +627,7 @@ class AssetIngestionExecutor:
             except StaleLeaseError:
                 raise
             except Exception as exc:
+                logging.getLogger(__name__).warning("asset_ingestion: recovery boundary (%s)", type(exc).__name__)
                 # Lexical publication is already durable and useful. Semantic indexing is
                 # an independent readiness dimension, so a model/runtime failure degrades
                 # the ingestion instead of discarding searchable evidence. A retry can
@@ -645,6 +648,7 @@ class AssetIngestionExecutor:
             self._cleanup_unreferenced_blobs(new_blob_keys)
             raise
         except Exception as exc:
+            logging.getLogger(__name__).warning("asset_ingestion: recovery boundary (%s)", type(exc).__name__)
             self._cleanup_unreferenced_blobs(new_blob_keys)
             # Media subprocesses poll the durable cancellation flag. If the user
             # cancelled while FFmpeg/ASR was running, publish a cancelled terminal
@@ -667,7 +671,7 @@ class AssetIngestionExecutor:
                 # Cleanup is best-effort here; the authoritative DB transaction is
                 # already fenced. Operators can reconcile orphaned content-addressed
                 # blobs without risking deletion of referenced media.
-                pass
+                logging.getLogger(__name__).debug("Unreferenced blob cleanup failed", exc_info=True)
 
     def _enrich_video_frames(
         self,
@@ -711,6 +715,7 @@ class AssetIngestionExecutor:
                     name=f"frame-{frame.presentation_time_ms}.jpg",
                 )
             except Exception as exc:
+                logging.getLogger(__name__).warning("asset_ingestion: recovery boundary (%s)", type(exc).__name__)
                 warnings.append(
                     f"Frame OCR at {frame.presentation_time_ms} ms failed: "
                     f"{type(exc).__name__}: {str(exc)[:180]}"
@@ -780,6 +785,7 @@ class AssetIngestionExecutor:
         except RichExtractionUnavailable:
             raise
         except Exception as exc:
+            logging.getLogger(__name__).warning("asset_ingestion: recovery boundary (%s)", type(exc).__name__)
             raise ValueError("image could not be safely decoded") from exc
 
     def _rich_extract(

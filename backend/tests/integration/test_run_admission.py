@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from ares.adapters.db import Base, build_session_factory
 from ares.application.repository import Repository, RunAdmissionError
 from ares.domain.models import RunCreate

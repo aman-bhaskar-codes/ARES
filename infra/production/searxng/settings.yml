@@ -1,0 +1,22 @@
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "ARES Search"
+
+search:
+  safe_search: 1
+  formats: [html, json]
+
+server:
+  # Overridden by SEARXNG_SECRET; compose requires it before creating the container.
+  secret_key: ""
+  limiter: true
+  image_proxy: false
+
+valkey:
+  url: valkey://search-valkey:6379/0
+
+engines:
+  - name: yahoo
+    disabled: false

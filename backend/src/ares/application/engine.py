@@ -1,27 +1,24 @@
 from __future__ import annotations
 
-import threading
+import logging
 import re
+import threading
 from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
-from ares.application.planning import DeterministicResearchPlanner, ResearchPlanner
+from pydantic import HttpUrl
+
 from ares.application.checkpoints import CheckpointStore
-from ares.application.run_context import RunCancelled, RunContext, RunDeadlineExceeded
+from ares.application.decisions import ResilientDecisionProvider
 from ares.application.finalization import compose_checked_markdown
 from ares.application.observability import RunTelemetry
-from ares.application.security import RemoteContentRiskScanner
-from ares.application.decisions import ResilientDecisionProvider
-from ares.application.rag import HybridRAGRetriever
-from ares.application.research_cache import RunResearchCache
-from ares.application.providers import ProviderRegistry
-from ares.ports.reranking import CandidateReranker
 from ares.application.persistent_rag import PersistentDocumentRAG
-from ares.application.research_stages.discovery import DiscoveryStage
-from ares.application.research_stages.synthesis import SynthesisStage
+from ares.application.planning import DeterministicResearchPlanner, ResearchPlanner
+from ares.application.providers import ProviderRegistry
+from ares.application.rag import HybridRAGRetriever, reciprocal_rank_fusion
 from ares.application.repository import (
     JobLease,
     QuotaExceededError,
@@ -30,6 +27,11 @@ from ares.application.repository import (
     RunAuthorizationError,
     RunBudgetExceededError,
 )
+from ares.application.research_cache import RunResearchCache
+from ares.application.research_stages.discovery import DiscoveryStage
+from ares.application.research_stages.synthesis import SynthesisStage
+from ares.application.run_context import RunCancelled, RunContext, RunDeadlineExceeded
+from ares.application.security import RemoteContentRiskScanner
 from ares.domain.budgets import BUDGETS, calculate_provider_cost
 from ares.domain.models import (
     AssessmentState,
@@ -40,9 +42,11 @@ from ares.domain.models import (
     SupportStatus,
     SynthesisResult,
 )
-from ares.ports.errors import LLMProviderError, SearchProviderError
-from ares.ports.research import AcademicFullTextFetcher, Fetcher, LLMProvider, SearchProvider
+from ares.domain.research import EvidenceCandidate
 from ares.ports.decisions import DecisionProvider
+from ares.ports.errors import LLMProviderError, SearchProviderError
+from ares.ports.reranking import CandidateReranker
+from ares.ports.research import AcademicFullTextFetcher, Fetcher, LLMProvider, SearchProvider
 from ares.ports.semantic import SemanticClaimChecker
 
 
@@ -221,7 +225,7 @@ class ResearchEngine:
         gemini_max_daily_spend_usd: float | None = None,
         planner: ResearchPlanner | None = None,
         retriever: HybridRAGRetriever | None = None,
-        candidate_reranker: "CandidateReranker | None" = None,
+        candidate_reranker: CandidateReranker | None = None,
         global_http_concurrency: int = 4,
         gemini_concurrency: int = 1,
         provider_http_timeout_seconds: float = 20.0,
@@ -318,7 +322,7 @@ class ResearchEngine:
                 raise RunCancelled("run cancellation requested")
         except RunCancelled:
             self.repository.set_status(lease.run_id, RunStatus.CANCELLED, lease_token=lease.token)
-            raise CancelledRun
+            raise CancelledRun from None
 
     @contextmanager
     def _resource_slot(
@@ -377,6 +381,13 @@ class ResearchEngine:
             run = self.repository.get_run(run_id)
             budget = BUDGETS[run.mode]
             import dataclasses
+            if run.plugins:
+                self.repository.record_event(
+                    run_id,
+                    "plugins.activated",
+                    {"plugins": list(run.plugins)},
+                    lease_token=lease.token,
+                )
             if "speed" in run.plugins:
                 budget = dataclasses.replace(
                     budget,
@@ -385,14 +396,66 @@ class ResearchEngine:
                     max_search_requests=min(6, budget.max_search_requests),
                     max_documents=min(10, budget.max_documents)
                 )
+                self.repository.record_event(
+                    run_id,
+                    "plugin.speed.applied",
+                    {
+                        "max_waves": 1,
+                        "max_search_requests": budget.max_search_requests,
+                        "max_documents": budget.max_documents,
+                    },
+                    lease_token=lease.token,
+                )
             if "accuracy" in run.plugins:
                 budget = dataclasses.replace(
                     budget,
-                    max_waves=budget.max_waves + 1,
+                    max_waves=min(4, budget.max_waves + 1),
                     max_llm_calls=budget.max_llm_calls * 2,
-                    max_search_requests=budget.max_search_requests + 6,
-                    max_documents=budget.max_documents * 2
+                    max_search_requests=min(18, budget.max_search_requests + 6),
+                    max_documents=min(24, budget.max_documents + 6),
+                    wall_clock_seconds=int(budget.wall_clock_seconds * 1.5),
                 )
+                self.repository.record_event(
+                    run_id,
+                    "plugin.accuracy.applied",
+                    {
+                        "deep_verification": True,
+                        "max_waves": budget.max_waves,
+                        "semantic_max_claims": 20,
+                    },
+                    lease_token=lease.token,
+                )
+            if "code" in run.plugins:
+                self.repository.record_event(
+                    run_id,
+                    "plugin.code.applied",
+                    {"status": "interpreter_ready"},
+                    lease_token=lease.token,
+                )
+                from ares.application.code_interpreter import CodeInterpreter
+                interp = CodeInterpreter()
+                if interp.detect_computational_intent(run.query):
+                    math_match = re.search(
+                        r"(?:calculate|compute|solve|eval|evaluate|what is)?\s*([0-9\.\+\-\*\/\(\)\^\%\s]{3,})",
+                        run.query,
+                        re.IGNORECASE,
+                    )
+                    if math_match and any(op in math_match.group(1) for op in ("+", "-", "*", "/", "^", "%")):
+                        clean_expr = math_match.group(1).strip().replace("^", "**")
+                        script = f"import math\nres = {clean_expr}\nprint(res)"
+                        comp_res = interp.execute(script)
+                        self.repository.record_event(
+                            run_id,
+                            "code_interpreter.executed",
+                            {
+                                "code": script,
+                                "stdout": comp_res.stdout,
+                                "stderr": comp_res.stderr,
+                                "success": comp_res.success,
+                                "duration_seconds": comp_res.execution_time_seconds,
+                            },
+                            lease_token=lease.token,
+                        )
             context = RunContext.create(self.repository, lease, budget)
             checkpoints = CheckpointStore(self.repository, run_id, lease.token)
             telemetry = RunTelemetry(self.repository, lease)
@@ -602,25 +665,57 @@ class ResearchEngine:
                         run.query, [document for _, document in document_docs], limit=pool_size
                     )
 
-            # Interleave source classes instead of comparing incomparable raw score scales.
-            ranked = []
-            for index in range(max(len(network_ranked), len(document_ranked))):
-                if index < len(network_ranked):
-                    ranked.append(network_ranked[index])
-                if index < len(document_ranked):
-                    ranked.append(document_ranked[index])
-                if len(ranked) >= pool_size:
-                    break
-            
-            # Deduplicate by candidate_id
-            seen = set()
-            deduped = []
-            for candidate in ranked:
-                if candidate.candidate_id not in seen:
-                    seen.add(candidate.candidate_id)
-                    deduped.append(candidate)
-            ranked = deduped[:60]
-            
+            memory_candidates: list[EvidenceCandidate] = []
+            if run.workspace_id:
+                try:
+                    facts = self.repository.search_memory_facts(run.workspace_id, run.query, limit=5)
+                    episodes = self.repository.search_memory_episodes(run.workspace_id, run.query, limit=3)
+                    for fact, fscore in facts:
+                        memory_candidates.append(
+                            EvidenceCandidate(
+                                source_id=uuid4(),
+                                title=f"Memory Fact: {fact.subject}",
+                                url=HttpUrl("https://ares.local/memory/fact"),
+                                text=f"{fact.subject} {fact.predicate}: {fact.fact}",
+                                locator="semantic memory",
+                                char_start=0,
+                                char_end=len(fact.fact),
+                                combined_score=fscore,
+                            )
+                        )
+                    for ep, escore in episodes:
+                        memory_candidates.append(
+                            EvidenceCandidate(
+                                source_id=uuid4(),
+                                title=f"Memory Episode: {ep.title}",
+                                url=HttpUrl("https://ares.local/memory/episode"),
+                                text=f"{ep.title}: {ep.summary}",
+                                locator="episodic memory",
+                                char_start=0,
+                                char_end=len(ep.summary),
+                                combined_score=escore,
+                            )
+                        )
+                    if memory_candidates:
+                        self.repository.record_event(
+                            run_id,
+                            "retrieval.memory",
+                            {
+                                "facts_retrieved": len(facts),
+                                "episodes_retrieved": len(episodes),
+                            },
+                            lease_token=lease.token,
+                        )
+                except Exception as _mem_read_exc:
+                    logging.getLogger(__name__).warning("Memory retrieval skipped: %s", _mem_read_exc)
+
+            # Reciprocal Rank Fusion combines source streams using rank-calibrated weighting
+            source_streams = [lst for lst in [network_ranked, document_ranked, memory_candidates] if lst]
+            if source_streams:
+                ranked = reciprocal_rank_fusion(source_streams, k=60, limit=60)
+            else:
+                ranked = []
+
             if self.candidate_reranker and len(ranked) > 0:
                 ranked = self.candidate_reranker.rerank(run.query, ranked, max_results=30)
                 
@@ -913,12 +1008,31 @@ class ResearchEngine:
                 if result.provider_output_tokens is not None:
                     context.consume(model_output_tokens=result.provider_output_tokens)
                 checkpoints.complete(synthesis_key, {"result": result.model_dump(mode="json")})
+            if "code" in run.plugins:
+                from ares.application.code_interpreter import CodeInterpreter
+                interp = CodeInterpreter()
+                for claim in result.claims:
+                    for block in interp.extract_python_blocks(claim.text):
+                        block_res = interp.execute(block)
+                        self.repository.record_event(
+                            run_id,
+                            "code_interpreter.executed",
+                            {
+                                "code": block[:300],
+                                "stdout": block_res.stdout[:500],
+                                "stderr": block_res.stderr[:500],
+                                "success": block_res.success,
+                                "duration_seconds": block_res.execution_time_seconds,
+                            },
+                            lease_token=lease.token,
+                        )
             persisted_claims: list[FinalizedClaim] = []
             packet_by_id = {packet.evidence_id: packet for packet in evidence_packets}
             available = set(packet_by_id)
             semantic_calls = 0
             semantic_budget_exhausted = False
             semantic_unavailable = False
+            effective_semantic_max_claims = 20 if "accuracy" in run.plugins else self.semantic_checker_max_claims
             with telemetry.stage("evaluation.claims", claims=len(result.claims)):
                 for claim in result.claims:
                     ids = list(dict.fromkeys(claim.evidence_ids))
@@ -931,7 +1045,7 @@ class ResearchEngine:
                     if (
                         self.semantic_checker is not None
                         and decision.assessment_state is AssessmentState.HEURISTIC_SCREENED
-                        and semantic_calls < self.semantic_checker_max_claims
+                        and semantic_calls < effective_semantic_max_claims
                         and not semantic_budget_exhausted
                         and not semantic_unavailable
                     ):
@@ -1062,6 +1176,47 @@ class ResearchEngine:
                 assessment=run_assessment,
                 lease_token=lease.token,
             )
+
+            # Store run in episodic memory and verified claims in semantic memory
+            if run.workspace_id and run.created_by_user_id:
+                try:
+                    from ares.domain.memory import EpisodeCreate, FactCreate
+                    supported = [c for c in persisted_claims if c.support_status is SupportStatus.SUPPORTED]
+                    findings = [c.text for c in supported][:8]
+                    summary_text = (
+                        (result.outline.summary if result.outline and result.outline.summary else checked_markdown[:500])
+                        if checked_markdown else run.query
+                    )
+                    self.repository.create_memory_episode(
+                        run.workspace_id,
+                        run.created_by_user_id,
+                        EpisodeCreate(
+                            title=run.query,
+                            summary=summary_text,
+                            key_findings=findings,
+                            importance=0.7 if run.mode.value == "deep" else 0.5,
+                            conversation_id=run.conversation_id,
+                            run_id=run_id,
+                        ),
+                    )
+                    # Only store claims that passed citation-integrity check
+                    for claim in persisted_claims:
+                        if claim.support_status in (SupportStatus.SUPPORTED, SupportStatus.PARTIALLY_SUPPORTED):
+                            src = next(iter(claim.evidence_rationales.values()), None)
+                            self.repository.create_memory_fact(
+                                run.workspace_id,
+                                run.created_by_user_id,
+                                FactCreate(
+                                    subject=run.query[:120],
+                                    predicate="supported_claim",
+                                    fact=claim.text,
+                                    evidence_source=src,
+                                    confidence=1.0 if claim.support_status is SupportStatus.SUPPORTED else 0.75,
+                                ),
+                            )
+                except Exception as _mem_exc:
+                    logging.getLogger(__name__).warning("Failed to persist run memory: %s", _mem_exc)
+
             self.repository.set_status(run_id, RunStatus.COMPLETED, lease_token=lease.token)
         except CancelledRun:
             return
@@ -1069,7 +1224,7 @@ class ResearchEngine:
             try:
                 self.repository.set_status(run_id, RunStatus.CANCELLED, lease_token=lease.token)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
         except RunAuthorizationError as exc:
             self.repository.fail_run(run_id, "ACCESS_REVOKED", str(exc), lease_token=lease.token)
         except RunDeadlineExceeded as exc:
@@ -1085,6 +1240,7 @@ class ResearchEngine:
         except LLMProviderError as exc:
             self._partial_or_fail(lease, code="MODEL_UNAVAILABLE", message=str(exc))
         except Exception as exc:
+            logging.getLogger(__name__).warning("engine: recovery boundary (%s)", type(exc).__name__)
             self.repository.fail_run(run_id, "UNEXPECTED_ERROR", str(exc), lease_token=lease.token)
 
 

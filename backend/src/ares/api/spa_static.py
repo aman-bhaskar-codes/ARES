@@ -18,6 +18,8 @@ class SpaStaticFiles(StaticFiles):
     _reserved_prefixes = ("api/", "health/", "metrics")
 
     async def get_response(self, path: str, scope: Scope) -> Response:
+        if path.casefold().endswith(".map"):
+            return Response(status_code=404)
         try:
             response = await super().get_response(path, scope)
         except HTTPException as exc:

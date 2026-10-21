@@ -17,10 +17,9 @@ import tempfile
 import time
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from fastapi.testclient import TestClient
 
 
 def percentile(values: list[float], p: float) -> float:

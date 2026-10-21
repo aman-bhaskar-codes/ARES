@@ -3,7 +3,7 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F"]
+select = ["E4", "E7", "E9", "F", "B", "S", "UP", "I"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
@@ -14,3 +14,56 @@ pythonpath = ["backend/src"]
 python_version = "3.12"
 strict = true
 mypy_path = "backend/src"
+
+# FastAPI's dependency/parameter defaults are evaluated intentionally by the framework.
+[tool.ruff.lint.per-file-ignores]
+"backend/src/ares/api/routers/*.py" = ["B008"]
+# Assertions and non-secret credential strings are intentional test fixtures.
+"backend/tests/**" = ["S101", "S106", "S603", "S607"]
+"scripts/perf_baseline.py" = ["S101"]
+# Child-process argv is constructed by bounded parser/worker code; shell=True is never used.
+"backend/src/ares/adapters/docling_parser.py" = ["S603"]
+"backend/src/ares/adapters/faster_whisper.py" = ["S603"]
+"backend/src/ares/application/code_interpreter.py" = ["S603"]
+"backend/src/ares/application/media_ingestion.py" = ["S603"]
+# SQL interpolation generates bind-placeholder names only; values remain bound parameters.
+"backend/src/ares/adapters/persistence/retrieval.py" = ["S608"]
+# Local maintenance tools execute fixed executables/argv, not remote input.
+"scripts/check_secrets.py" = ["S607"]
+"scripts/doctor.py" = ["S603"]
+"scripts/generate_frontend_types.py" = ["S603", "S607"]
+"scripts/verify_migrations.py" = ["S603"]
+"scripts/verify_v3_release.py" = ["S603"]
+# Vendoring tool already restricts its source URL to the official HTTPS repository.
+"scripts/vendor_playwright_seccomp.py" = ["S310"]
+
+# Incremental strict typing debt: explicit legacy modules, never whole-layer wildcards.
+[[tool.mypy.overrides]]
+module = [
+  "ares.api.bootstrap",
+  "ares.api.event_stream",
+  "ares.api.ingestion_stream",
+  "ares.application.asset_ingestion",
+  "ares.application.auth",
+  "ares.application.checkpoints",
+  "ares.application.decisions",
+  "ares.application.documents",
+  "ares.application.engine",
+  "ares.application.exports",
+  "ares.application.gemini_planner",
+  "ares.application.media_ingestion",
+  "ares.application.model_routing",
+  "ares.application.observability",
+  "ares.application.persistent_rag",
+  "ares.application.report_builder",
+  "ares.application.research_cache",
+  "ares.application.research_stages.discovery",
+  "ares.application.research_stages.synthesis",
+  "ares.application.runtime",
+  "ares.application.table_operations",
+  "ares.application.tool_adapters",
+  "ares.application.tool_executor",
+  "ares.application.visualizations",
+  "ares.application.watchlist_manager",
+]
+ignore_errors = true

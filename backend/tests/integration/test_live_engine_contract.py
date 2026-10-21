@@ -15,8 +15,8 @@ from ares.domain.models import (
     RunMode,
     RunStatus,
     SearchHit,
-    SynthesizedClaim,
     SynthesisResult,
+    SynthesizedClaim,
 )
 from ares.domain.research import EvidencePacket, SearchRequest
 

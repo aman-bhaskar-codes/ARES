@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -22,7 +23,8 @@ def _normalized_bbox(bbox, page) -> list[float] | None:
         if values[2] <= values[0] or values[3] <= values[1]:
             return None
         return values
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("docling_runner: recovery boundary (%s)", type(_boundary_error).__name__)
         return None
 
 
@@ -32,7 +34,8 @@ def _page_for(doc, page_no: int):
         return pages.get(page_no) or pages.get(str(page_no))
     try:
         return pages[page_no]
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("docling_runner: recovery boundary (%s)", type(_boundary_error).__name__)
         return None
 
 
@@ -63,11 +66,18 @@ def run(
     language: str,
     artifacts_path: Path,
 ) -> None:
-    from docling.datamodel.base_models import InputFormat  # type: ignore[import-not-found]
-    from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions  # type: ignore[import-not-found]
-    from docling.document_converter import DocumentConverter, ImageFormatOption, PdfFormatOption  # type: ignore[import-not-found]
-    from docling_core.types.doc import TableItem  # type: ignore[import-not-found]
     import docling  # type: ignore[import-not-found]
+    from docling.datamodel.base_models import InputFormat  # type: ignore[import-not-found]
+    from docling.datamodel.pipeline_options import (  # type: ignore[import-not-found]
+        PdfPipelineOptions,
+        RapidOcrOptions,
+    )
+    from docling.document_converter import (  # type: ignore[import-not-found]
+        DocumentConverter,
+        ImageFormatOption,
+        PdfFormatOption,
+    )
+    from docling_core.types.doc import TableItem  # type: ignore[import-not-found]
 
     if mime_type == "application/pdf":
         input_format = InputFormat.PDF
@@ -76,7 +86,19 @@ def run(
     else:
         raise ValueError(f"Docling runner does not accept {mime_type}")
 
-    ocr_options = RapidOcrOptions(lang=[language] if language else ["iso:en"])
+    lang_list: list[str] = []
+    if language:
+        for item in language.split(","):
+            cleaned = item.strip()
+            if cleaned:
+                if not cleaned.startswith("iso:") and len(cleaned) == 2:
+                    lang_list.append(f"iso:{cleaned}")
+                else:
+                    lang_list.append(cleaned)
+    if not lang_list:
+        lang_list = ["iso:en"]
+
+    ocr_options = RapidOcrOptions(lang=lang_list)
     pipeline_options = PdfPipelineOptions(
         do_ocr=True,
         do_table_structure=True,
@@ -146,7 +168,7 @@ def run(
                         "text": text,
                         "locator": cell_locator,
                         "derivation_kind": "ocr_or_layout_extracted",
-                        "confidence": None,
+                        "confidence": getattr(cell, "confidence", None),
                         "language": language or None,
                         "table_key": table_key,
                         "table_row": row,
@@ -178,17 +200,19 @@ def run(
             # page-region citation. Keep it searchable only through the aggregate
             # compatibility document.
             continue
+        conf_val = getattr(prov, "confidence", None) or getattr(item, "confidence", None)
+        segment_confidence = float(conf_val) if isinstance(conf_val, (int, float)) else None
         segments.append(
             {
                 "modality": "text",
                 "text": text,
                 "locator": locator,
                 "derivation_kind": "ocr_or_layout_extracted",
-                "confidence": None,
+                "confidence": segment_confidence,
                 "language": language or None,
             }
         )
-        reading_parts.append((int(locator["page"]), text))
+        reading_parts.append((int(str(locator["page"])), text))
 
     # Build a stable compatibility text view while preserving page offsets. Precise
     # citations use the segment page-region locators above, not these aggregate offsets.
@@ -270,5 +294,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
+        logging.getLogger(__name__).warning("docling_runner: recovery boundary (%s)", type(exc).__name__)
         print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
         raise

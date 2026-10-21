@@ -52,6 +52,7 @@ def test_gemini_separates_privileged_instruction_from_untrusted_evidence_and_is_
 def test_gemini_client_construction_applies_transport_timeout(monkeypatch) -> None:
     import sys
     import types as pytypes
+
     import google
 
     captured: dict[str, object] = {}
@@ -132,6 +133,7 @@ def test_quota_exhaustion_explains_why_answer_is_unavailable() -> None:
 
 def test_reference_markers_do_not_become_claim_quantities_but_source_arrays_survive():
     import json
+
     from ares.application.decisions import DeterministicDecisionProvider
     provider = GeminiLLMProvider('', client=_Client())
     packet = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='Measurements', url='https://example.com', domain='example.com', text='Measured voltage is 3 V. The vector is [0, 1].', locator='passage 1', captured_at=datetime.now(UTC), content_hash='a'*64)

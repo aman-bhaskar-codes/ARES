@@ -1,5 +1,4 @@
 import pytest
-
 from ares.application.documents import DocumentIngestService
 from ares.domain.models import DocumentTextCreate
 

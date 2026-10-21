@@ -1,8 +1,10 @@
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
-from datetime import datetime, timezone
+
+from ares.application.repository import Repository
 from ares.domain.reports import ReportDocument, ReportSection, ReportTemplate
 from ares.domain.research import RunAssessment
-from ares.application.repository import Repository
+
 
 class ReportBuilder:
     def __init__(self, repository: Repository):
@@ -45,5 +47,5 @@ class ReportBuilder:
             sections=sections,
             assessed_claim_references=assessed_claims,
             evidence_references=evidence_refs,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(UTC)
         )

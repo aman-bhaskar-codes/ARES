@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import uuid4
 
 from ares.adapters.pdf_parser import BoundedPdfParser, PdfParseError
@@ -52,9 +54,17 @@ def build_document_chunks(
     candidates = chunk_document(
         doc, RAGConfig(target_chars=1_250, overlap_chars=160, min_chunk_chars=160)
     )
+    # The shared chunker works on stripped text; persisted PDF locators must refer
+    # to the original text, including separators for blank cover pages.
+    leading_offset = len(text) - len(text.lstrip())
     prepared: list[PreparedChunk] = []
     for index, candidate in enumerate(candidates[:max_chunks], start=1):
-        page_start, page_end = pages_for_range(page_map, candidate.char_start, candidate.char_end)
+        start = candidate.char_start + leading_offset
+        end = candidate.char_end + leading_offset
+        span = text[start:end]
+        start += len(span) - len(span.lstrip())
+        end -= len(span) - len(span.rstrip())
+        page_start, page_end = pages_for_range(page_map, start, end)
         if page_start is None:
             locator = f"passage {index}"
         elif page_start == page_end:
@@ -65,8 +75,8 @@ def build_document_chunks(
             PreparedChunk(
                 chunk_index=index,
                 text=candidate.text,
-                char_start=candidate.char_start,
-                char_end=candidate.char_end,
+                char_start=start,
+                char_end=end,
                 page_start=page_start,
                 page_end=page_end,
                 locator=locator,
@@ -99,7 +109,8 @@ class DocumentIngestService:
                 parser_version="plain-text-v1",
                 chunks=chunks,
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("documents: recovery boundary (%s)", type(_boundary_error).__name__)
             if not self.repository.is_blob_referenced(blob_key):
                 self.blobs.delete(blob_key)
             raise
@@ -107,7 +118,7 @@ class DocumentIngestService:
     def ingest_pdf(self, *, name: str, raw: bytes) -> DocumentView:
         parsed = self.pdf_parser.parse(raw)
         blob_key = self.blobs.put_bytes("documents", raw)
-        status = DocumentStatus(parsed.status)
+        status = DocumentStatus.PARTIAL if parsed.status == "mixed" else DocumentStatus(parsed.status)
         chunks = (
             build_document_chunks(name=name, text=parsed.text, page_map=parsed.page_map)
             if status in {DocumentStatus.READY, DocumentStatus.PARTIAL}
@@ -127,7 +138,28 @@ class DocumentIngestService:
                 parser_version=parsed.parser_version,
                 chunks=chunks,
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("documents: recovery boundary (%s)", type(_boundary_error).__name__)
+            if not self.repository.is_blob_referenced(blob_key):
+                self.blobs.delete(blob_key)
+            raise
+
+    def ingest_pdf_file(self, *, name: str, path: Path) -> DocumentView:
+        parsed = self.pdf_parser.parse_file(path)
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for block in iter(lambda: handle.read(64 * 1024), b""):
+                digest.update(block)
+        blob_key = self.blobs.put_file("documents", path)
+        status = DocumentStatus.PARTIAL if parsed.status == "mixed" else DocumentStatus(parsed.status)
+        chunks = build_document_chunks(name=name, text=parsed.text, page_map=parsed.page_map) if status in {DocumentStatus.READY, DocumentStatus.PARTIAL} else []
+        try:
+            return self.repository.create_user_document(name=name.strip(), mime_type="application/pdf",
+                text=parsed.text, raw_bytes=None, content_hash=digest.hexdigest(), byte_count=path.stat().st_size,
+                blob_key=blob_key, status=status, page_count=parsed.page_count, page_map=parsed.page_map,
+                warnings=parsed.warnings, parser_version=parsed.parser_version, chunks=chunks)
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("documents: recovery boundary (%s)", type(_boundary_error).__name__)
             if not self.repository.is_blob_referenced(blob_key):
                 self.blobs.delete(blob_key)
             raise

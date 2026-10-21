@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 import multiprocessing as mp
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from io import BytesIO
+from pathlib import Path
 from queue import Empty
 from typing import Any
 
@@ -19,6 +21,8 @@ class ParsedPdf:
     status: str
     warnings: list[str]
     parser_version: str
+    page_types: dict[int, str] = field(default_factory=dict)
+    scanned_pages: list[int] = field(default_factory=list)
 
 
 def _apply_resource_limits(memory_bytes: int, cpu_seconds: int) -> None:
@@ -35,7 +39,7 @@ def _apply_resource_limits(memory_bytes: int, cpu_seconds: int) -> None:
 
 
 def _parse_worker(
-    payload: bytes,
+    payload: bytes | str,
     result_queue: Any,
     *,
     max_pages: int,
@@ -45,13 +49,15 @@ def _parse_worker(
 ) -> None:
     try:
         _apply_resource_limits(memory_bytes, cpu_seconds)
-        from pypdf import PdfReader, __version__ as pypdf_version
+        from pypdf import PdfReader
+        from pypdf import __version__ as pypdf_version
 
-        reader = PdfReader(BytesIO(payload), strict=False)
+        reader = PdfReader(BytesIO(payload) if isinstance(payload, bytes) else payload, strict=False)
         if reader.is_encrypted:
             try:
                 unlocked = reader.decrypt("")
             except Exception as exc:  # pypdf raises several encryption-specific errors
+                logging.getLogger(__name__).warning("pdf_parser: recovery boundary (%s)", type(exc).__name__)
                 raise PdfParseError("encrypted PDF could not be opened without a password") from exc
             if not unlocked:
                 raise PdfParseError("password-protected PDFs are not supported")
@@ -63,6 +69,7 @@ def _parse_worker(
 
         parts: list[str] = []
         page_map: list[dict[str, int]] = []
+        page_types: dict[int, str] = {}
         warnings: list[str] = []
         empty_pages = 0
         cursor = 0
@@ -70,8 +77,26 @@ def _parse_worker(
             try:
                 page_text = (page.extract_text() or "").strip()
             except Exception as exc:
+                logging.getLogger(__name__).warning("pdf_parser: recovery boundary (%s)", type(exc).__name__)
                 page_text = ""
                 warnings.append(f"Page {index} could not be extracted ({type(exc).__name__}).")
+
+            has_images = False
+            try:
+                images_attr = getattr(page, "images", None)
+                if images_attr is not None:
+                    has_images = len(images_attr) > 0
+            except Exception:
+                has_images = False
+
+            # Classify page: text length >= 40 chars indicates high-fidelity digital text
+            if len(page_text) >= 40:
+                page_types[index] = "digital"
+            elif has_images or not page_text:
+                page_types[index] = "scanned"
+            else:
+                page_types[index] = "digital"
+
             if not page_text:
                 empty_pages += 1
             if parts:
@@ -86,11 +111,18 @@ def _parse_worker(
                     f"extracted PDF text exceeds the {max_text_chars:,}-character limit"
                 )
 
-        text = "".join(parts).strip()
+        # Page offsets refer to this exact concatenation, including blank-page separators.
+        text = "".join(parts)
+        scanned_pages = [idx for idx, ptype in page_types.items() if ptype == "scanned"]
         meaningful_pages = page_count - empty_pages
-        if not text or meaningful_pages == 0:
+        if len(scanned_pages) == page_count or not text or meaningful_pages == 0:
             status = "needs_ocr"
             warnings.append("No usable text layer was detected; OCR is required before research.")
+        elif scanned_pages:
+            status = "mixed"
+            warnings.append(
+                f"{len(scanned_pages)} of {page_count} pages are scanned or contain raster images requiring OCR."
+            )
         elif empty_pages:
             status = "partial"
             warnings.append(f"{empty_pages} of {page_count} pages had no extractable text.")
@@ -104,6 +136,8 @@ def _parse_worker(
                 "page_count": page_count,
                 "status": status,
                 "warnings": warnings,
+                "page_types": page_types,
+                "scanned_pages": scanned_pages,
                 "parser_version": f"pypdf-{pypdf_version}",
             }
         )
@@ -134,6 +168,18 @@ class BoundedPdfParser:
             raise PdfParseError("file signature is not a PDF")
         if len(payload) > self.max_bytes:
             raise PdfParseError(f"PDF exceeds the {self.max_bytes // (1024 * 1024)} MB limit")
+        return self._parse_payload(payload)
+
+    def parse_file(self, path: str | Path) -> ParsedPdf:
+        source = Path(path)
+        with source.open("rb") as handle:
+            if handle.read(5) != b"%PDF-":
+                raise PdfParseError("file signature is not a PDF")
+        if source.stat().st_size > self.max_bytes:
+            raise PdfParseError("PDF exceeds the configured upload limit")
+        return self._parse_payload(str(source.resolve()))
+
+    def _parse_payload(self, payload: bytes | str) -> ParsedPdf:
         context = mp.get_context("spawn")
         result_queue = context.Queue(maxsize=1)
         process = context.Process(
@@ -147,19 +193,29 @@ class BoundedPdfParser:
             },
             daemon=True,
         )
-        process.start()
-        process.join(self.timeout_seconds)
-        if process.is_alive():
-            process.terminate()
-            process.join(3)
-            raise PdfParseError("PDF parsing exceeded its time limit")
         try:
-            result = result_queue.get(timeout=1)
-        except Empty as exc:
-            raise PdfParseError(
-                f"PDF parser exited without a result (exit={process.exitcode})"
-            ) from exc
+            process.start()
+            # Drain the result before joining: Queue's child feeder cannot exit while a
+            # text-heavy result is blocked in the OS pipe waiting for this reader.
+            try:
+                result = result_queue.get(timeout=self.timeout_seconds)
+            except Empty as exc:
+                if process.exitcode is not None:
+                    raise PdfParseError(
+                        f"PDF parser exited without a result (exit={process.exitcode})"
+                    ) from exc
+                raise PdfParseError("PDF parsing exceeded its time limit") from exc
         finally:
+            if process.pid is not None:
+                process.join(0.2)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(1)
+                if process.is_alive():
+                    process.kill()
+                    process.join(1)
+                if not process.is_alive():
+                    process.close()
             result_queue.close()
         if not result.get("ok"):
             raise PdfParseError(str(result.get("error", "PDF parsing failed")))
@@ -170,4 +226,6 @@ class BoundedPdfParser:
             status=str(result["status"]),
             warnings=list(result["warnings"]),
             parser_version=str(result["parser_version"]),
+            page_types=dict(result.get("page_types", {})),
+            scanned_pages=list(result.get("scanned_pages", [])),
         )

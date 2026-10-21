@@ -119,7 +119,8 @@ class SafeHttpFetcher:
     ) -> tuple[int, dict[str, str], bytes]:
         parsed = urlparse(url)
         validate_public_url(url)
-        assert parsed.hostname is not None
+        if parsed.hostname is None:
+            raise ValueError("URL must contain a hostname")
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
         target_ip = _resolve_public_target(parsed.hostname, port)
         connection_cls = (

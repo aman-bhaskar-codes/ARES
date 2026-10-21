@@ -1,7 +1,9 @@
-import httpx
-from datetime import datetime, timezone
 import logging
-from ares.domain.tools import ToolSpec, ToolContext, ToolResult
+from datetime import UTC, datetime
+
+import httpx
+
+from ares.domain.tools import ToolContext, ToolResult, ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +85,8 @@ class EuropePMCTool:
                 
             return ToolResult(
                 payload={"results": results},
-                retrieval_timestamp=datetime.now(timezone.utc),
-                capture_timestamp=datetime.now(timezone.utc),
+                retrieval_timestamp=datetime.now(UTC),
+                capture_timestamp=datetime.now(UTC),
                 license="Europe PMC Term of Use",
                 attribution="Europe PMC"
             )

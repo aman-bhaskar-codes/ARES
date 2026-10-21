@@ -11,8 +11,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
-
 from ares.adapters.filesystem_blob import FilesystemBlobStore
 from ares.adapters.pdf_parser import BoundedPdfParser
 from ares.api.app import create_app
@@ -22,11 +20,12 @@ from ares.application.asset_ingestion import (
     AssetIngestionExecutor,
     BuiltinRichExtractor,
 )
-from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.identity import Principal, WorkspaceRole, principal_scope
+from ares.application.indexing import DocumentEmbeddingIndexer
 from ares.application.media_ingestion import FFmpegMediaProcessor
 from ares.application.repository import NotFoundError
 from ares.ports.transcription import TranscriptionResult, TranscriptionSegment
+from fastapi.testclient import TestClient
 
 
 class FakeTranscriber:
@@ -270,6 +269,7 @@ def test_media_api_refuses_configured_audio_when_runtime_is_not_ready(tmp_path: 
         database_url=f"sqlite+pysqlite:///{tmp_path / 'api.sqlite3'}",
         blob_root=str(tmp_path / "blobs"),
         audio_enabled=True,
+        video_enabled=False,
         max_upload_bytes=1_024,
         max_image_bytes=1_024,
         max_request_body_bytes=1_024,
@@ -295,12 +295,18 @@ def test_demo_video_degrades_to_visual_only_when_asr_is_unavailable(tmp_path: Pa
         database_url=f"sqlite+pysqlite:///{tmp_path / 'visual-only.sqlite3'}",
         blob_root=str(tmp_path / "visual-only-blobs"),
         video_enabled=True,
+        audio_enabled=False,
+        microphone_enabled=False,
+        cloud_media_enabled=False,
+        max_upload_bytes=5_000_000,
+        max_image_bytes=5_000_000,
         max_video_bytes=5_000_000,
         max_asset_request_body_bytes=6_000_000,
         whisper_model_path=str(tmp_path / "missing-whisper-model"),
         max_video_duration_seconds=10,
         max_video_frames=5,
         video_baseline_frames=3,
+        video_frame_ocr_limit=3,
         media_process_timeout_seconds=30,
         media_subprocess_cpu_seconds=30,
         media_subprocess_memory_mb=1024,

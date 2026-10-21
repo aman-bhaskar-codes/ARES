@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def test_academic_pdf_fetch_uses_bounded_parser_and_preserves_page_map(monkeypatch):
-    from ares.adapters.pdf_parser import ParsedPdf, BoundedPdfParser
+    from ares.adapters.pdf_parser import BoundedPdfParser, ParsedPdf
     from ares.adapters.safe_fetch import SafeHttpFetcher
 
     fetcher = SafeHttpFetcher()

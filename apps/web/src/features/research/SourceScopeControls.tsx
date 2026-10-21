@@ -12,10 +12,12 @@ export function SourceScopeControls({
   value,
   onChange,
   selectedDocuments,
+  disabled = false,
 }: {
   value: SourceScope[]
   onChange: (value: SourceScope[]) => void
   selectedDocuments: number
+  disabled?: boolean
 }) {
   const toggle = (scope: SourceScope) => {
     const next = value.includes(scope) ? value.filter((item) => item !== scope) : [...value, scope]
@@ -30,6 +32,7 @@ export function SourceScopeControls({
           <button
             key={id}
             type="button"
+            disabled={disabled}
             className={selected ? 'selected' : ''}
             aria-pressed={selected}
             onClick={() => toggle(id)}

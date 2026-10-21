@@ -4,63 +4,84 @@
     "evidence": [
       "HNSW has slower build times and uses more memory than IVFFlat."
     ],
-    "expected_verdict": "supported"
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "RRF combines lexical and semantic rankings.",
     "evidence": [
       "Reciprocal rank fusion combines rankings from lexical retrieval and semantic retrieval."
     ],
-    "expected_verdict": "supported"
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The API uses idempotency keys for run creation.",
     "evidence": [
       "Run creation requires an idempotency key and replays the same request when the key and payload match."
     ],
-    "expected_verdict": "supported"
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The PDF parser runs in a bounded subprocess.",
     "evidence": [
       "Untrusted PDF parsing runs in a separate bounded process with time and resource ceilings."
     ],
-    "expected_verdict": "supported"
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The study reports better retrieval accuracy.",
     "evidence": [
       "The study reports retrieval accuracy and downstream task success, with higher scores on two benchmarks."
     ],
-    "expected_verdict": "supported"
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The system improves latency and memory use.",
     "evidence": [
       "The system improves latency in the measured workload."
     ],
-    "expected_verdict": "partially_supported"
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The evaluation covers every production workload.",
     "evidence": [
       "The evaluation uses three synthetic corpora and one development workload."
     ],
-    "expected_verdict": "insufficient_evidence"
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": []
   },
   {
     "claim": "The model reduced cost by 80 percent.",
     "evidence": [
       "The paper discusses retrieval recall and citation precision."
     ],
-    "expected_verdict": "insufficient_evidence"
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": []
   },
   {
     "claim": "The release removed Python support.",
     "evidence": [
       "The release notes describe new tracing APIs and bug fixes."
     ],
-    "expected_verdict": "insufficient_evidence"
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": []
   },
   {
     "claim": "The index increased retrieval latency.",
@@ -68,7 +89,10 @@
       "The index increased retrieval latency in the large corpus.",
       "The index decreased retrieval latency in the large corpus."
     ],
-    "expected_verdict": "conflicting"
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The feature is enabled by default.",
@@ -76,7 +100,10 @@
       "The feature is enabled by default for new projects.",
       "The migration guide says the feature is disabled by default for existing projects."
     ],
-    "expected_verdict": "conflicting"
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ]
   },
   {
     "claim": "The policy blocks external network calls.",
@@ -84,6 +111,1109 @@
       "The policy blocks external network calls from the worker.",
       "A compatibility mode allows external network calls from the worker."
     ],
-    "expected_verdict": "conflicting"
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ]
+  },
+  {
+    "id": "synthetic-00-0",
+    "claim": "The Orion protocol reports a latency of 20 milliseconds.",
+    "evidence": [
+      "The Orion protocol reports a latency of 20 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-00-1",
+    "claim": "The Orion protocol reports a latency of 20 milliseconds.",
+    "evidence": [
+      "The Orion protocol reports a latency of 50 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-00-2",
+    "claim": "The Orion protocol increases retrieval latency.",
+    "evidence": [
+      "The Orion protocol increases retrieval latency.",
+      "The Orion protocol decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-00-3",
+    "claim": "The Orion protocol improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Orion protocol improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-00-4",
+    "claim": "The Orion protocol reports a latency of 20 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-01-0",
+    "claim": "The Vega index reports a latency of 21 milliseconds.",
+    "evidence": [
+      "The Vega index reports a latency of 21 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-01-1",
+    "claim": "The Vega index reports a latency of 21 milliseconds.",
+    "evidence": [
+      "The Vega index reports a latency of 51 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-01-2",
+    "claim": "The Vega index increases retrieval latency.",
+    "evidence": [
+      "The Vega index increases retrieval latency.",
+      "The Vega index decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-01-3",
+    "claim": "The Vega index improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Vega index improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-01-4",
+    "claim": "The Vega index reports a latency of 21 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-02-0",
+    "claim": "The Lyra pipeline reports a latency of 22 milliseconds.",
+    "evidence": [
+      "The Lyra pipeline reports a latency of 22 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-02-1",
+    "claim": "The Lyra pipeline reports a latency of 22 milliseconds.",
+    "evidence": [
+      "The Lyra pipeline reports a latency of 52 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-02-2",
+    "claim": "The Lyra pipeline increases retrieval latency.",
+    "evidence": [
+      "The Lyra pipeline increases retrieval latency.",
+      "The Lyra pipeline decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-02-3",
+    "claim": "The Lyra pipeline improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Lyra pipeline improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-02-4",
+    "claim": "The Lyra pipeline reports a latency of 22 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-03-0",
+    "claim": "The Atlas trial reports a latency of 23 milliseconds.",
+    "evidence": [
+      "The Atlas trial reports a latency of 23 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-03-1",
+    "claim": "The Atlas trial reports a latency of 23 milliseconds.",
+    "evidence": [
+      "The Atlas trial reports a latency of 53 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-03-2",
+    "claim": "The Atlas trial increases retrieval latency.",
+    "evidence": [
+      "The Atlas trial increases retrieval latency.",
+      "The Atlas trial decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-03-3",
+    "claim": "The Atlas trial improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Atlas trial improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-03-4",
+    "claim": "The Atlas trial reports a latency of 23 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-04-0",
+    "claim": "The Nova parser reports a latency of 24 milliseconds.",
+    "evidence": [
+      "The Nova parser reports a latency of 24 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-04-1",
+    "claim": "The Nova parser reports a latency of 24 milliseconds.",
+    "evidence": [
+      "The Nova parser reports a latency of 54 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-04-2",
+    "claim": "The Nova parser increases retrieval latency.",
+    "evidence": [
+      "The Nova parser increases retrieval latency.",
+      "The Nova parser decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-04-3",
+    "claim": "The Nova parser improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Nova parser improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-04-4",
+    "claim": "The Nova parser reports a latency of 24 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-05-0",
+    "claim": "The Cedar sensor reports a latency of 25 milliseconds.",
+    "evidence": [
+      "The Cedar sensor reports a latency of 25 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-05-1",
+    "claim": "The Cedar sensor reports a latency of 25 milliseconds.",
+    "evidence": [
+      "The Cedar sensor reports a latency of 55 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-05-2",
+    "claim": "The Cedar sensor increases retrieval latency.",
+    "evidence": [
+      "The Cedar sensor increases retrieval latency.",
+      "The Cedar sensor decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-05-3",
+    "claim": "The Cedar sensor improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Cedar sensor improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-05-4",
+    "claim": "The Cedar sensor reports a latency of 25 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-06-0",
+    "claim": "The Maple encoder reports a latency of 26 milliseconds.",
+    "evidence": [
+      "The Maple encoder reports a latency of 26 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-06-1",
+    "claim": "The Maple encoder reports a latency of 26 milliseconds.",
+    "evidence": [
+      "The Maple encoder reports a latency of 56 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-06-2",
+    "claim": "The Maple encoder increases retrieval latency.",
+    "evidence": [
+      "The Maple encoder increases retrieval latency.",
+      "The Maple encoder decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-06-3",
+    "claim": "The Maple encoder improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Maple encoder improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-06-4",
+    "claim": "The Maple encoder reports a latency of 26 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-07-0",
+    "claim": "The Amber cache reports a latency of 27 milliseconds.",
+    "evidence": [
+      "The Amber cache reports a latency of 27 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-07-1",
+    "claim": "The Amber cache reports a latency of 27 milliseconds.",
+    "evidence": [
+      "The Amber cache reports a latency of 57 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-07-2",
+    "claim": "The Amber cache increases retrieval latency.",
+    "evidence": [
+      "The Amber cache increases retrieval latency.",
+      "The Amber cache decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-07-3",
+    "claim": "The Amber cache improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Amber cache improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-07-4",
+    "claim": "The Amber cache reports a latency of 27 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-08-0",
+    "claim": "The Indigo queue reports a latency of 28 milliseconds.",
+    "evidence": [
+      "The Indigo queue reports a latency of 28 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-08-1",
+    "claim": "The Indigo queue reports a latency of 28 milliseconds.",
+    "evidence": [
+      "The Indigo queue reports a latency of 58 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-08-2",
+    "claim": "The Indigo queue increases retrieval latency.",
+    "evidence": [
+      "The Indigo queue increases retrieval latency.",
+      "The Indigo queue decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-08-3",
+    "claim": "The Indigo queue improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Indigo queue improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-08-4",
+    "claim": "The Indigo queue reports a latency of 28 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-09-0",
+    "claim": "The Sable planner reports a latency of 29 milliseconds.",
+    "evidence": [
+      "The Sable planner reports a latency of 29 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-09-1",
+    "claim": "The Sable planner reports a latency of 29 milliseconds.",
+    "evidence": [
+      "The Sable planner reports a latency of 59 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-09-2",
+    "claim": "The Sable planner increases retrieval latency.",
+    "evidence": [
+      "The Sable planner increases retrieval latency.",
+      "The Sable planner decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-09-3",
+    "claim": "The Sable planner improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Sable planner improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-09-4",
+    "claim": "The Sable planner reports a latency of 29 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-10-0",
+    "claim": "The Quartz worker reports a latency of 30 milliseconds.",
+    "evidence": [
+      "The Quartz worker reports a latency of 30 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-10-1",
+    "claim": "The Quartz worker reports a latency of 30 milliseconds.",
+    "evidence": [
+      "The Quartz worker reports a latency of 60 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-10-2",
+    "claim": "The Quartz worker increases retrieval latency.",
+    "evidence": [
+      "The Quartz worker increases retrieval latency.",
+      "The Quartz worker decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-10-3",
+    "claim": "The Quartz worker improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Quartz worker improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-10-4",
+    "claim": "The Quartz worker reports a latency of 30 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-11-0",
+    "claim": "The Iris agent reports a latency of 31 milliseconds.",
+    "evidence": [
+      "The Iris agent reports a latency of 31 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-11-1",
+    "claim": "The Iris agent reports a latency of 31 milliseconds.",
+    "evidence": [
+      "The Iris agent reports a latency of 61 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-11-2",
+    "claim": "The Iris agent increases retrieval latency.",
+    "evidence": [
+      "The Iris agent increases retrieval latency.",
+      "The Iris agent decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-11-3",
+    "claim": "The Iris agent improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Iris agent improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-11-4",
+    "claim": "The Iris agent reports a latency of 31 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-12-0",
+    "claim": "The Lotus gateway reports a latency of 32 milliseconds.",
+    "evidence": [
+      "The Lotus gateway reports a latency of 32 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-12-1",
+    "claim": "The Lotus gateway reports a latency of 32 milliseconds.",
+    "evidence": [
+      "The Lotus gateway reports a latency of 62 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-12-2",
+    "claim": "The Lotus gateway increases retrieval latency.",
+    "evidence": [
+      "The Lotus gateway increases retrieval latency.",
+      "The Lotus gateway decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-12-3",
+    "claim": "The Lotus gateway improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Lotus gateway improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-12-4",
+    "claim": "The Lotus gateway reports a latency of 32 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-13-0",
+    "claim": "The Aster engine reports a latency of 33 milliseconds.",
+    "evidence": [
+      "The Aster engine reports a latency of 33 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-13-1",
+    "claim": "The Aster engine reports a latency of 33 milliseconds.",
+    "evidence": [
+      "The Aster engine reports a latency of 63 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-13-2",
+    "claim": "The Aster engine increases retrieval latency.",
+    "evidence": [
+      "The Aster engine increases retrieval latency.",
+      "The Aster engine decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-13-3",
+    "claim": "The Aster engine improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Aster engine improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-13-4",
+    "claim": "The Aster engine reports a latency of 33 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-14-0",
+    "claim": "The Birch adapter reports a latency of 34 milliseconds.",
+    "evidence": [
+      "The Birch adapter reports a latency of 34 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-14-1",
+    "claim": "The Birch adapter reports a latency of 34 milliseconds.",
+    "evidence": [
+      "The Birch adapter reports a latency of 64 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-14-2",
+    "claim": "The Birch adapter increases retrieval latency.",
+    "evidence": [
+      "The Birch adapter increases retrieval latency.",
+      "The Birch adapter decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-14-3",
+    "claim": "The Birch adapter improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Birch adapter improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-14-4",
+    "claim": "The Birch adapter reports a latency of 34 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-15-0",
+    "claim": "The Coral router reports a latency of 35 milliseconds.",
+    "evidence": [
+      "The Coral router reports a latency of 35 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-15-1",
+    "claim": "The Coral router reports a latency of 35 milliseconds.",
+    "evidence": [
+      "The Coral router reports a latency of 65 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-15-2",
+    "claim": "The Coral router increases retrieval latency.",
+    "evidence": [
+      "The Coral router increases retrieval latency.",
+      "The Coral router decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-15-3",
+    "claim": "The Coral router improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Coral router improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-15-4",
+    "claim": "The Coral router reports a latency of 35 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-16-0",
+    "claim": "The Delta scanner reports a latency of 36 milliseconds.",
+    "evidence": [
+      "The Delta scanner reports a latency of 36 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-16-1",
+    "claim": "The Delta scanner reports a latency of 36 milliseconds.",
+    "evidence": [
+      "The Delta scanner reports a latency of 66 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-16-2",
+    "claim": "The Delta scanner increases retrieval latency.",
+    "evidence": [
+      "The Delta scanner increases retrieval latency.",
+      "The Delta scanner decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-16-3",
+    "claim": "The Delta scanner improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Delta scanner improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-16-4",
+    "claim": "The Delta scanner reports a latency of 36 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-17-0",
+    "claim": "The Echo ranker reports a latency of 37 milliseconds.",
+    "evidence": [
+      "The Echo ranker reports a latency of 37 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-17-1",
+    "claim": "The Echo ranker reports a latency of 37 milliseconds.",
+    "evidence": [
+      "The Echo ranker reports a latency of 67 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-17-2",
+    "claim": "The Echo ranker increases retrieval latency.",
+    "evidence": [
+      "The Echo ranker increases retrieval latency.",
+      "The Echo ranker decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-17-3",
+    "claim": "The Echo ranker improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Echo ranker improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-17-4",
+    "claim": "The Echo ranker reports a latency of 37 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-18-0",
+    "claim": "The Fable reader reports a latency of 38 milliseconds.",
+    "evidence": [
+      "The Fable reader reports a latency of 38 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-18-1",
+    "claim": "The Fable reader reports a latency of 38 milliseconds.",
+    "evidence": [
+      "The Fable reader reports a latency of 68 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-18-2",
+    "claim": "The Fable reader increases retrieval latency.",
+    "evidence": [
+      "The Fable reader increases retrieval latency.",
+      "The Fable reader decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-18-3",
+    "claim": "The Fable reader improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Fable reader improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-18-4",
+    "claim": "The Fable reader reports a latency of 38 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-19-0",
+    "claim": "The Grove service reports a latency of 39 milliseconds.",
+    "evidence": [
+      "The Grove service reports a latency of 39 milliseconds."
+    ],
+    "expected_verdict": "supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-19-1",
+    "claim": "The Grove service reports a latency of 39 milliseconds.",
+    "evidence": [
+      "The Grove service reports a latency of 69 milliseconds."
+    ],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-19-2",
+    "claim": "The Grove service increases retrieval latency.",
+    "evidence": [
+      "The Grove service increases retrieval latency.",
+      "The Grove service decreases retrieval latency."
+    ],
+    "expected_verdict": "conflicting",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-19-3",
+    "claim": "The Grove service improves latency, memory use, throughput, reliability, and efficiency.",
+    "evidence": [
+      "The Grove service improves latency."
+    ],
+    "expected_verdict": "partially_supported",
+    "supporting_evidence_indexes": [
+      0
+    ],
+    "provenance": "authored synthetic invariants; fictional systems"
+  },
+  {
+    "id": "synthetic-19-4",
+    "claim": "The Grove service reports a latency of 39 milliseconds.",
+    "evidence": [],
+    "expected_verdict": "insufficient_evidence",
+    "supporting_evidence_indexes": [],
+    "provenance": "authored synthetic invariants; fictional systems"
   }
 ]

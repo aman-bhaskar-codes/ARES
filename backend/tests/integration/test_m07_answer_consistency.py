@@ -5,9 +5,8 @@ from pathlib import Path
 from ares.adapters.db import Base, build_session_factory
 from ares.application.engine import ResearchEngine
 from ares.application.repository import Repository
-from ares.domain.models import RunCreate, RunMode, RunStatus, SynthesizedClaim, SynthesisResult
+from ares.domain.models import RunCreate, RunMode, RunStatus, SynthesisResult, SynthesizedClaim
 from ares.domain.research import EvidencePacket
-
 from test_live_engine_contract import FakeSearch, TrackingFetcher
 
 

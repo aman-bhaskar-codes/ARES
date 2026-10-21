@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import logging
 from uuid import UUID
@@ -8,7 +9,6 @@ from uuid import UUID
 from ares.application.repository import Repository
 from ares.domain.models import ArtifactView, ExportCreate, RunStatus
 from ares.ports.storage import BlobStore
-import html
 
 logger = logging.getLogger(__name__)
 

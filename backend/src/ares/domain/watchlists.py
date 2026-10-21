@@ -1,7 +1,8 @@
-from typing import Literal
-from pydantic import BaseModel, Field
-from uuid import UUID
 from datetime import datetime
+from typing import Literal
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 WatchlistState = Literal["active", "paused", "error", "completed"]
 

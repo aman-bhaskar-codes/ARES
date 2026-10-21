@@ -9,7 +9,8 @@ from uuid import uuid4
 
 import httpx
 
-from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.adapters.safe_xml import parse_xml
+from ares.application.providers import DiscoveryProvider, ProviderCapabilities, ProviderMetadata
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -35,7 +36,7 @@ class ArxivAcademicProvider(DiscoveryProvider):
         base_url: str = "https://export.arxiv.org",
         min_interval_seconds: float = 3.0,
         client: httpx.Client | None = None,
-    ):
+    ) -> None:
         self._client = client or httpx.Client(
             base_url=base_url.rstrip("/"),
             timeout=25.0,
@@ -62,7 +63,7 @@ class ArxivAcademicProvider(DiscoveryProvider):
             cache_ttl_seconds=604800,
         )
 
-    def _paced_get(self, **kwargs) -> httpx.Response:
+    def _paced_get(self, **kwargs: object) -> httpx.Response:
         with self._lock:
             delay = self._interval - (time.monotonic() - self._last_request)
             if delay > 0:
@@ -109,12 +110,12 @@ class ArxivAcademicProvider(DiscoveryProvider):
         if response.status_code >= 400:
             raise SearchProviderError(f"arXiv returned HTTP {response.status_code}")
         try:
-            root = ET.fromstring(response.text)
-        except ET.ParseError as exc:
+            root = parse_xml(response.text)
+        except (ET.ParseError, ValueError) as exc:
             raise SearchProviderError("arXiv returned invalid Atom XML") from exc
 
         results: list[tuple[SearchHit, FetchedDocument]] = []
-        for rank, entry in enumerate(root.findall(f"{_ATOM}entry")[:limit], start=1):
+        for entry in root.findall(f"{_ATOM}entry"):
             entry_url = (entry.findtext(f"{_ATOM}id") or "").strip()
             title = " ".join((entry.findtext(f"{_ATOM}title") or "Untitled preprint").split())
             summary = " ".join((entry.findtext(f"{_ATOM}summary") or "").split())
@@ -161,6 +162,7 @@ class ArxivAcademicProvider(DiscoveryProvider):
             lines.extend(["", "Abstract", summary])
             text = "\n".join(lines)
             identifier = f"arxiv:{arxiv_id}"
+            rank = len(results) + 1
             hit = SearchHit(
                 title=title,
                 url=entry_url,
@@ -190,6 +192,8 @@ class ArxivAcademicProvider(DiscoveryProvider):
                 published_at=published_at,
             )
             results.append((hit, document))
+            if len(results) >= limit:
+                break
         return results
 
     def close(self) -> None:

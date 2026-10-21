@@ -1,0 +1,76 @@
+# Retained exception boundaries
+
+These boundaries normalize third-party SDK/parser errors, preserve a partial run, isolate optional source failures, or perform best-effort cleanup. They remain broad because provider-specific exception sets are not stable. Each emits bounded type/module context or a durable event. Logs intentionally omit source payloads and exception messages. A broader redesign of every large module is outside this pass.
+
+- `backend/src/ares/adapters/wikimedia.py:101`: retained boundary; existing durable event/log context.
+- `backend/src/ares/adapters/pdf_parser.py:56`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/pdf_parser.py:74`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/rss.py:113`: retained boundary; existing durable event/log context.
+- `backend/src/ares/adapters/grounded_synthesis.py:40`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini_multimodal.py:118`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini_multimodal.py:125`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini.py:60`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini.py:55`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/europe_pmc.py:97`: retained boundary; existing durable event/log context.
+- `backend/src/ares/adapters/faster_whisper.py:162`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/browser_fetch.py:97`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini_semantic.py:112`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini_semantic.py:202`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/gemini_semantic.py:169`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/adapters/docling_parser.py:148`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/api/bootstrap.py:121`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/api/bootstrap.py:266`: retained boundary; existing durable event/log context.
+- `backend/src/ares/api/dependencies.py:71`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/auth.py:515`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/auth.py:553`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/exports.py:142`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/code_interpreter.py:81`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/documents.py:103`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/documents.py:131`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/documents.py:150`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/persistent_rag.py:108`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/observability.py:88`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/observability.py:266`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/observability.py:103`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/observability.py:119`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/observability.py:139`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/observability.py:97`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/observability.py:163`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/observability.py:148`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/asset_ingestion.py:214`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/asset_ingestion.py:648`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/asset_ingestion.py:783`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/asset_ingestion.py:628`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/asset_ingestion.py:667`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/asset_ingestion.py:714`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/engine.py:1166`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/engine.py:1150`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/engine.py:1035`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/gemini_planner.py:74`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/media_ingestion.py:699`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/media_ingestion.py:202`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/table_operations.py:111`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/workflow_executor.py:79`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/tool_executor.py:78`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:153`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:162`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:500`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:63`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:110`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:191`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:473`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:487`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:496`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:402`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:443`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:429`: retained boundary; existing durable event/log context.
+- `backend/src/ares/worker/main.py:447`: retained boundary; existing durable event/log context.
+- `backend/src/ares/media/docling_runner.py:25`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/media/docling_runner.py:35`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/media/docling_runner.py:279`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/application/research_stages/discovery.py:614`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/research_stages/discovery.py:289`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/research_stages/discovery.py:799`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/research_stages/discovery.py:713`: retained boundary; existing durable event/log context.
+- `backend/src/ares/application/research_stages/synthesis.py:257`: retained boundary; added module and exception-type log; no payload or exception message.
+- `backend/src/ares/api/routers/system.py:56`: retained boundary; added module and exception-type log; no payload or exception message.

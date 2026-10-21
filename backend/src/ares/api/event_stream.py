@@ -68,7 +68,7 @@ async def stream_run_events(
             last_auth = now
         try:
             items = await asyncio.to_thread(
-                lambda: scoped(
+                lambda cursor=cursor: scoped(
                     lambda: repository.list_events(run_id, after=cursor, limit=page_size)
                 )
             )
@@ -82,7 +82,7 @@ async def stream_run_events(
                 # Named copy preserves M06 listeners; generic copy lets M07 clients accept additive events.
                 yield _wire(item, named=True)
                 yield _wire(item, named=False)
-            latest = await asyncio.to_thread(lambda: scoped(lambda: repository.get_run(run_id)))
+            latest = await asyncio.to_thread(lambda cursor=cursor: scoped(lambda: repository.get_run(run_id)))
             if latest.status.terminal and cursor >= latest.last_seq:
                 return
             continue

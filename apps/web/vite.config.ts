@@ -11,5 +11,11 @@ export default defineConfig({
       '/health': 'http://127.0.0.1:8000'
     }
   },
-  build: { sourcemap: true }
+  build: {
+    sourcemap: 'hidden',
+    rolldownOptions: { output: { codeSplitting: { groups: [
+      { name: 'react-vendor', test: /node_modules\/(?:react|react-dom|react-router|react-router-dom)\// },
+      { name: 'markdown-vendor', test: /node_modules\/(?:react-markdown|remark-gfm)\// },
+    ] } } },
+  }
 })

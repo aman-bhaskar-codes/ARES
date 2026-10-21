@@ -9,16 +9,15 @@ from urllib.parse import parse_qs, urlparse
 
 import httpx
 import pytest
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from fastapi.testclient import TestClient
-
 from ares.adapters.db import Base, build_session_factory
 from ares.api.app import create_app
 from ares.api.settings import Settings
-from ares.application.auth import AuthStore, AuthenticationError, OidcClient, safe_return_path
+from ares.application.auth import AuthenticationError, AuthStore, OidcClient, safe_return_path
 from ares.application.identity import Principal, WorkspaceRole, principal_scope
 from ares.application.repository import NotFoundError, Repository
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from fastapi.testclient import TestClient
 
 
 def _b64(data: bytes) -> str:
@@ -343,8 +342,8 @@ async def test_oidc_discovery_rejects_non_https_endpoints_for_https_issuer(tmp_p
 
 
 def test_workspace_switch_rebinds_session_and_logout_revokes_it(tmp_path: Path) -> None:
-    from sqlalchemy import select
     from ares.adapters.db import WorkspaceMembershipRow
+    from sqlalchemy import select
 
     db = f"sqlite+pysqlite:///{tmp_path / 'switch-logout.sqlite3'}"
     engine, sessions = build_session_factory(db)

@@ -32,6 +32,22 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  ocr-worker:
+    profiles: ["ocr"]
+    image: ghcr.io/aman-bhaskar-codes/ares-media:latest
+    environment:
+      WORKER_PROFILE: media
+      OCR_ENABLED: "true"
+      RICH_PARSER_ENABLED: "true"
+      OCR_PREPROCESSING_ENABLED: "true"
+      DATABASE_URL: postgresql://ares:ares@postgres:5432/ares
+    volumes:
+      - ../../.data/models:/app/.data/models:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   ares-postgres:
   ares-searxng-cache:
