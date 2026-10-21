@@ -43,5 +43,6 @@ evals/reports/*.json
 *.zip
 scratch_*
 .kilo/
+CLEANUP_LOG.md
 evals/reports/**
 !evals/reports/README.md
