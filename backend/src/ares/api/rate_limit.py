@@ -15,26 +15,32 @@ from starlette.types import ASGIApp
 class SlidingWindowRateLimiter:
     """Sliding-window request rate limiter in seconds."""
 
-    def __init__(self, requests_per_minute: int) -> None:
-        self.capacity = requests_per_minute
-        self.window_seconds = 60.0
+    def __init__(
+        self,
+        requests_per_minute: int = 60,
+        *,
+        rpm: int | None = None,
+        window_seconds: float = 60.0,
+    ) -> None:
+        self.capacity = rpm if rpm is not None else requests_per_minute
+        self.window_seconds = window_seconds
         self.history: dict[str, list[float]] = defaultdict(list)
 
-    def is_allowed(self, client_key: str) -> tuple[bool, float]:
-        now = time.monotonic()
+    def is_allowed(self, client_key: str, now: float | None = None) -> tuple[bool, float]:
+        current_time = now if now is not None else time.monotonic()
         timestamps = self.history[client_key]
-        cutoff = now - self.window_seconds
+        cutoff = current_time - self.window_seconds
 
         # Prune expired timestamps
         while timestamps and timestamps[0] <= cutoff:
             timestamps.pop(0)
 
         if len(timestamps) < self.capacity:
-            timestamps.append(now)
+            timestamps.append(current_time)
             return True, 0.0
 
         oldest = timestamps[0]
-        retry_after = max(1.0, self.window_seconds - (now - oldest))
+        retry_after = max(1.0, self.window_seconds - (current_time - oldest))
         return False, retry_after
 
 
