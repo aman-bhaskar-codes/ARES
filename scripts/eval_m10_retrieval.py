@@ -20,6 +20,7 @@ from ares.adapters.local_embeddings import LocalFastEmbedProvider
 from ares.application.rag import HybridRAGRetriever, RAGConfig
 from ares.domain.models import FetchedDocument
 from ares.evaluation.metrics import aggregate_retrieval, retrieval_metrics
+
 from evals.run_suite import retrieval as lexical_retrieval
 
 ROOT = Path(__file__).resolve().parents[1]

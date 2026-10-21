@@ -4,8 +4,7 @@ import hashlib
 from datetime import UTC, datetime
 
 import pytest
-
-from ares.adapters.browser_fetch import BrowserFetchError, BrowserFallbackFetcher, BrowserFetcher
+from ares.adapters.browser_fetch import BrowserFallbackFetcher, BrowserFetcher, BrowserFetchError
 from ares.adapters.safe_fetch import FetchError, UnsafeUrlError
 from ares.domain.models import FetchedDocument
 

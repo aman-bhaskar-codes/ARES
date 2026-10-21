@@ -14,7 +14,7 @@ def main() -> None:
     # Delegate to openapi-typescript
     print(f"Generating types using openapi-typescript from {OPENAPI} -> {OUTPUT}")
     result = subprocess.run(
-        ["npx", "--yes", "openapi-typescript@7.13.0", str(OPENAPI), "-o", str(OUTPUT)],
+        ["npm", "exec", "--yes", "--package=typescript@5.9.3", "--package=openapi-typescript@7.13.0", "--", "openapi-typescript", str(OPENAPI), "-o", str(OUTPUT)],
         cwd=str(ROOT),
         capture_output=True,
         text=True,

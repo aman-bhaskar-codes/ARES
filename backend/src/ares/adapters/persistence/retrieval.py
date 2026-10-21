@@ -5,24 +5,26 @@ import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import delete, func, select, text
-
 from ares.adapters.db import (
-    RetrievalProfileRow,
-    RetrievalTraceRow,
     AssetRenditionRow,
     AssetVersionRow,
     DocumentChunkRow,
     DocumentEmbeddingRow,
     DocumentVersionRow,
     EvidenceRow,
+    EvidenceSegmentRow,
     MediaFrameRow,
     MediaTrackRow,
     ResearchCacheRow,
+    RetrievalProfileRow,
+    RetrievalTraceRow,
     RunRow,
     SourceRow,
     UserDocumentRow,
 )
+from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.application.documents import PreparedChunk
+from ares.application.source_identity import source_origin_group
 from ares.domain.models import (
     DocumentStatus,
     DocumentTextCreate,
@@ -32,12 +34,8 @@ from ares.domain.models import (
     SupportStatus,
 )
 from ares.domain.research import EvidenceCandidate, EvidencePacket, RetrievalTrace
-from ares.application.documents import PreparedChunk
-from ares.application.source_identity import source_origin_group
-
-
-from ares.ports.repositories import NotFoundError, RunAuthorizationError, IngestionLease
-from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.ports.repositories import IngestionLease, NotFoundError, RunAuthorizationError
+from sqlalchemy import delete, func, select, text
 
 
 def _hash_request(payload: RunCreate) -> str:
@@ -110,7 +108,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
         name: str,
         mime_type: str,
         text: str,
-        raw_bytes: bytes,
+        raw_bytes: bytes | None,
         blob_key: str | None,
         status: DocumentStatus,
         page_count: int | None,
@@ -118,8 +116,17 @@ class SqlRetrievalRepository(SqlRepositoryBase):
         warnings: list[str],
         parser_version: str | None,
         chunks: list[PreparedChunk],
+        content_hash: str | None = None,
+        byte_count: int | None = None,
     ) -> DocumentView:
-        digest = hashlib.sha256(raw_bytes).hexdigest()
+        if raw_bytes is None:
+            if content_hash is None or byte_count is None:
+                raise ValueError("File ingestion requires content hash and byte count")
+            digest = content_hash
+            size = byte_count
+        else:
+            digest = hashlib.sha256(raw_bytes).hexdigest()
+            size = len(raw_bytes)
         principal = self._request_principal()
         with self._sessions.begin() as session:
             self._ensure_local_identity(session, principal)
@@ -130,7 +137,7 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                 mime_type=mime_type,
                 text=text,
                 content_hash=digest,
-                byte_count=len(raw_bytes),
+                byte_count=size,
                 blob_key=blob_key,
                 status=status.value,
                 page_count=page_count,
@@ -281,6 +288,8 @@ class SqlRetrievalRepository(SqlRepositoryBase):
         dialect = engine.dialect.name if engine is not None else "unknown"
         with self._sessions() as session:
             if dialect == "postgresql":
+                # Safe: placeholders string only contains generated named bind variables (:doc_0, :doc_1, ...).
+                # All document ID values are securely passed via the params dictionary.
                 placeholders = ",".join(f":doc_{index}" for index in range(len(document_ids)))
                 params: dict[str, object] = {"query": query, "limit": limit}
                 params.update({f"doc_{index}": value for index, value in enumerate(document_ids)})
@@ -462,6 +471,9 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                 if profile_id:
                     params["profile_id"] = profile_id
                 
+                # Safe: placeholders string only contains generated named bind variables (:doc_0, :doc_1, ...).
+                # All document IDs and embedding values are securely passed via the params dictionary.
+                # profile_condition is either empty string or static parameter condition "AND p.profile_id = :profile_id".
                 params.update({f"doc_{index}": doc_id for index, doc_id in enumerate(document_ids)})
                 
                 profile_condition = "AND p.profile_id = :profile_id" if profile_id else ""
@@ -702,6 +714,41 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                     )
                 elif evidence.segment_id is None and candidate.segment_id is not None:
                     evidence.segment_id = candidate.segment_id
+
+                modality_val = "text"
+                loc_data = None
+                bbox_val = None
+                time_val = None
+                if evidence.segment_id is not None:
+                    seg = session.get(EvidenceSegmentRow, evidence.segment_id)
+                    if seg is not None:
+                        if seg.modality in {"image", "image_region", "page_region"}:
+                            modality_val = "image_region"
+                        elif seg.modality in {"table", "table_cell"}:
+                            modality_val = "table"
+                        elif seg.modality == "audio":
+                            modality_val = "audio_segment"
+                        elif seg.modality == "video_frame":
+                            modality_val = "video_frame"
+                        else:
+                            modality_val = "text"
+
+                        loc_data = seg.locator_json
+                        if isinstance(loc_data, dict):
+                            raw_bbox = loc_data.get("bbox")
+                            if isinstance(raw_bbox, (list, tuple)) and len(raw_bbox) == 4:
+                                bbox_val = (
+                                    float(raw_bbox[0]),
+                                    float(raw_bbox[1]),
+                                    float(raw_bbox[2]),
+                                    float(raw_bbox[3]),
+                                )
+                            if "start_ms" in loc_data and "end_ms" in loc_data:
+                                time_val = (int(str(loc_data["start_ms"])), int(str(loc_data["end_ms"])))
+                            elif "presentation_time_ms" in loc_data:
+                                p_time = int(str(loc_data["presentation_time_ms"]))
+                                time_val = (p_time, p_time)
+
                 packets.append(
                     EvidencePacket(
                         evidence_id=evidence.id,
@@ -714,6 +761,10 @@ class SqlRetrievalRepository(SqlRepositoryBase):
                         locator=evidence.locator,
                         captured_at=evidence.captured_at,
                         content_hash=version.content_hash,
+                        modality=modality_val,
+                        locator_data=loc_data,
+                        bbox=bbox_val,
+                        timestamp_ms=time_val,
                     )
                 )
             return packets

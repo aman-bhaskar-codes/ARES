@@ -25,7 +25,13 @@
         "title": "OCR",
         "text": "Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. Optical character recognition extracts text from scanned images. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "pg": 3,
+      "rag": 0,
+      "css": 0,
+      "ocr": 0
+    }
   },
   {
     "query": "hnsw ivfflat memory build time",
@@ -53,7 +59,13 @@
         "title": "UI",
         "text": "Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. Responsive interfaces use semantic controls and focus indicators. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "vec": 3,
+      "sql": 0,
+      "sec": 0,
+      "ui": 0
+    }
   },
   {
     "query": "prompt injection retrieved web content",
@@ -81,7 +93,13 @@
         "title": "Git",
         "text": "Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. Git commits identify repository history. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "inj": 3,
+      "pdf": 0,
+      "cache": 0,
+      "git": 0
+    }
   },
   {
     "query": "citation evidence provenance offsets",
@@ -109,7 +127,13 @@
         "title": "Queues",
         "text": "Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. Durable jobs can use lease tokens. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "prov": 3,
+      "emb": 0,
+      "http": 0,
+      "queue": 0
+    }
   },
   {
     "query": "reciprocal rank fusion lexical semantic",
@@ -137,7 +161,13 @@
         "title": "API",
         "text": "REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. REST APIs expose resources using HTTP methods. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "rrf": 3,
+      "bm": 0,
+      "tls": 0,
+      "api": 0
+    }
   },
   {
     "query": "scanned pdf needs ocr text layer",
@@ -165,7 +195,13 @@
         "title": "Release",
         "text": "Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. Software releases publish versioned changes. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "scan": 3,
+      "native": 0,
+      "vector": 0,
+      "release": 0
+    }
   },
   {
     "query": "ssrf dns rebinding pinned ip",
@@ -193,7 +229,13 @@
         "title": "RAG",
         "text": "RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. RAG retrieves passages before synthesis. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "ssrf": 3,
+      "cors": 0,
+      "auth": 0,
+      "rag2": 0
+    }
   },
   {
     "query": "idempotency replay conflicting payload",
@@ -221,7 +263,13 @@
         "title": "CSS",
         "text": "CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. CSS variables represent design tokens. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "idem": 3,
+      "lease": 0,
+      "pdf2": 0,
+      "css2": 0
+    }
   },
   {
     "query": "claim support conflicting evidence",
@@ -249,7 +297,13 @@
         "title": "Database",
         "text": "Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. Database indexes accelerate lookup. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "claim": 3,
+      "search": 0,
+      "log": 0,
+      "db": 0
+    }
   },
   {
     "query": "rate limit rpm tpm rpd quota",
@@ -277,6 +331,1252 @@
         "title": "Blob",
         "text": "Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. Blob storage persists file bytes by key. "
       }
-    ]
+    ],
+    "relevance_grades": {
+      "quota": 3,
+      "ui2": 0,
+      "paper": 0,
+      "blob": 0
+    }
+  },
+  {
+    "id": "synthetic-retrieval-00",
+    "query": "lease fencing implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "lease fencing",
+        "text": "lease fencing is the focus of this synthetic reference. This reference explains lease fencing, implementation constraints, concrete examples and limitations. lease fencing is the focus of this synthetic reference. This reference explains lease fencing, implementation constraints, concrete examples and limitations. lease fencing is the focus of this synthetic reference. This reference explains lease fencing, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on lease fencing",
+        "text": "This background document discusses lease fencing and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses lease fencing and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses lease fencing and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-01",
+    "query": "transaction isolation implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "transaction isolation",
+        "text": "transaction isolation is the focus of this synthetic reference. This reference explains transaction isolation, implementation constraints, concrete examples and limitations. transaction isolation is the focus of this synthetic reference. This reference explains transaction isolation, implementation constraints, concrete examples and limitations. transaction isolation is the focus of this synthetic reference. This reference explains transaction isolation, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on transaction isolation",
+        "text": "This background document discusses transaction isolation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses transaction isolation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses transaction isolation and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-02",
+    "query": "content hashing implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "content hashing",
+        "text": "content hashing is the focus of this synthetic reference. This reference explains content hashing, implementation constraints, concrete examples and limitations. content hashing is the focus of this synthetic reference. This reference explains content hashing, implementation constraints, concrete examples and limitations. content hashing is the focus of this synthetic reference. This reference explains content hashing, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on content hashing",
+        "text": "This background document discusses content hashing and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses content hashing and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses content hashing and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-03",
+    "query": "PDF parsing implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "PDF parsing",
+        "text": "PDF parsing is the focus of this synthetic reference. This reference explains PDF parsing, implementation constraints, concrete examples and limitations. PDF parsing is the focus of this synthetic reference. This reference explains PDF parsing, implementation constraints, concrete examples and limitations. PDF parsing is the focus of this synthetic reference. This reference explains PDF parsing, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on PDF parsing",
+        "text": "This background document discusses PDF parsing and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses PDF parsing and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses PDF parsing and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-04",
+    "query": "stream replay implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "stream replay",
+        "text": "stream replay is the focus of this synthetic reference. This reference explains stream replay, implementation constraints, concrete examples and limitations. stream replay is the focus of this synthetic reference. This reference explains stream replay, implementation constraints, concrete examples and limitations. stream replay is the focus of this synthetic reference. This reference explains stream replay, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on stream replay",
+        "text": "This background document discusses stream replay and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses stream replay and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses stream replay and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-05",
+    "query": "schema migration implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "schema migration",
+        "text": "schema migration is the focus of this synthetic reference. This reference explains schema migration, implementation constraints, concrete examples and limitations. schema migration is the focus of this synthetic reference. This reference explains schema migration, implementation constraints, concrete examples and limitations. schema migration is the focus of this synthetic reference. This reference explains schema migration, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on schema migration",
+        "text": "This background document discusses schema migration and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses schema migration and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses schema migration and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-06",
+    "query": "cookie authentication implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "cookie authentication",
+        "text": "cookie authentication is the focus of this synthetic reference. This reference explains cookie authentication, implementation constraints, concrete examples and limitations. cookie authentication is the focus of this synthetic reference. This reference explains cookie authentication, implementation constraints, concrete examples and limitations. cookie authentication is the focus of this synthetic reference. This reference explains cookie authentication, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on cookie authentication",
+        "text": "This background document discusses cookie authentication and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses cookie authentication and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses cookie authentication and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-07",
+    "query": "CSRF validation implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "CSRF validation",
+        "text": "CSRF validation is the focus of this synthetic reference. This reference explains CSRF validation, implementation constraints, concrete examples and limitations. CSRF validation is the focus of this synthetic reference. This reference explains CSRF validation, implementation constraints, concrete examples and limitations. CSRF validation is the focus of this synthetic reference. This reference explains CSRF validation, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on CSRF validation",
+        "text": "This background document discusses CSRF validation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses CSRF validation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses CSRF validation and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-08",
+    "query": "resource quotas implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "resource quotas",
+        "text": "resource quotas is the focus of this synthetic reference. This reference explains resource quotas, implementation constraints, concrete examples and limitations. resource quotas is the focus of this synthetic reference. This reference explains resource quotas, implementation constraints, concrete examples and limitations. resource quotas is the focus of this synthetic reference. This reference explains resource quotas, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on resource quotas",
+        "text": "This background document discusses resource quotas and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses resource quotas and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses resource quotas and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-09",
+    "query": "numeric units implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "numeric units",
+        "text": "numeric units is the focus of this synthetic reference. This reference explains numeric units, implementation constraints, concrete examples and limitations. numeric units is the focus of this synthetic reference. This reference explains numeric units, implementation constraints, concrete examples and limitations. numeric units is the focus of this synthetic reference. This reference explains numeric units, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on numeric units",
+        "text": "This background document discusses numeric units and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses numeric units and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses numeric units and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-10",
+    "query": "query planning implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "query planning",
+        "text": "query planning is the focus of this synthetic reference. This reference explains query planning, implementation constraints, concrete examples and limitations. query planning is the focus of this synthetic reference. This reference explains query planning, implementation constraints, concrete examples and limitations. query planning is the focus of this synthetic reference. This reference explains query planning, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on query planning",
+        "text": "This background document discusses query planning and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses query planning and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses query planning and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-11",
+    "query": "citation attribution implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "citation attribution",
+        "text": "citation attribution is the focus of this synthetic reference. This reference explains citation attribution, implementation constraints, concrete examples and limitations. citation attribution is the focus of this synthetic reference. This reference explains citation attribution, implementation constraints, concrete examples and limitations. citation attribution is the focus of this synthetic reference. This reference explains citation attribution, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on citation attribution",
+        "text": "This background document discusses citation attribution and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses citation attribution and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses citation attribution and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-12",
+    "query": "Unicode filenames implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "Unicode filenames",
+        "text": "Unicode filenames is the focus of this synthetic reference. This reference explains Unicode filenames, implementation constraints, concrete examples and limitations. Unicode filenames is the focus of this synthetic reference. This reference explains Unicode filenames, implementation constraints, concrete examples and limitations. Unicode filenames is the focus of this synthetic reference. This reference explains Unicode filenames, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on Unicode filenames",
+        "text": "This background document discusses Unicode filenames and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses Unicode filenames and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses Unicode filenames and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-13",
+    "query": "source freshness implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "source freshness",
+        "text": "source freshness is the focus of this synthetic reference. This reference explains source freshness, implementation constraints, concrete examples and limitations. source freshness is the focus of this synthetic reference. This reference explains source freshness, implementation constraints, concrete examples and limitations. source freshness is the focus of this synthetic reference. This reference explains source freshness, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on source freshness",
+        "text": "This background document discusses source freshness and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses source freshness and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses source freshness and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-14",
+    "query": "vector retrieval implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "vector retrieval",
+        "text": "vector retrieval is the focus of this synthetic reference. This reference explains vector retrieval, implementation constraints, concrete examples and limitations. vector retrieval is the focus of this synthetic reference. This reference explains vector retrieval, implementation constraints, concrete examples and limitations. vector retrieval is the focus of this synthetic reference. This reference explains vector retrieval, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on vector retrieval",
+        "text": "This background document discusses vector retrieval and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses vector retrieval and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses vector retrieval and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-15",
+    "query": "lexical retrieval implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "lexical retrieval",
+        "text": "lexical retrieval is the focus of this synthetic reference. This reference explains lexical retrieval, implementation constraints, concrete examples and limitations. lexical retrieval is the focus of this synthetic reference. This reference explains lexical retrieval, implementation constraints, concrete examples and limitations. lexical retrieval is the focus of this synthetic reference. This reference explains lexical retrieval, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on lexical retrieval",
+        "text": "This background document discusses lexical retrieval and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses lexical retrieval and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses lexical retrieval and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-16",
+    "query": "rank fusion implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "rank fusion",
+        "text": "rank fusion is the focus of this synthetic reference. This reference explains rank fusion, implementation constraints, concrete examples and limitations. rank fusion is the focus of this synthetic reference. This reference explains rank fusion, implementation constraints, concrete examples and limitations. rank fusion is the focus of this synthetic reference. This reference explains rank fusion, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on rank fusion",
+        "text": "This background document discusses rank fusion and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses rank fusion and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses rank fusion and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-17",
+    "query": "document chunking implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "document chunking",
+        "text": "document chunking is the focus of this synthetic reference. This reference explains document chunking, implementation constraints, concrete examples and limitations. document chunking is the focus of this synthetic reference. This reference explains document chunking, implementation constraints, concrete examples and limitations. document chunking is the focus of this synthetic reference. This reference explains document chunking, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on document chunking",
+        "text": "This background document discusses document chunking and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses document chunking and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses document chunking and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-18",
+    "query": "reranking evidence implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "reranking evidence",
+        "text": "reranking evidence is the focus of this synthetic reference. This reference explains reranking evidence, implementation constraints, concrete examples and limitations. reranking evidence is the focus of this synthetic reference. This reference explains reranking evidence, implementation constraints, concrete examples and limitations. reranking evidence is the focus of this synthetic reference. This reference explains reranking evidence, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on reranking evidence",
+        "text": "This background document discusses reranking evidence and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses reranking evidence and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses reranking evidence and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-19",
+    "query": "workspace authorization implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "workspace authorization",
+        "text": "workspace authorization is the focus of this synthetic reference. This reference explains workspace authorization, implementation constraints, concrete examples and limitations. workspace authorization is the focus of this synthetic reference. This reference explains workspace authorization, implementation constraints, concrete examples and limitations. workspace authorization is the focus of this synthetic reference. This reference explains workspace authorization, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on workspace authorization",
+        "text": "This background document discusses workspace authorization and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses workspace authorization and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses workspace authorization and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-20",
+    "query": "media transcription implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "media transcription",
+        "text": "media transcription is the focus of this synthetic reference. This reference explains media transcription, implementation constraints, concrete examples and limitations. media transcription is the focus of this synthetic reference. This reference explains media transcription, implementation constraints, concrete examples and limitations. media transcription is the focus of this synthetic reference. This reference explains media transcription, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on media transcription",
+        "text": "This background document discusses media transcription and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses media transcription and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses media transcription and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-21",
+    "query": "OCR extraction implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "OCR extraction",
+        "text": "OCR extraction is the focus of this synthetic reference. This reference explains OCR extraction, implementation constraints, concrete examples and limitations. OCR extraction is the focus of this synthetic reference. This reference explains OCR extraction, implementation constraints, concrete examples and limitations. OCR extraction is the focus of this synthetic reference. This reference explains OCR extraction, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on OCR extraction",
+        "text": "This background document discusses OCR extraction and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses OCR extraction and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses OCR extraction and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-22",
+    "query": "video sampling implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "video sampling",
+        "text": "video sampling is the focus of this synthetic reference. This reference explains video sampling, implementation constraints, concrete examples and limitations. video sampling is the focus of this synthetic reference. This reference explains video sampling, implementation constraints, concrete examples and limitations. video sampling is the focus of this synthetic reference. This reference explains video sampling, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on video sampling",
+        "text": "This background document discusses video sampling and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses video sampling and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses video sampling and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-23",
+    "query": "tool admission implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "tool admission",
+        "text": "tool admission is the focus of this synthetic reference. This reference explains tool admission, implementation constraints, concrete examples and limitations. tool admission is the focus of this synthetic reference. This reference explains tool admission, implementation constraints, concrete examples and limitations. tool admission is the focus of this synthetic reference. This reference explains tool admission, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on tool admission",
+        "text": "This background document discusses tool admission and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses tool admission and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses tool admission and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-24",
+    "query": "safe URL fetching implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "safe URL fetching",
+        "text": "safe URL fetching is the focus of this synthetic reference. This reference explains safe URL fetching, implementation constraints, concrete examples and limitations. safe URL fetching is the focus of this synthetic reference. This reference explains safe URL fetching, implementation constraints, concrete examples and limitations. safe URL fetching is the focus of this synthetic reference. This reference explains safe URL fetching, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on safe URL fetching",
+        "text": "This background document discusses safe URL fetching and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses safe URL fetching and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses safe URL fetching and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-25",
+    "query": "DNS pinning implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "DNS pinning",
+        "text": "DNS pinning is the focus of this synthetic reference. This reference explains DNS pinning, implementation constraints, concrete examples and limitations. DNS pinning is the focus of this synthetic reference. This reference explains DNS pinning, implementation constraints, concrete examples and limitations. DNS pinning is the focus of this synthetic reference. This reference explains DNS pinning, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on DNS pinning",
+        "text": "This background document discusses DNS pinning and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses DNS pinning and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses DNS pinning and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-26",
+    "query": "download streaming implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "download streaming",
+        "text": "download streaming is the focus of this synthetic reference. This reference explains download streaming, implementation constraints, concrete examples and limitations. download streaming is the focus of this synthetic reference. This reference explains download streaming, implementation constraints, concrete examples and limitations. download streaming is the focus of this synthetic reference. This reference explains download streaming, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on download streaming",
+        "text": "This background document discusses download streaming and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses download streaming and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses download streaming and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-27",
+    "query": "upload spooling implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "upload spooling",
+        "text": "upload spooling is the focus of this synthetic reference. This reference explains upload spooling, implementation constraints, concrete examples and limitations. upload spooling is the focus of this synthetic reference. This reference explains upload spooling, implementation constraints, concrete examples and limitations. upload spooling is the focus of this synthetic reference. This reference explains upload spooling, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on upload spooling",
+        "text": "This background document discusses upload spooling and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses upload spooling and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses upload spooling and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-28",
+    "query": "bounded generation implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "bounded generation",
+        "text": "bounded generation is the focus of this synthetic reference. This reference explains bounded generation, implementation constraints, concrete examples and limitations. bounded generation is the focus of this synthetic reference. This reference explains bounded generation, implementation constraints, concrete examples and limitations. bounded generation is the focus of this synthetic reference. This reference explains bounded generation, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on bounded generation",
+        "text": "This background document discusses bounded generation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses bounded generation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses bounded generation and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-29",
+    "query": "semantic checking implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "semantic checking",
+        "text": "semantic checking is the focus of this synthetic reference. This reference explains semantic checking, implementation constraints, concrete examples and limitations. semantic checking is the focus of this synthetic reference. This reference explains semantic checking, implementation constraints, concrete examples and limitations. semantic checking is the focus of this synthetic reference. This reference explains semantic checking, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on semantic checking",
+        "text": "This background document discusses semantic checking and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses semantic checking and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses semantic checking and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-30",
+    "query": "idempotency keys implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "idempotency keys",
+        "text": "idempotency keys is the focus of this synthetic reference. This reference explains idempotency keys, implementation constraints, concrete examples and limitations. idempotency keys is the focus of this synthetic reference. This reference explains idempotency keys, implementation constraints, concrete examples and limitations. idempotency keys is the focus of this synthetic reference. This reference explains idempotency keys, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on idempotency keys",
+        "text": "This background document discusses idempotency keys and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses idempotency keys and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses idempotency keys and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-31",
+    "query": "worker heartbeats implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "worker heartbeats",
+        "text": "worker heartbeats is the focus of this synthetic reference. This reference explains worker heartbeats, implementation constraints, concrete examples and limitations. worker heartbeats is the focus of this synthetic reference. This reference explains worker heartbeats, implementation constraints, concrete examples and limitations. worker heartbeats is the focus of this synthetic reference. This reference explains worker heartbeats, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on worker heartbeats",
+        "text": "This background document discusses worker heartbeats and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses worker heartbeats and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses worker heartbeats and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-32",
+    "query": "deadline cancellation implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "deadline cancellation",
+        "text": "deadline cancellation is the focus of this synthetic reference. This reference explains deadline cancellation, implementation constraints, concrete examples and limitations. deadline cancellation is the focus of this synthetic reference. This reference explains deadline cancellation, implementation constraints, concrete examples and limitations. deadline cancellation is the focus of this synthetic reference. This reference explains deadline cancellation, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on deadline cancellation",
+        "text": "This background document discusses deadline cancellation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses deadline cancellation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses deadline cancellation and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-33",
+    "query": "partial reports implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "partial reports",
+        "text": "partial reports is the focus of this synthetic reference. This reference explains partial reports, implementation constraints, concrete examples and limitations. partial reports is the focus of this synthetic reference. This reference explains partial reports, implementation constraints, concrete examples and limitations. partial reports is the focus of this synthetic reference. This reference explains partial reports, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on partial reports",
+        "text": "This background document discusses partial reports and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses partial reports and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses partial reports and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-34",
+    "query": "discovery concurrency implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "discovery concurrency",
+        "text": "discovery concurrency is the focus of this synthetic reference. This reference explains discovery concurrency, implementation constraints, concrete examples and limitations. discovery concurrency is the focus of this synthetic reference. This reference explains discovery concurrency, implementation constraints, concrete examples and limitations. discovery concurrency is the focus of this synthetic reference. This reference explains discovery concurrency, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on discovery concurrency",
+        "text": "This background document discusses discovery concurrency and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses discovery concurrency and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses discovery concurrency and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-35",
+    "query": "cache invalidation implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "cache invalidation",
+        "text": "cache invalidation is the focus of this synthetic reference. This reference explains cache invalidation, implementation constraints, concrete examples and limitations. cache invalidation is the focus of this synthetic reference. This reference explains cache invalidation, implementation constraints, concrete examples and limitations. cache invalidation is the focus of this synthetic reference. This reference explains cache invalidation, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on cache invalidation",
+        "text": "This background document discusses cache invalidation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses cache invalidation and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses cache invalidation and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-36",
+    "query": "artifact exports implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "artifact exports",
+        "text": "artifact exports is the focus of this synthetic reference. This reference explains artifact exports, implementation constraints, concrete examples and limitations. artifact exports is the focus of this synthetic reference. This reference explains artifact exports, implementation constraints, concrete examples and limitations. artifact exports is the focus of this synthetic reference. This reference explains artifact exports, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on artifact exports",
+        "text": "This background document discusses artifact exports and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses artifact exports and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses artifact exports and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-37",
+    "query": "source deduplication implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "source deduplication",
+        "text": "source deduplication is the focus of this synthetic reference. This reference explains source deduplication, implementation constraints, concrete examples and limitations. source deduplication is the focus of this synthetic reference. This reference explains source deduplication, implementation constraints, concrete examples and limitations. source deduplication is the focus of this synthetic reference. This reference explains source deduplication, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on source deduplication",
+        "text": "This background document discusses source deduplication and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses source deduplication and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses source deduplication and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-38",
+    "query": "run observability implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "run observability",
+        "text": "run observability is the focus of this synthetic reference. This reference explains run observability, implementation constraints, concrete examples and limitations. run observability is the focus of this synthetic reference. This reference explains run observability, implementation constraints, concrete examples and limitations. run observability is the focus of this synthetic reference. This reference explains run observability, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on run observability",
+        "text": "This background document discusses run observability and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses run observability and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses run observability and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
+  },
+  {
+    "id": "synthetic-retrieval-39",
+    "query": "coverage assessment implementation constraints examples limitations",
+    "relevant_ids": [
+      "direct",
+      "background"
+    ],
+    "relevance_grades": {
+      "direct": 3,
+      "background": 1,
+      "noise": 0
+    },
+    "documents": [
+      {
+        "id": "direct",
+        "title": "coverage assessment",
+        "text": "coverage assessment is the focus of this synthetic reference. This reference explains coverage assessment, implementation constraints, concrete examples and limitations. coverage assessment is the focus of this synthetic reference. This reference explains coverage assessment, implementation constraints, concrete examples and limitations. coverage assessment is the focus of this synthetic reference. This reference explains coverage assessment, implementation constraints, concrete examples and limitations. "
+      },
+      {
+        "id": "background",
+        "title": "Background on coverage assessment",
+        "text": "This background document discusses coverage assessment and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses coverage assessment and its surrounding research context. It does not supply the detailed implementation procedure. This background document discusses coverage assessment and its surrounding research context. It does not supply the detailed implementation procedure. "
+      },
+      {
+        "id": "noise",
+        "title": "Unrelated recipe",
+        "text": "Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. Bread baking combines flour water yeast and salt. Proof the dough and heat the oven before baking a loaf. "
+      }
+    ],
+    "provenance": "authored synthetic development scenario"
   }
 ]

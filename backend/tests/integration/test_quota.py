@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 
 import pytest
-
 from ares.application.repository import QuotaExceededError, Repository
 
 

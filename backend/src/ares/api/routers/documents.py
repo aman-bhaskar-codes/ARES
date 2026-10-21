@@ -1,22 +1,86 @@
-# ruff: noqa: F403, F405, E501
-from fastapi import APIRouter, Request
-from ares.api.dependencies import *
-from ares.domain.models import *
-from ares.domain.assets import *
-from ares.domain.visualizations import *
+from __future__ import annotations
+
+import asyncio
 import logging
-logger = logging.getLogger('ares.api')
+import tempfile
+from pathlib import Path
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+
+from ares.adapters.filesystem_blob import FilesystemBlobStore
+from ares.adapters.pdf_parser import PdfParseError
+from ares.api.dependencies import get_blobs, get_documents, get_repository, get_settings
+from ares.api.settings import Settings
+from ares.application.documents import DocumentIngestService
+from ares.application.repository import NotFoundError, Repository
+from ares.domain.models import DocumentTextCreate, DocumentView
+
+logger = logging.getLogger("ares.api")
 router = APIRouter()
 
-@router.get('/api/v1/documents', response_model=list[DocumentView])
-def list_documents(*, request: Request) -> list[DocumentView]:
-    repository = request.app.state.repository
-    getattr(request.app.state, 'auth_store', None)
-    getattr(request.app.state, 'oidc', None)
-    getattr(request.app.state, 'asset_admission', None)
-    getattr(request.app.state, 'documents', None)
-    getattr(request.app.state, 'exports', None)
-    getattr(request.app.state, 'visualizations', None)
-    getattr(request.app.state, 'db_engine', None)
-    getattr(request.app.state, 'local_media_runtime', None)
+
+@router.get("/api/v1/documents", response_model=list[DocumentView])
+def list_documents(
+    *, request: Request, repository: Repository = Depends(get_repository)
+) -> list[DocumentView]:
     return repository.list_documents()
+
+
+@router.post("/api/v1/documents/text", response_model=DocumentView, status_code=201)
+async def create_text_document(
+    payload: DocumentTextCreate, *, documents: DocumentIngestService = Depends(get_documents)
+) -> DocumentView:
+    return await asyncio.to_thread(documents.ingest_text, payload)
+
+
+@router.post("/api/v1/documents/pdf", response_model=DocumentView, status_code=201)
+async def create_pdf_document(
+    file: Annotated[UploadFile, File(...)],
+    *,
+    cfg: Settings = Depends(get_settings),
+    documents: DocumentIngestService = Depends(get_documents),
+) -> DocumentView:
+    name = Path(file.filename or "document.pdf").name.strip()[:255] or "document.pdf"
+    if file.content_type not in {None, "", "application/pdf", "application/octet-stream"}:
+        raise HTTPException(
+            status_code=415,
+            detail={
+                "code": "UNSUPPORTED_MEDIA_TYPE",
+                "message": "PDF upload must use application/pdf",
+            },
+        )
+    with tempfile.TemporaryDirectory(prefix="ares-pdf-upload-") as directory:
+        path = Path(directory) / "upload.pdf"
+        received = 0
+        try:
+            with path.open("wb") as handle:
+                while chunk := await file.read(64 * 1024):
+                    received += len(chunk)
+                    if received > cfg.max_upload_bytes:
+                        raise HTTPException(status_code=413, detail={"code": "UPLOAD_TOO_LARGE", "message": "PDF exceeds the configured upload limit"})
+                    await asyncio.to_thread(handle.write, chunk)
+            return await asyncio.to_thread(documents.ingest_pdf_file, name=name, path=path)
+        except PdfParseError as exc:
+            raise HTTPException(status_code=422, detail={"code": "PDF_PARSE_FAILED", "message": str(exc)}) from exc
+        finally:
+            await file.close()
+
+
+@router.delete("/api/v1/documents/{document_id}", status_code=204)
+async def delete_document(
+    document_id: UUID,
+    *,
+    blobs: FilesystemBlobStore = Depends(get_blobs),
+    repository: Repository = Depends(get_repository),
+) -> Response:
+    try:
+        blob_keys = await asyncio.to_thread(repository.delete_document_with_blobs, document_id)
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+        ) from exc
+    for blob_key in blob_keys:
+        await asyncio.to_thread(blobs.delete, blob_key)
+    return Response(status_code=204)

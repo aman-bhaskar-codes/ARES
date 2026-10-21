@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import csv
+import re
 from collections import defaultdict
 from io import StringIO
-import re
 from uuid import UUID
 
 from ares.application.repository import NotFoundError, Repository

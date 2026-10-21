@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from urllib.parse import urlparse
 
@@ -95,6 +96,7 @@ class BrowserFetcher:
                 }
             )
         except Exception as exc:
+            logging.getLogger(__name__).warning("browser_fetch: recovery boundary (%s)", type(exc).__name__)
             raise BrowserFetchError(
                 "browser renderer returned an invalid document contract"
             ) from exc

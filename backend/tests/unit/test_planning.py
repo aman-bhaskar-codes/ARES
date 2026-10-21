@@ -1,6 +1,6 @@
-from ares.application.planning import DeterministicResearchPlanner
 from datetime import datetime
 
+from ares.application.planning import DeterministicResearchPlanner
 from ares.domain.models import DateWindow, RunMode
 
 

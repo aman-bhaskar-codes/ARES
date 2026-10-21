@@ -10,7 +10,7 @@ export function RunHeader({ run }: RunHeaderProps) {
       <span>You asked</span>
       <h1>{run.query}</h1>
       <div className="run-meta">
-        <span>{run.mode}</span>
+        <span>{run.mode === 'quick' ? 'Search' : 'Research'}</span>
         {run.model_provider && <span>{run.model_provider === "qwen" ? "Qwen · Local" : "Gemini · Cloud"}</span>}
         {run.source_scope.map((scope) => (
           <span key={scope}>{scope}</span>
@@ -21,6 +21,7 @@ export function RunHeader({ run }: RunHeaderProps) {
             {run.document_ids.length === 1 ? '' : 's'}
           </span>
         )}
+
       </div>
     </div>
   )

@@ -5,7 +5,6 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pytest
-
 from ares.api.body_limit import PathAwareRequestBodyLimitMiddleware
 
 

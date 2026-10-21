@@ -6,10 +6,8 @@ from threading import Barrier
 from uuid import uuid4
 
 import pytest
-
 from ares.adapters.db import build_session_factory
 from ares.application.repository import QuotaExceededError, Repository
-
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")
@@ -48,11 +46,12 @@ def test_postgres_serializes_provider_quota_reservations() -> None:
 
 
 def test_postgres_serializes_active_run_admission() -> None:
-    from ares.adapters.db import Base
-    from ares.application.repository import RunAdmissionError
-    from ares.domain.models import RunCreate
+    from ares.adapters.db import Base, RunRow
     from ares.application.auth import AuthStore
     from ares.application.identity import principal_scope
+    from ares.application.repository import RunAdmissionError
+    from ares.domain.models import RunCreate, RunStatus
+    from sqlalchemy import func, select
 
     assert POSTGRES_URL is not None
     engine, sessions = build_session_factory(POSTGRES_URL)
@@ -65,6 +64,10 @@ def test_postgres_serializes_active_run_admission() -> None:
     with principal_scope(principal):
         conversation = repository.create_conversation(f"admission-{uuid4()}")
         barrier = Barrier(2)
+    # Other fixture workspaces can retain queued runs; reserve exactly one additional global slot.
+    with sessions() as session:
+        active_statuses = [status.value for status in RunStatus if not status.terminal]
+        existing_active = session.scalar(select(func.count(RunRow.id)).where(RunRow.status.in_(active_statuses))) or 0
 
     def create(index: int) -> str:
         barrier.wait(timeout=10)
@@ -73,15 +76,18 @@ def test_postgres_serializes_active_run_admission() -> None:
                 repository.create_run(
                     RunCreate(conversation_id=conversation.id, query=f"concurrent run {index}"),
                     f"pg-admission-{uuid4()}",
-                    max_active_runs=1,
+                    max_active_runs=existing_active + 1,
                 )
         except RunAdmissionError:
             return "rejected"
         return "admitted"
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        futures = [pool.submit(create, i) for i in range(2)]
-        outcomes = sorted(future.result(timeout=15) for future in futures)
-
-    engine.dispose()
-    assert outcomes == ["admitted", "rejected"]
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(create, i) for i in range(2)]
+            outcomes = sorted(future.result(timeout=15) for future in futures)
+        assert outcomes == ["admitted", "rejected"]
+    finally:
+        with principal_scope(principal):
+            repository.delete_conversation(conversation.id)
+        engine.dispose()

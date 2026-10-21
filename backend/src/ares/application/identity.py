@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Iterator
 from uuid import UUID
-
 
 SYSTEM_USER_ID = UUID("00000000-0000-4000-8000-000000000001")
 SYSTEM_WORKSPACE_ID = UUID("00000000-0000-4000-8000-000000000002")

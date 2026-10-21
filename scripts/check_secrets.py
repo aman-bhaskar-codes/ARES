@@ -48,8 +48,22 @@ def candidate_files() -> list[Path]:
     ]
 
 
+def production_config_findings(compose: Path) -> list[tuple[str, str]]:
+    """Inspect bind-mounted files, resolving paths relative to their compose file."""
+    findings = []
+    if not compose.is_file():
+        return findings
+    for source in re.findall(r"^\s*-\s*[\"']?([^\s:]+):/", compose.read_text(), re.MULTILINE):
+        if "$" in source:
+            continue
+        path = (compose.parent / source).resolve()
+        if path.is_file() and "development-only" in path.read_text(errors="replace"):
+            findings.append((str(path), "development_config_in_production"))
+    return findings
+
+
 def main() -> int:
-    findings: list[tuple[str, str]] = []
+    findings: list[tuple[str, str]] = production_config_findings(Path("infra/production/compose.yaml"))
     candidates = candidate_files()
     for path in candidates:
         if str(path) in SKIP_NAMES or path.suffix.lower() in SKIP_SUFFIXES or not path.is_file():

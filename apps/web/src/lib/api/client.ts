@@ -19,6 +19,11 @@ import type {
   SystemStatus,
   WorkspaceView,
   VisualizationView,
+  MemoryEpisode,
+  MemoryFact,
+  MemoryPreference,
+  ScoredEpisode,
+  ScoredFact,
 } from './types'
 import { parseAuthMe, parseRunSnapshot, parseVisualizationViews } from './runtime'
 
@@ -41,12 +46,12 @@ function cookie(name: string): string | undefined {
 
 async function parse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('ares:auth-expired'))
-    }
     const payload = await response.json().catch(() => null)
     const detail = payload?.detail
     const code = typeof detail?.code === 'string' ? detail.code : undefined
+    if ((response.status === 401 || (response.status === 403 && code === 'CSRF_TOKEN')) && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('ares:auth-expired'))
+    }
     const message = detail?.message ?? code ?? `Request failed (${response.status})`
     throw new ApiError(response.status, code, message)
   }
@@ -58,7 +63,10 @@ async function download(url: string): Promise<{ blob: Blob; filename: string | u
   if (!response.ok) await parse<never>(response)
   const disposition = response.headers.get('Content-Disposition') ?? ''
   const filenameMatch = disposition.match(/filename="?([^";]+)"?/i)
-  return { blob: await response.blob(), filename: filenameMatch?.[1] }
+  const utf8Name = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  let filename = filenameMatch?.[1]
+  if (utf8Name) { try { filename = decodeURIComponent(utf8Name) } catch { /* Keep the ASCII fallback. */ } }
+  return { blob: await response.blob(), filename }
 }
 
 async function request<T>(url: string, init: RequestInit = {}, validate?: (value: unknown) => T): Promise<T> {
@@ -197,4 +205,47 @@ export const api = {
     request<ArtifactView>(`/api/v1/runs/${runId}/exports`, {
       method: 'POST', headers: jsonHeaders, body: JSON.stringify({ format })
     }),
+
+  listMemoryEpisodes: (limit?: number) =>
+    request<MemoryEpisode[]>(`/api/v1/memory/episodes${limit ? `?limit=${limit}` : ''}`),
+  searchMemoryEpisodes: (q: string) =>
+    request<ScoredEpisode[]>(`/api/v1/memory/episodes/search?q=${encodeURIComponent(q)}`),
+  deleteMemoryEpisode: async (episodeId: string) => {
+    const headers = new Headers()
+    const token = cookie(csrfCookieName)
+    if (token) headers.set('X-CSRF-Token', decodeURIComponent(token))
+    const response = await fetch(`/api/v1/memory/episodes/${episodeId}`, {
+      method: 'DELETE', headers, credentials: 'same-origin'
+    })
+    if (!response.ok) await parse<never>(response)
+  },
+
+  listMemoryFacts: (subject?: string, status = 'active') => {
+    const params = new URLSearchParams()
+    if (subject) params.set('subject', subject)
+    if (status) params.set('status', status)
+    return request<MemoryFact[]>(`/api/v1/memory/facts?${params.toString()}`)
+  },
+  searchMemoryFacts: (q: string) =>
+    request<ScoredFact[]>(`/api/v1/memory/facts/search?q=${encodeURIComponent(q)}`),
+  deleteMemoryFact: async (factId: string) => {
+    const headers = new Headers()
+    const token = cookie(csrfCookieName)
+    if (token) headers.set('X-CSRF-Token', decodeURIComponent(token))
+    const response = await fetch(`/api/v1/memory/facts/${factId}`, {
+      method: 'DELETE', headers, credentials: 'same-origin'
+    })
+    if (!response.ok) await parse<never>(response)
+  },
+  consolidateMemoryFacts: () =>
+    request<{ active_facts: number; superseded_facts: number }>('/api/v1/memory/facts/consolidate', {
+      method: 'POST', headers: jsonHeaders
+    }),
+
+  getMemoryPreferences: () => request<MemoryPreference>('/api/v1/memory/preferences'),
+  updateMemoryPreferences: (payload: Partial<MemoryPreference>) =>
+    request<MemoryPreference>('/api/v1/memory/preferences', {
+      method: 'PUT', headers: jsonHeaders, body: JSON.stringify(payload)
+    }),
 }
+

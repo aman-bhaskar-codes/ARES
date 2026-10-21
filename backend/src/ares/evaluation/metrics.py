@@ -163,3 +163,27 @@ def detection_metrics(expected_risk: list[bool], predicted_risk: list[bool]) -> 
         accuracy=correct / len(expected_risk),
         accuracy_ci95=wilson_interval(correct, len(expected_risk)),
     )
+
+
+def graded_retrieval_metrics(ranked_ids: list[str], grades: dict[str, int], *, k: int) -> RetrievalMetrics:
+    """Use annotated relevance gains for nDCG; recall counts unique relevant documents."""
+    ranked = list(dict.fromkeys(ranked_ids))
+    relevant = {key for key, grade in grades.items() if grade > 0}
+    basic = retrieval_metrics(ranked, relevant, k=k)
+    gains = [(2 ** grades.get(key, 0)) - 1 for key in ranked[:k]]
+    dcg = sum(gain / math.log2(i + 2) for i, gain in enumerate(gains))
+    ideal = sorted(((2 ** grade) - 1 for grade in grades.values() if grade > 0), reverse=True)[:k]
+    idcg = sum(gain / math.log2(i + 2) for i, gain in enumerate(ideal))
+    return RetrievalMetrics(basic.precision_at_k, basic.recall_at_k, basic.reciprocal_rank, dcg / idcg if idcg else 0.0)
+
+
+def citation_faithfulness(cited: list[set[int]], supporting: list[set[int]]) -> dict[str, float]:
+    """Score citation edges against annotations, never merely against resolvable IDs."""
+    if len(cited) != len(supporting) or not cited:
+        raise ValueError('citation vectors must be non-empty and aligned')
+    true_edges = sum(len(actual & expected) for actual, expected in zip(cited, supporting, strict=True))
+    actual_edges = sum(map(len, cited))
+    expected_edges = sum(map(len, supporting))
+    return {'citation_precision': true_edges / actual_edges if actual_edges else 1.0,
+            'citation_recall': true_edges / expected_edges if expected_edges else 1.0,
+            'citation_edges': float(actual_edges), 'annotated_support_edges': float(expected_edges)}

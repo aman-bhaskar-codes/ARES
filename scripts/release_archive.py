@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import stat
 import zipfile
-import json
 from pathlib import Path, PurePosixPath
 
 from generate_sbom import render_sbom

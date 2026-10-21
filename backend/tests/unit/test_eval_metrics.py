@@ -46,3 +46,20 @@ def test_wilson_interval_remains_bounded_at_extremes() -> None:
     high = wilson_interval(10, 10)
     assert low[0] == 0.0 and 0 < low[1] < 1
     assert 0 < high[0] < 1 and abs(high[1] - 1.0) < 1e-12
+
+
+def test_graded_retrieval_rewards_highly_relevant_documents():
+    from ares.evaluation.metrics import graded_retrieval_metrics
+    grades = {'direct': 3, 'background': 1}
+    good = graded_retrieval_metrics(['direct', 'background'], grades, k=2)
+    bad = graded_retrieval_metrics(['background', 'direct'], grades, k=2)
+    assert good.ndcg_at_k == 1.0
+    assert bad.ndcg_at_k < good.ndcg_at_k
+    assert good.recall_at_k == 1.0
+
+
+def test_citation_faithfulness_counts_wrong_source_links():
+    from ares.evaluation.metrics import citation_faithfulness
+    result = citation_faithfulness([{0, 1}, {2}], [{0}, {2}])
+    assert result['citation_precision'] == 2 / 3
+    assert result['citation_recall'] == 1.0

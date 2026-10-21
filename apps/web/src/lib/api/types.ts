@@ -286,3 +286,56 @@ export interface VisualizationView extends Omit<Schema<'VisualizationView'>, 'ki
   description: string
   schema_version: number
 }
+
+export interface MemoryEpisode {
+  id: string
+  workspace_id: string
+  user_id: string
+  conversation_id: string | null
+  run_id: string | null
+  title: string
+  summary: string
+  key_findings: string[]
+  importance: number
+  created_at: string
+  updated_at: string
+}
+
+export interface MemoryFact {
+  id: string
+  workspace_id: string
+  user_id: string
+  subject: string
+  predicate: string
+  fact: string
+  evidence_source: string | null
+  confidence: number
+  status: 'active' | 'superseded' | 'contradiction'
+  superseded_by_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MemoryPreference {
+  id: string
+  workspace_id: string
+  user_id: string
+  depth: 'quick' | 'standard' | 'deep'
+  preferred_domains: string[]
+  excluded_domains: string[]
+  tone: 'academic' | 'brief' | 'technical' | 'general'
+  custom_instructions: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ScoredEpisode {
+  episode: MemoryEpisode
+  score: number
+}
+
+export interface ScoredFact {
+  fact: MemoryFact
+  score: number
+}
+

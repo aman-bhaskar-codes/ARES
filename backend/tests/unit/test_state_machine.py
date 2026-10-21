@@ -1,5 +1,4 @@
 import pytest
-
 from ares.domain.models import RunStatus
 from ares.domain.state_machine import InvalidTransition, assert_transition
 

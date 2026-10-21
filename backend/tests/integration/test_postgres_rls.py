@@ -4,13 +4,12 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import text
-from sqlalchemy.exc import DBAPIError
-
 from ares.adapters.db import build_session_factory
 from ares.application.auth import AuthStore
 from ares.application.identity import principal_scope
 from ares.application.repository import Repository
+from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")
@@ -73,9 +72,9 @@ def test_postgres_rls_hides_other_workspace_and_rejects_cross_tenant_insert() ->
 def test_postgres_pool_reuse_clears_tenant_context() -> None:
     """A pooled connection must never carry a previous request tenant into a later transaction."""
     assert POSTGRES_URL is not None
+    from ares.adapters.db import TenantSession
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
-    from ares.adapters.db import TenantSession
 
     engine = create_engine(POSTGRES_URL, pool_pre_ping=True, pool_size=1, max_overflow=0)
     sessions = sessionmaker(bind=engine, expire_on_commit=False, class_=TenantSession)

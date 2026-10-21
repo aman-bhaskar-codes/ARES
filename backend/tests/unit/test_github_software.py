@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import base64
-import httpx
 
+import httpx
 from ares.adapters.github_software import GitHubSoftwareProvider
 
 

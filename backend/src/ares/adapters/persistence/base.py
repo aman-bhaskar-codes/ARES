@@ -7,36 +7,40 @@ import threading
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, sessionmaker
-
 from ares.adapters.db import (
+    ArtifactRow,
     AssetRenditionRow,
     AssetVersionRow,
-    ArtifactRow,
     ClaimEvidenceRow,
     ClaimRow,
     ConversationRow,
     EvidenceRow,
     ExtractionVersionRow,
+    FacetCoverageRow,
     IngestionEventRow,
     IngestionJobRow,
+    JobRow,
     MediaFrameRow,
     MediaTrackRow,
-    JobRow,
     ProviderQuotaLockRow,
-    FacetCoverageRow,
     ProviderUsageRow,
     RunEventRow,
     RunRow,
     RunStepRow,
     UserDocumentRow,
     UserRow,
-    WorkspaceRow,
-    WorkspaceMembershipRow,
     VisualizationDatasetRow,
     VisualizationRow,
+    WorkspaceMembershipRow,
+    WorkspaceRow,
+)
+from ares.application.identity import (
+    SYSTEM_USER_ID,
+    SYSTEM_WORKSPACE_ID,
+    Principal,
+    WorkspaceRole,
+    current_principal,
+    local_principal,
 )
 from ares.domain.assets import (
     AssetStatus,
@@ -48,8 +52,8 @@ from ares.domain.assets import (
     MediaTrackDraft,
 )
 from ares.domain.models import (
-    AnswerClaim,
     AnswerBlock,
+    AnswerClaim,
     CitationRef,
     DocumentStatus,
     DocumentView,
@@ -60,24 +64,24 @@ from ares.domain.models import (
     RunStatus,
     SupportStatus,
 )
+from ares.domain.research import AnswerOutline, RunAssessment
+from ares.domain.state_machine import assert_transition
 from ares.domain.visualizations import (
     VisualizationLineageRef,
     VisualizationSpec,
     VisualizationView,
 )
-from ares.application.identity import (
-    SYSTEM_USER_ID,
-    SYSTEM_WORKSPACE_ID,
-    Principal,
-    WorkspaceRole,
-    current_principal,
-    local_principal,
+from ares.ports.repositories import (
+    IngestionLease,
+    JobLease,
+    NotFoundError,
+    QuotaExceededError,
+    RunAuthorizationError,
+    StaleLeaseError,
 )
-from ares.domain.state_machine import assert_transition
-
-
-from ares.ports.repositories import NotFoundError, StaleLeaseError, QuotaExceededError, RunAuthorizationError, JobLease, IngestionLease
-from ares.domain.research import AnswerOutline, RunAssessment
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, sessionmaker
 
 
 def _hash_request(payload: RunCreate) -> str:
@@ -963,6 +967,8 @@ class SqlRepositoryBase:
             model_provider=row.model_provider,
             id=row.id,
             conversation_id=row.conversation_id,
+            workspace_id=row.workspace_id,
+            created_by_user_id=row.created_by_user_id,
             query=row.query,
             mode=RunMode(row.mode),
             source_scope=list(row.source_scope or []),

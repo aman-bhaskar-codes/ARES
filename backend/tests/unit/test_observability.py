@@ -4,7 +4,6 @@ import sys
 from types import SimpleNamespace
 
 import pytest
-
 from ares.application.observability import optional_span
 
 
@@ -59,3 +58,29 @@ def test_telemetry_export_status_distinguishes_configured_from_ready(
         "ready": False,
         "degraded": True,
     }
+
+
+def test_configure_llm_tracing(monkeypatch: pytest.MonkeyPatch) -> None:
+    from collections.abc import Callable
+    from typing import Any
+
+    from ares.application import observability
+
+    calls: list[dict[str, Any]] = []
+
+    def mock_configure_telemetry(**kwargs: Any) -> Callable[[], None]:
+        calls.append(kwargs)
+        return lambda: None
+
+    monkeypatch.setattr(observability, "configure_telemetry", mock_configure_telemetry)
+
+    # Test phoenix endpoint
+    observability.configure_llm_tracing(phoenix_endpoint="http://localhost:6006/v1/traces")
+    assert len(calls) == 1
+    assert calls[0]["endpoint"] == "http://localhost:6006/v1/traces"
+
+    # Test langfuse host
+    observability.configure_llm_tracing(langfuse_host="https://cloud.langfuse.com")
+    assert len(calls) == 2
+    assert calls[1]["endpoint"] == "https://cloud.langfuse.com/api/public/otel"
+

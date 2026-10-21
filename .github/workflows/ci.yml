@@ -2,8 +2,9 @@ name: ci
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
-    branches: [v3-development]
+    branches: [main, v3-development]
 
 permissions:
   contents: read
@@ -30,11 +31,11 @@ jobs:
       DATABASE_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
       ARES_TEST_POSTGRES_URL: postgresql+psycopg://ares:ares@127.0.0.1:5432/ares_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
       - name: Verify backend lock
         run: uv lock --project backend --check
       - name: Install backend
@@ -42,7 +43,7 @@ jobs:
       - name: Lint
         run: uv run --project backend ruff check backend/src backend/tests evals scripts
       - name: Typecheck
-        run: uv run --project backend mypy backend/src/ares/domain backend/src/ares/ports
+        run: uv run --project backend mypy backend/src/ares/domain backend/src/ares/ports backend/src/ares/application backend/src/ares/api
       - name: Secret-shaped material gate
         run: python scripts/check_secrets.py
       - name: Validate keyless integration configuration
@@ -54,7 +55,9 @@ jobs:
       - name: Tests
         run: uv run --project backend pytest backend/tests -q
       - name: Offline regression evaluation
-        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite all --decision-provider deterministic --retrieval-mode lexical --report evals/reports/regression_ci.json
+        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite all --decision-provider deterministic --retrieval-mode lexical --repeats 3 --report evals/reports/regression_ci.json
+      - name: Report external scientific support limits (not a release qualification gate)
+        run: PYTHONPATH=backend/src uv run --project backend python evals/run_suite.py --suite claims --dataset-dir evals/datasets/heldout/scifact --dataset-kind scifact_external_holdout --repeats 3 --no-gate --report evals/reports/scifact_ci.json
       - name: Compile
         run: PYTHONPATH=backend/src uv run --project backend python -m compileall -q backend/src backend/tests
       - name: Export API contract
@@ -66,8 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '22.16.0'
       - name: Require committed frontend lock
@@ -88,7 +91,7 @@ jobs:
     timeout-minutes: 25
     needs: [backend, frontend-lock-gate]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Build production images
         run: |
           docker build --target runtime --tag ares:ci .
@@ -114,6 +117,7 @@ jobs:
           GEMINI_TPM=1000
           GEMINI_RPD=10
           EOF
+          SEARXNG_SECRET=ci-search-placeholder-32-characters \
           ARES_IMAGE=ares:ci \
           ARES_MEDIA_IMAGE=ares-media:ci \
           ARES_ENV_FILE=/tmp/ares-ci.env \

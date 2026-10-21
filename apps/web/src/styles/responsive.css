@@ -5,7 +5,7 @@
   .nav-rail {
     position: fixed;
     left: -270px;
-    width: 252px;
+    width: 260px;
     transition: left 0.18s ease;
     box-shadow: 20px 0 60px #0002;
   }
@@ -41,7 +41,7 @@
     padding: 60px 15px 35px;
   }
   .home-state h1 {
-    font-size: 46px;
+    font-size: 30px;
   }
   .example-grid {
     grid-template-columns: 1fr;
@@ -50,7 +50,7 @@
     padding: 38px 14px 125px;
   }
   .answer-card {
-    padding: 21px 18px;
+    padding: 0;
   }
   .composer-actions {
     align-items: flex-end;
@@ -217,7 +217,7 @@
     grid-column: 1/-1;
   }
   .research-tabs {
-    top: 62px;
+    top: 64px;
   }
   .visual-card-head {
     display: block;
@@ -288,4 +288,15 @@
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
   }
+}
+
+@media (max-width: 650px) {
+  .home-state { padding-top: 48px; }
+  .home-state > p { font-size: 13px; max-width: 280px; margin: 14px auto 26px; }
+  .thread-view { padding-top: 28px; }
+  .breadcrumb-title { display: none; }
+  .research-tabs button { padding: 0 10px; }
+  .research-tabs { margin-left: 0; margin-right: 0; }
+  .topbar > .mobile-menu { margin-right: 10px; }
+  .account-chip > span { display: none; }
 }

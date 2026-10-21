@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-
 from typing import Literal
 
 from ares.domain.models import RunMode
@@ -22,8 +21,8 @@ class RunBudget:
 
 
 BUDGETS = {
-    RunMode.QUICK: RunBudget(1, 4, 5, 6, 2, 12_000, 3_000, 120),
-    RunMode.RESEARCH: RunBudget(3, 10, 12, 20, 3, 40_000, 8_000, 300),
+    RunMode.QUICK: RunBudget(1, 4, 5, 6, 2, 12_000, 3_000, 180),
+    RunMode.RESEARCH: RunBudget(3, 10, 12, 20, 3, 40_000, 8_000, 480),
 }
 
 

@@ -926,6 +926,85 @@ class RetrievalTraceRow(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
+
+class MemoryEpisodeRow(Base):
+    __tablename__ = "memory_episodes"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    workspace_id: Mapped[UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    conversation_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True
+    )
+    run_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("runs.id", ondelete="SET NULL"), nullable=True
+    )
+    title: Mapped[str] = mapped_column(String(255))
+    summary: Mapped[str] = mapped_column(Text)
+    key_findings: Mapped[list] = mapped_column(JSON, default=list)
+    importance: Mapped[float] = mapped_column(Float, default=0.5)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class MemoryFactRow(Base):
+    __tablename__ = "memory_facts"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    workspace_id: Mapped[UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    subject: Mapped[str] = mapped_column(String(255), index=True)
+    predicate: Mapped[str] = mapped_column(String(100))
+    fact: Mapped[str] = mapped_column(Text)
+    evidence_source: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    status: Mapped[str] = mapped_column(String(32), default="active", index=True)
+    superseded_by_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("memory_facts.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class MemoryPreferenceRow(Base):
+    __tablename__ = "memory_preferences"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "user_id", name="uq_memory_preferences_workspace_user"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    workspace_id: Mapped[UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    depth: Mapped[str] = mapped_column(String(32), default="standard")
+    preferred_domains: Mapped[list] = mapped_column(JSON, default=list)
+    excluded_domains: Mapped[list] = mapped_column(JSON, default=list)
+    tone: Mapped[str] = mapped_column(String(32), default="academic")
+    custom_instructions: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
 def default_database_url() -> str:
     return os.getenv("DATABASE_URL", "sqlite+pysqlite:///./.data/ares-dev.sqlite3")
 

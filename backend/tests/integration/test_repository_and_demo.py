@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-
 import pytest
-
 from ares.application.engine import DemoResearchEngine
 from ares.application.repository import IdempotencyConflictError, Repository, StaleLeaseError
 from ares.domain.models import RunCreate, RunMode, RunStatus

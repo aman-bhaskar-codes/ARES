@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import httpx
-
 from ares.adapters.openalex import OpenAlexAcademicProvider
 
 

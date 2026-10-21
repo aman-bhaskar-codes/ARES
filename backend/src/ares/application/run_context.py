@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from time import monotonic
 from threading import Lock
+from time import monotonic
+
 from ares.application.repository import JobLease, Repository
 from ares.domain.budgets import RunBudget
 from ares.domain.models import DateWindow, RunSnapshot
@@ -26,7 +28,7 @@ class RunContext:
     _usage_lock: Lock = field(default_factory=Lock, repr=False)
 
     @classmethod
-    def create(cls, repository: Repository, lease: JobLease, budget: RunBudget) -> "RunContext":
+    def create(cls, repository: Repository, lease: JobLease, budget: RunBudget) -> RunContext:
         run = repository.initialize_run_execution_contract(
             lease.run_id, wall_clock_seconds=budget.wall_clock_seconds, lease_token=lease.token
         )
