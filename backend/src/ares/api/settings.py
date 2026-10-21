@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     csrf_cookie_name: str = "ares_csrf"
     session_cookie_secure: bool = False
     session_ttl_hours: int = Field(default=12, ge=1, le=168)
+    server_bind_host: str = "127.0.0.1"
+    allow_insecure_remote_disabled_auth: bool = False
     oidc_issuer: str = ""
     oidc_client_id: str = ""
     oidc_client_secret: str = ""
@@ -299,6 +301,22 @@ class Settings(BaseSettings):
             if browser.path not in {"", "/"} or browser.query or browser.fragment:
                 raise ValueError(
                     "BROWSER_SERVICE_URL must be an origin without path, query or fragment"
+                )
+        if self.auth_mode == "disabled" and not self.allow_insecure_remote_disabled_auth:
+            loopback_hosts = {"127.0.0.1", "localhost", "::1", "testserver"}
+            public_host = (urlsplit(self.public_base_url).hostname or "").lower()
+            bind_host = self.server_bind_host.strip().lower()
+            if public_host not in loopback_hosts:
+                raise ValueError(
+                    f"AUTH_MODE=disabled is restricted to local loopback hosts (127.0.0.1, localhost, ::1). "
+                    f"Got public_base_url host '{public_host}'. "
+                    f"Set ALLOW_INSECURE_REMOTE_DISABLED_AUTH=true to explicitly override."
+                )
+            if bind_host not in loopback_hosts:
+                raise ValueError(
+                    f"AUTH_MODE=disabled is restricted to local loopback hosts (127.0.0.1, localhost, ::1). "
+                    f"Got server_bind_host '{bind_host}'. "
+                    f"Set ALLOW_INSECURE_REMOTE_DISABLED_AUTH=true to explicitly override."
                 )
         if self.auth_mode == "oidc":
             if not self.oidc_issuer or not self.oidc_client_id:
