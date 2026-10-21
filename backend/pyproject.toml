@@ -4,7 +4,7 @@ version = "0.12.0"
 description = "ARES research API and durable worker"
 requires-python = ">=3.12,<3.16"
 dependencies = [
-  "fastapi==0.142.2",
+  "fastapi==0.143.0",
   "pydantic==2.13.5",
   "pydantic-settings==2.15.0",
   "sqlalchemy==2.1.4",
@@ -12,9 +12,9 @@ dependencies = [
   "psycopg[binary]==3.3.6",
   "httpx==0.28.1",
   "uvicorn[standard]==0.54.0",
-  "google-genai==2.27.0",
-  "trafilatura==2.2.0",
-  "pypdf==6.19.0",
+  "google-genai==2.29.0",
+  "trafilatura==2.3.1",
+  "pypdf==6.21.1",
   "python-multipart==0.0.32",
   "cryptography==50.0.2",
   "fastembed==0.8.1",
