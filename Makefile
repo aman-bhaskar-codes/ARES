@@ -159,7 +159,7 @@ dev: infra migrate
 	@echo "  Postgres & SearXNG containers: Ready                     "
 	@echo "  Database schema migrations: Applied to HEAD revision    "
 	@echo "  API endpoint:   http://127.0.0.1:8000                   "
-	@echo "  Web interface:  http://127.0.0.1:3000                   "
+	@echo "  Web interface:  http://127.0.0.1:5173                   "
 	@echo "=========================================================="
 
 perf-m10:
