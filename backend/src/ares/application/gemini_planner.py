@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any
 
-
+from ares.application.planning import DeterministicResearchPlanner
 from ares.domain.models import DateWindow, RunMode
 from ares.domain.research import ResearchPlan
-from ares.application.planning import DeterministicResearchPlanner
 
 _PLAN_SYSTEM_INSTRUCTION = """You are the research planner for ARES.
 Analyze the USER_QUERY and context to produce a structured ResearchPlan.
@@ -72,5 +72,6 @@ class GeminiResearchPlanner:
             if not isinstance(language, str) or not re.fullmatch(r"all|[a-z]{2}(?:-[A-Za-z]{2})?", language):
                 data["language"] = "all"
             return ResearchPlan.model_validate(data)
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("gemini_planner: recovery boundary (%s)", type(_boundary_error).__name__)
             return self._fallback.plan(query, mode, date_window)

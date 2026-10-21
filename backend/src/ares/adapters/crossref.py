@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import httpx
 
-from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.application.providers import DiscoveryProvider, ProviderCapabilities, ProviderMetadata
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -73,8 +73,9 @@ class CrossrefAcademicProvider(DiscoveryProvider):
         published_after: datetime | None = None,
         published_before: datetime | None = None,
     ) -> list[tuple[SearchHit, FetchedDocument | None]]:
+        clean_query = " ".join(query.split())[:150]
         params: dict[str, str | int] = {
-            "query.bibliographic": query,
+            "query": clean_query,
             "rows": min(max(limit, 1), 20),
             "select": "DOI,title,author,container-title,published,published-online,published-print,abstract,type,URL,subject",
         }
@@ -87,12 +88,9 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             params["filter"] = ",".join(filters)
         if self.mailto:
             params["mailto"] = self.mailto
+        effective_timeout = min(timeout_seconds if timeout_seconds is not None else 10.0, 10.0)
         try:
-            response = (
-                self._client.get("/works", params=params, timeout=timeout_seconds)
-                if timeout_seconds is not None
-                else self._client.get("/works", params=params)
-            )
+            response = self._client.get("/works", params=params, timeout=effective_timeout)
         except httpx.HTTPError as exc:
             raise SearchProviderError(f"Crossref request failed: {type(exc).__name__}") from exc
         if response.status_code == 429:
@@ -109,7 +107,7 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             raise SearchProviderError("Crossref returned an invalid response schema") from exc
 
         results: list[tuple[SearchHit, FetchedDocument]] = []
-        for rank, item in enumerate(items[:limit], start=1):
+        for item in items:
             doi = str(item.get("DOI") or "").strip().lower()
             titles = item.get("title") or []
             title = str(titles[0] if titles else "Untitled work").strip()
@@ -145,6 +143,7 @@ class CrossrefAcademicProvider(DiscoveryProvider):
             if abstract:
                 lines.extend(["", "Abstract", abstract])
             text = "\n".join(lines)
+            rank = len(results) + 1
             hit = SearchHit(
                 title=title,
                 url=url,
@@ -172,6 +171,8 @@ class CrossrefAcademicProvider(DiscoveryProvider):
                 published_at=published_at,
             )
             results.append((hit, document))
+            if len(results) >= limit:
+                break
         return results
 
     def close(self) -> None:

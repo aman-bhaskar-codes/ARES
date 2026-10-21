@@ -4,14 +4,13 @@ import hashlib
 import json
 from uuid import UUID
 
-from sqlalchemy import select
-
 from ares.adapters.db import (
     ArtifactRow,
     EvidenceRow,
     VisualizationDatasetRow,
     VisualizationRow,
 )
+from ares.adapters.persistence.base import SqlRepositoryBase
 from ares.domain.models import (
     ArtifactView,
     RunCreate,
@@ -21,10 +20,8 @@ from ares.domain.visualizations import (
     VisualizationView,
     validate_visualization_dataset,
 )
-
-
 from ares.ports.repositories import NotFoundError
-from ares.adapters.persistence.base import SqlRepositoryBase
+from sqlalchemy import select
 
 
 def _hash_request(payload: RunCreate) -> str:

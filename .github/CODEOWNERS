@@ -1,0 +1,5 @@
+# Lines starting with '#' are considered comments.
+# Each line is a file pattern followed by one or more owners.
+
+# Global code ownership for ARES repository
+* @aman-bhaskar-codes

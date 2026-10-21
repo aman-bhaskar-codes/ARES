@@ -1,7 +1,6 @@
 import socket
 
 import pytest
-
 from ares.adapters.safe_fetch import UnsafeUrlError, validate_public_url
 
 

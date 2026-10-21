@@ -1,5 +1,4 @@
 import pytest
-
 from ares.api.settings import Settings
 
 

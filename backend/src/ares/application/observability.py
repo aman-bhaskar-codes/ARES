@@ -5,9 +5,9 @@ import importlib.util
 import json
 import logging
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from typing import Iterator
 
 from ares.application.repository import JobLease, Repository
 
@@ -55,7 +55,7 @@ def configure_logging(*, json_logs: bool = True, level: int = logging.INFO) -> N
     )
     root.handlers.clear()
     root.addHandler(handler)
-    setattr(root, "_ares_configured", True)
+    root._ares_configured = True
 
 
 @contextmanager
@@ -85,7 +85,8 @@ def optional_span(name: str, **attributes: object) -> Iterator[None]:
         }
         span_context = tracer.start_as_current_span(name, attributes=safe_attributes)
         span_context.__enter__()
-    except Exception:
+    except Exception as _boundary_error:
+        logging.getLogger(__name__).warning("observability: recovery boundary (%s)", type(_boundary_error).__name__)
         yield
         return
 
@@ -95,13 +96,13 @@ def optional_span(name: str, **attributes: object) -> Iterator[None]:
         try:
             span_context.__exit__(type(exc), exc, exc.__traceback__)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
         raise
     else:
         try:
             span_context.__exit__(None, None, None)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
 
 _stage_duration_histogram = None
 
@@ -116,7 +117,8 @@ def _get_stage_duration_histogram() -> object | None:
                 unit="ms",
                 description="Duration of research stages",
             )
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("observability: recovery boundary (%s)", type(_boundary_error).__name__)
             _stage_duration_histogram = False
     return None if _stage_duration_histogram is False else _stage_duration_histogram
 
@@ -136,7 +138,8 @@ class RunTelemetry:
         try:
             with optional_span(f"ares.run.{name}", run_id=str(self.lease.run_id), stage=name):
                 yield
-        except Exception:
+        except Exception as _boundary_error:
+            logging.getLogger(__name__).warning("observability: recovery boundary (%s)", type(_boundary_error).__name__)
             outcome = "error"
             raise
         finally:
@@ -146,7 +149,7 @@ class RunTelemetry:
                 try:
                     histogram.record(duration_ms, {"stage": name, "outcome": outcome})
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional cleanup or instrumentation failed", exc_info=True)
             payload: dict[str, object] = {
                 "stage": name,
                 "duration_ms": duration_ms,
@@ -210,15 +213,15 @@ def configure_telemetry(
     if not endpoint:
         return lambda: None
     try:
-        from opentelemetry import trace, metrics
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry import metrics, trace
         from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
         from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
-        from opentelemetry.sdk.metrics import MeterProvider
-        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
         current = trace.get_tracer_provider()
         if isinstance(current, TracerProvider):
@@ -268,3 +271,24 @@ def configure_telemetry(
             "OpenTelemetry exporter initialization failed; continuing without export"
         )
         return lambda: None
+
+
+def configure_llm_tracing(
+    *,
+    phoenix_endpoint: str | None = None,
+    langfuse_host: str | None = None,
+    service_name: str = "ares",
+    sample_ratio: float = 1.0,
+    export_timeout_seconds: float = 5.0,
+) -> None:
+    """Configure LLM tracing for Phoenix or Langfuse via standard OTLP / OpenTelemetry."""
+    target_endpoint = phoenix_endpoint or (
+        f"{langfuse_host.rstrip('/')}/api/public/otel" if langfuse_host else None
+    )
+    if target_endpoint:
+        configure_telemetry(
+            endpoint=target_endpoint,
+            service_name=service_name,
+            sample_ratio=sample_ratio,
+            export_timeout_seconds=export_timeout_seconds,
+        )

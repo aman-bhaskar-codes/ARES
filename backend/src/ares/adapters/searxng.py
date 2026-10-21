@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.application.providers import DiscoveryProvider, ProviderCapabilities, ProviderMetadata
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.domain.research import SearchRequest
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
@@ -52,8 +52,9 @@ class SearXNGSearchProvider(DiscoveryProvider):
 
     def search(self, request: SearchRequest) -> list[SearchHit]:
         endpoint = urljoin(self.base_url, "search")
+        clean_query = " ".join(request.query.split())
         params: dict[str, object] = {
-            "q": request.query,
+            "q": clean_query,
             "format": "json",
             "safesearch": 1,
             "language": request.language,

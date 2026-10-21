@@ -4,13 +4,11 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import text
-
 from ares.adapters.db import build_session_factory
 from ares.application.documents import PreparedChunk
 from ares.application.repository import Repository
 from ares.domain.models import DocumentStatus
-
+from sqlalchemy import text
 
 POSTGRES_URL = os.getenv("ARES_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="ARES_TEST_POSTGRES_URL is not configured")
@@ -51,20 +49,23 @@ def test_pgvector_exact_search_uses_migrated_sidecar() -> None:
     chunks = repository.get_document_chunks([document.id])
     by_text = {chunk.text: chunk.id for chunk in chunks}
     model_id = f"test-vector-{suffix}"
+    v_mem = [1.0, 1.0] + [0.0] * 382
+    v_traf = [0.0, 0.0, 1.0] + [0.0] * 381
+    v_query = [1.0, 1.0] + [0.0] * 382
     repository.store_chunk_embeddings(
         model_id=model_id,
-        dimensions=3,
+        dimensions=384,
         embeddings=[
-            (by_text[memory], [1.0, 1.0, 0.0]),
-            (by_text[traffic], [0.0, 0.0, 1.0]),
+            (by_text[memory], v_mem),
+            (by_text[traffic], v_traf),
         ],
     )
 
     ranked = repository.vector_search_document_chunks(
         [document.id],
         model_id=model_id,
-        dimensions=3,
-        query_vector=[1.0, 1.0, 0.0],
+        dimensions=384,
+        query_vector=v_query,
         limit=2,
     )
 

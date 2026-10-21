@@ -1,13 +1,15 @@
-from typing import Any, Literal, Dict
-from pydantic import BaseModel, Field
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Literal
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
 
 class ToolSpec(BaseModel):
     name: str
     version: str
-    input_schema: Dict[str, Any]
-    output_schema: Dict[str, Any]
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
     allowed_modes: list[str]
     allowed_roles: list[str]
     billing_class: Literal["local", "public_free", "gemini_paid"]
@@ -25,7 +27,7 @@ class ToolContext(BaseModel):
     lease_token: UUID
     deadline: datetime
     policy_version: str
-    remaining_budgets: Dict[str, float]
+    remaining_budgets: dict[str, float]
     permitted_asset_ids: list[UUID]
     permitted_source_ids: list[UUID]
 
@@ -39,7 +41,7 @@ ToolErrorCategory = Literal[
 ]
 
 class ToolResult(BaseModel):
-    payload: Dict[str, Any] = Field(default_factory=dict)
+    payload: dict[str, Any] = Field(default_factory=dict)
     source_ids: list[UUID] = Field(default_factory=list)
     evidence_ids: list[UUID] = Field(default_factory=list)
     retrieval_timestamp: datetime | None = None

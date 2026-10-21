@@ -4,15 +4,13 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
-
 from ares.adapters.db import (
+    AssetVersionRow,
     DocumentTableCellRow,
     DocumentTableRow,
     EvidenceRow,
     EvidenceSegmentRow,
     ExtractionVersionRow,
-    AssetVersionRow,
     VisualizationDatasetRow,
     VisualizationRow,
 )
@@ -40,6 +38,7 @@ from ares.domain.visualizations import (
     VisualizationLineageRef,
     VisualizationSpec,
 )
+from sqlalchemy import select
 
 
 def _complete_run_with_evidence(repository: Repository, *, suffix: str = "base"):
@@ -335,10 +334,10 @@ def test_visualization_draft_enforces_approved_max_points() -> None:
 
 
 def test_visualization_api_returns_validated_artifacts(tmp_path) -> None:
-    from fastapi.testclient import TestClient
     from ares.adapters.db import Base, build_session_factory
     from ares.api.app import create_app
     from ares.api.settings import Settings
+    from fastapi.testclient import TestClient
 
     db = f"sqlite+pysqlite:///{tmp_path / 'm11-api.sqlite3'}"
     engine, sessions = build_session_factory(db)
@@ -411,10 +410,10 @@ def test_visualization_csv_export_is_lineage_bearing_and_formula_safe(
 
 
 def test_visualization_csv_api_is_download_only_and_rejects_graph_export(tmp_path) -> None:
-    from fastapi.testclient import TestClient
     from ares.adapters.db import Base, build_session_factory
     from ares.api.app import create_app
     from ares.api.settings import Settings
+    from fastapi.testclient import TestClient
 
     db = f"sqlite+pysqlite:///{tmp_path / 'm11-csv-api.sqlite3'}"
     engine, sessions = build_session_factory(db)

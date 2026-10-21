@@ -5,8 +5,6 @@ import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import delete, func, or_, select, update
-
 from ares.adapters.db import (
     AssetRenditionRow,
     AssetVersionRow,
@@ -24,6 +22,8 @@ from ares.adapters.db import (
     UserDocumentRow,
     WorkspaceMembershipRow,
 )
+from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.application.documents import PreparedChunk
 from ares.domain.assets import (
     AssetStatus,
     AssetView,
@@ -37,11 +37,14 @@ from ares.domain.models import (
     DocumentStatus,
     RunCreate,
 )
-from ares.application.documents import PreparedChunk
-
-
-from ares.ports.repositories import NotFoundError, StaleLeaseError, RunAuthorizationError, IngestionLease, IngestionPublication
-from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.ports.repositories import (
+    IngestionLease,
+    IngestionPublication,
+    NotFoundError,
+    RunAuthorizationError,
+    StaleLeaseError,
+)
+from sqlalchemy import delete, func, or_, select, update
 
 
 def _hash_request(payload: RunCreate) -> str:

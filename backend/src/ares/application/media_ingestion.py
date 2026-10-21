@@ -3,20 +3,21 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import logging
 import math
 import os
 import re
-import signal
 import shutil
+import signal
 import subprocess
+import sys
 import tempfile
 import time
 import wave
 from array import array
-import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 from uuid import UUID
 
 from ares.domain.assets import (
@@ -27,7 +28,6 @@ from ares.domain.assets import (
     TimeRangeLocator,
 )
 from ares.ports.transcription import TranscriptionProvider, TranscriptionResult
-
 
 AUDIO_MIME_TYPES = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/webm", "audio/ogg"}
 VIDEO_MIME_TYPES = {"video/mp4", "video/webm"}
@@ -200,7 +200,8 @@ class FFmpegMediaProcessor:
             if cancelled is not None:
                 try:
                     stop_requested = cancelled()
-                except Exception:
+                except Exception as _boundary_error:
+                    logging.getLogger(__name__).warning("media_ingestion: recovery boundary (%s)", type(_boundary_error).__name__)
                     # A deleted/revoked ingestion invalidates the lease while a local
                     # parser may still be running. Kill the subprocess before surfacing
                     # the fencing error so no orphan decoder survives the request.
@@ -698,6 +699,7 @@ class FFmpegMediaProcessor:
                         bits = (bits << 1) | int(value >= mean)
                     perceptual_hash = f"{bits:016x}"
             except Exception as exc:
+                logging.getLogger(__name__).warning("media_ingestion: recovery boundary (%s)", type(exc).__name__)
                 raise MediaProcessingError("sampled frame could not be validated") from exc
             frames.append(
                 MediaFrameDraft(

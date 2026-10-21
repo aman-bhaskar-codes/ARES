@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Literal, Dict, Any
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Literal
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 ReportSectionKind = Literal[
     "overview",
@@ -42,7 +43,7 @@ class ReportDocument(BaseModel):
     table_calculation_references: list[UUID] = Field(default_factory=list)
     visualization_references: list[UUID] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
-    bibliography: list[Dict[str, Any]] = Field(default_factory=list)
+    bibliography: list[dict[str, Any]] = Field(default_factory=list)
     generation_identity: str | None = None
     profile_identity: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

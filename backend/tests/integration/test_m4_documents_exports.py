@@ -3,14 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi.testclient import TestClient
-
 from ares.api.app import create_app
 from ares.api.settings import Settings
+from ares.application.documents import PreparedChunk
 from ares.application.repository import Repository
 from ares.domain.models import DocumentStatus, FetchedDocument, RunCreate, RunMode
-from ares.application.documents import PreparedChunk
 from ares.domain.research import EvidenceCandidate
+from fastapi.testclient import TestClient
 
 
 def test_document_identity_is_distinct_from_run_source_and_reusable(repository: Repository) -> None:

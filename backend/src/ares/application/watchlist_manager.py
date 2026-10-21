@@ -1,8 +1,9 @@
 import logging
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
-from datetime import datetime, timezone
-from ares.domain.watchlists import Watchlist, EvidenceChange
+
 from ares.application.repository import Repository
+from ares.domain.watchlists import EvidenceChange, Watchlist
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class WatchlistManager:
                     watchlist_id=watchlist_id,
                     source_id=e_id,
                     change_type="new_source",
-                    after_capture_date=datetime.now(timezone.utc),
+                    after_capture_date=datetime.now(UTC),
                     after_hash=new_item.get("content_hash")
                 ))
             else:
@@ -44,7 +45,7 @@ class WatchlistManager:
                         source_id=e_id,
                         change_type="evidence_change",
                         before_capture_date=old_item.get("capture_date"),
-                        after_capture_date=datetime.now(timezone.utc),
+                        after_capture_date=datetime.now(UTC),
                         before_hash=old_item.get("content_hash"),
                         after_hash=new_item.get("content_hash")
                     ))
@@ -55,7 +56,7 @@ class WatchlistManager:
                         source_id=e_id,
                         change_type="metadata_only",
                         before_capture_date=old_item.get("capture_date"),
-                        after_capture_date=datetime.now(timezone.utc),
+                        after_capture_date=datetime.now(UTC),
                         before_hash=old_item.get("content_hash"),
                         after_hash=new_item.get("content_hash")
                     ))
@@ -68,7 +69,7 @@ class WatchlistManager:
                     source_id=e_id,
                     change_type="source_removed",
                     before_capture_date=old_item.get("capture_date"),
-                    after_capture_date=datetime.now(timezone.utc),
+                    after_capture_date=datetime.now(UTC),
                     before_hash=old_item.get("content_hash")
                 ))
                 

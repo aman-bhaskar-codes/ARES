@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import httpx
+from datetime import UTC, datetime
+from uuid import uuid4
 
+import httpx
 from ares.adapters.jev import JevConfig, JevDecisionProvider
 from ares.domain.decisions import ClaimVerdict, ResearchTask
 from ares.domain.research import EvidencePacket
-from datetime import UTC, datetime
-from uuid import uuid4
 
 
 def _provider(payloads: list[dict]) -> JevDecisionProvider:

@@ -8,7 +8,7 @@ WORKDIR /src
 ENV COREPACK_HOME=/tmp/corepack
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/package.json
-RUN corepack enable && corepack prepare pnpm@12.8.1 --activate \
+RUN corepack enable && corepack prepare "$(node -p 'require("./package.json").packageManager')" --activate \
     && pnpm install --frozen-lockfile --filter @ares/web...
 COPY apps/web apps/web
 RUN pnpm --filter @ares/web typecheck \
@@ -56,7 +56,7 @@ FROM runtime-base AS runtime
 COPY --from=backend-build --chown=ares:ares /src/backend backend
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2).read()" || exit 1
+  CMD python -m ares.api.health_probe --path /health/live || exit 1
 CMD ["uvicorn", "ares.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=127.0.0.1"]
 
 FROM runtime-base AS runtime-media

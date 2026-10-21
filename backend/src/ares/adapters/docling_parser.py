@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -123,8 +124,7 @@ class DoclingSubprocessParser:
                     cwd=workdir,
                     env=env,
                     stdin=subprocess.DEVNULL,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    capture_output=True,
                     check=False,
                     timeout=self.timeout_seconds + 5,
                     preexec_fn=preexec,
@@ -147,6 +147,7 @@ class DoclingSubprocessParser:
                 payload = json.loads(output_path.read_text(encoding="utf-8"))
                 return RichExtractionResult.model_validate(payload)
             except Exception as exc:
+                logging.getLogger(__name__).warning("docling_parser: recovery boundary (%s)", type(exc).__name__)
                 raise DoclingParseError(
                     "Docling parser returned invalid structured output"
                 ) from exc

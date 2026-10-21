@@ -7,6 +7,8 @@ from urllib.parse import urlsplit
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ares.api.schema_revision import schema_head
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -26,14 +28,22 @@ class Settings(BaseSettings):
     csrf_cookie_name: str = "ares_csrf"
     session_cookie_secure: bool = False
     session_ttl_hours: int = Field(default=12, ge=1, le=168)
+    server_bind_host: str = "127.0.0.1"
+    allow_insecure_remote_disabled_auth: bool = False
     oidc_issuer: str = ""
     oidc_client_id: str = ""
     oidc_client_secret: str = ""
     oidc_scopes: str = "openid email profile"
     oidc_state_ttl_seconds: int = Field(default=600, ge=60, le=1800)
 
+    # Per-client API rate limiting (off-by-default only in demo mode)
+    rate_limit_enabled: bool | None = None
+    rate_limit_write_rpm: int = Field(default=60, ge=1, le=1000)
+    rate_limit_upload_rpm: int = Field(default=30, ge=1, le=1000)
+    rate_limit_runs_rpm: int = Field(default=20, ge=1, le=1000)
+
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-3.8-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     gemini_thinking_level: Literal["low", "medium", "high"] = "low"
     gemini_rpm: int | None = Field(default=None, ge=1)
     gemini_tpm: int | None = Field(default=None, ge=1)
@@ -42,8 +52,10 @@ class Settings(BaseSettings):
     local_llm_enabled: bool = False
     local_llm_url: str = "http://127.0.0.1:11434"
     local_llm_model: str = "qwen3:4b"
-    local_llm_timeout_seconds: float = Field(default=120.0, ge=5.0, le=120.0)
-    gemini_timeout_seconds: float = Field(default=45.0, ge=5.0, le=120.0)
+    local_llm_context_tokens: int = Field(default=4096, ge=2048, le=65536)
+    local_llm_passage_chars: int = Field(default=900, ge=256, le=8000)
+    local_llm_timeout_seconds: float = Field(default=180.0, ge=5.0, le=600.0)
+    gemini_timeout_seconds: float = Field(default=60.0, ge=5.0, le=300.0)
     gemini_billing_mode: Literal["free", "paid"] = "free"
     gemini_max_daily_spend_usd: float = Field(default=0.0, ge=0.0)
     searxng_url: str = "http://127.0.0.1:8080"
@@ -102,6 +114,10 @@ class Settings(BaseSettings):
     local_embeddings_enabled: bool = False
     local_embedding_model: str = "BAAI/bge-small-en-v1.5"
     local_embedding_dimensions: int = Field(default=384, ge=128, le=3072)
+    multilingual_embedding_enabled: bool = False
+    multilingual_embedding_model: str = "BAAI/bge-m3"
+    multilingual_embedding_dimensions: int = Field(default=1024, ge=128, le=3072)
+    local_reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
     local_embedding_cache_dir: str = ".data/models/fastembed"
     local_embedding_threads: int | None = Field(default=None, ge=1, le=32)
     local_embedding_batch_size: int = Field(default=32, ge=1, le=256)
@@ -109,6 +125,13 @@ class Settings(BaseSettings):
     docling_timeout_seconds: float = Field(default=120.0, ge=10.0, le=600.0)
     docling_model_cache_dir: str = ".data/models/docling"
     ocr_language: str = "iso:en"
+    ocr_languages: list[str] = Field(default_factory=lambda: ["en", "hi", "de"])
+    ocr_preprocessing_enabled: bool = True
+    ocr_vlm_fallback_enabled: bool = False
+    ocr_vlm_provider: Literal["ollama", "gemini", "none"] = "none"
+    ocr_vlm_confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_vision_model: str = "qwen2.5-vl:latest"
     max_image_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
     max_image_pixels: int = Field(default=20_000_000, ge=1_000_000, le=100_000_000)
     max_csv_rows: int = Field(default=5_000, ge=1, le=100_000)
@@ -176,7 +199,7 @@ class Settings(BaseSettings):
     event_max_replay: int = Field(default=1000, ge=100, le=10_000)
     event_heartbeat_seconds: float = Field(default=15.0, ge=5.0, le=60.0)
     stream_authorization_recheck_seconds: float = Field(default=10.0, ge=2.0, le=15.0)
-    required_schema_revision: str = "0013"
+    required_schema_revision: str = Field(default_factory=schema_head)
 
     @field_validator(
         "gemini_rpm",
@@ -195,22 +218,24 @@ class Settings(BaseSettings):
 
     def validate_live_mode(self) -> None:
         self.validate_security_mode()
-        
+
         # Legacy normalization
         if not self.strict_free_mode and self.gemini_billing_mode == "free":
             self.gemini_billing_mode = "paid"
-            
+
         if self.allow_billable_providers:
             raise ValueError("ARES strict-free mode refuses ALLOW_BILLABLE_PROVIDERS=true")
-            
+
         if self.ares_mode != "local_live":
             return
-            
+
         if not self.gemini_api_key and not self.local_llm_enabled:
-            raise ValueError("Configure GEMINI_API_KEY or enable LOCAL_LLM_ENABLED for local_live mode")
+            raise ValueError(
+                "Configure GEMINI_API_KEY or enable LOCAL_LLM_ENABLED for local_live mode"
+            )
         if self.gemini_api_key and None in {self.gemini_rpm, self.gemini_tpm, self.gemini_rpd}:
             raise ValueError("GEMINI_RPM, GEMINI_TPM and GEMINI_RPD must be explicit in live mode")
-            
+
         if self.jev_enabled:
             raise ValueError(
                 "Jev is a metered external service; ARES V3 policy rejects JEV_ENABLED=true. "
@@ -277,6 +302,22 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "BROWSER_SERVICE_URL must be an origin without path, query or fragment"
                 )
+        if self.auth_mode == "disabled" and not self.allow_insecure_remote_disabled_auth:
+            loopback_hosts = {"127.0.0.1", "localhost", "::1", "testserver"}
+            public_host = (urlsplit(self.public_base_url).hostname or "").lower()
+            bind_host = self.server_bind_host.strip().lower()
+            if public_host not in loopback_hosts:
+                raise ValueError(
+                    f"AUTH_MODE=disabled is restricted to local loopback hosts (127.0.0.1, localhost, ::1). "
+                    f"Got public_base_url host '{public_host}'. "
+                    f"Set ALLOW_INSECURE_REMOTE_DISABLED_AUTH=true to explicitly override."
+                )
+            if bind_host not in loopback_hosts:
+                raise ValueError(
+                    f"AUTH_MODE=disabled is restricted to local loopback hosts (127.0.0.1, localhost, ::1). "
+                    f"Got server_bind_host '{bind_host}'. "
+                    f"Set ALLOW_INSECURE_REMOTE_DISABLED_AUTH=true to explicitly override."
+                )
         if self.auth_mode == "oidc":
             if not self.oidc_issuer or not self.oidc_client_id:
                 raise ValueError("OIDC_ISSUER and OIDC_CLIENT_ID are required when AUTH_MODE=oidc")
@@ -307,6 +348,12 @@ class Settings(BaseSettings):
                 )
             if public.path not in {"", "/"} or frontend.path not in {"", "/"}:
                 raise ValueError("production public origins must not contain path prefixes")
+
+    @property
+    def is_rate_limiting_active(self) -> bool:
+        if self.rate_limit_enabled is not None:
+            return self.rate_limit_enabled
+        return self.ares_mode != "demo"
 
 
 @lru_cache(maxsize=1)

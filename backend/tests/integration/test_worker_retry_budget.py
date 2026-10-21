@@ -1,11 +1,10 @@
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import select
-
 from ares.adapters.db import Base, JobRow, build_session_factory
 from ares.application.repository import Repository
 from ares.domain.models import RunCreate, RunStatus
+from sqlalchemy import select
 
 
 def test_expired_worker_leases_fail_closed_after_retry_budget(tmp_path: Path) -> None:

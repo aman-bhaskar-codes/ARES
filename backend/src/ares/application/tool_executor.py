@@ -1,15 +1,17 @@
 import logging
+from typing import Any
+
 import jsonschema
-from typing import Dict, Any
-from ares.domain.tools import ToolSpec, ToolContext, ToolResult
-from ares.ports.tools import Tool
+
 from ares.application.repository import Repository
+from ares.domain.tools import ToolContext, ToolResult, ToolSpec
+from ares.ports.tools import Tool
 
 logger = logging.getLogger(__name__)
 
 class ToolRegistry:
     def __init__(self):
-        self._tools: Dict[str, Tool] = {}
+        self._tools: dict[str, Tool] = {}
 
     def register(self, tool: Tool):
         spec = tool.get_spec()

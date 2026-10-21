@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 
 
@@ -92,3 +93,24 @@ class FilesystemBlobStore:
 
     def exists(self, key: str) -> bool:
         return self._path(key).is_file()
+
+    def file_path(self, key: str) -> Path:
+        path = self._path(key)
+        if not path.is_file():
+            raise FileNotFoundError(key)
+        return path
+
+    def iter_bytes(self, key: str, *, start: int = 0, end_inclusive: int | None = None,
+                   chunk_size: int = 64 * 1024) -> Iterator[bytes]:
+        if start < 0 or chunk_size <= 0 or (end_inclusive is not None and end_inclusive < start):
+            raise ValueError("invalid blob stream range")
+        with self._path(key).open("rb") as handle:
+            handle.seek(start)
+            remaining = None if end_inclusive is None else end_inclusive - start + 1
+            while remaining is None or remaining > 0:
+                chunk = handle.read(chunk_size if remaining is None else min(chunk_size, remaining))
+                if not chunk:
+                    break
+                yield chunk
+                if remaining is not None:
+                    remaining -= len(chunk)

@@ -8,8 +8,6 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import httpx
-from sqlalchemy import text
-
 from ares.adapters.arxiv import ArxivAcademicProvider
 from ares.adapters.crossref import CrossrefAcademicProvider
 from ares.adapters.db import build_session_factory
@@ -18,6 +16,7 @@ from ares.adapters.searxng import SearXNGSearchProvider
 from ares.api.settings import Settings
 from ares.application.observability import telemetry_export_status
 from ares.domain.research import SearchRequest
+from sqlalchemy import text
 
 
 @dataclass(frozen=True)

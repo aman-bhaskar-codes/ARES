@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, UTC
-from typing import Literal, Any
+from datetime import UTC, datetime
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, HttpUrl, model_validator
@@ -61,6 +61,10 @@ class EvidencePacket(BaseModel):
     locator: str
     captured_at: datetime
     content_hash: str
+    modality: Literal["text", "image_region", "table", "audio_segment", "video_frame"] = "text"
+    locator_data: dict[str, Any] | None = None
+    bbox: tuple[float, float, float, float] | None = None
+    timestamp_ms: tuple[int, int] | None = None
 
 
 class PersistedEvidence(BaseModel):
@@ -80,7 +84,7 @@ class RetrievalProfile(BaseModel):
     language_coverage: str = "en"
     chunk_policy: str
     extraction_revision: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 class RetrievalTrace(BaseModel):
     id: UUID = Field(default_factory=uuid4)

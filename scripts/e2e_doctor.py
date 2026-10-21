@@ -6,9 +6,8 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-import httpx
-
 import connectivity_doctor
+import httpx
 from ares.api.settings import Settings
 
 

@@ -6,12 +6,10 @@ import math
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import func, select
-
 from ares.adapters.db import (
+    ArtifactRow,
     AssetRenditionRow,
     AssetVersionRow,
-    ArtifactRow,
     ClaimEvidenceRow,
     ClaimRow,
     ConversationRow,
@@ -22,20 +20,21 @@ from ares.adapters.db import (
     EvidenceRow,
     EvidenceSegmentRow,
     ExtractionVersionRow,
+    FacetCoverageRow,
     IngestionEventRow,
     IngestionJobRow,
     MediaFrameRow,
     MediaTrackRow,
     ResearchCacheRow,
-    FacetCoverageRow,
     RunEventRow,
     RunRow,
     SourceRow,
     UserDocumentRow,
-    WorkerInstanceRow,
     VisualizationDatasetRow,
     VisualizationRow,
+    WorkerInstanceRow,
 )
+from ares.adapters.persistence.base import SqlRepositoryBase
 from ares.domain.assets import (
     AssetView,
     EvidenceLocator,
@@ -50,12 +49,12 @@ from ares.domain.assets import (
 )
 from ares.domain.models import (
     AnswerBlock,
+    ClaimEvidenceRelationView,
     ConversationView,
+    DocumentView,
     EventEnvelope,
     EvidenceView,
-    DocumentView,
     RunCreate,
-    ClaimEvidenceRelationView,
     RunFacetView,
     RunQualityView,
     RunSnapshot,
@@ -66,10 +65,8 @@ from ares.domain.visualizations import (
     NumericTablePointCandidate,
     VisualizationView,
 )
-
-
-from ares.ports.repositories import NotFoundError, RunAuthorizationError, IngestionLease
-from ares.adapters.persistence.base import SqlRepositoryBase
+from ares.ports.repositories import IngestionLease, NotFoundError, RunAuthorizationError
+from sqlalchemy import func, select
 
 
 def _hash_request(payload: RunCreate) -> str:

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import pytest
-
 from ares.adapters.gemini_multimodal import (
     GeminiMultimodalUnderstandingProvider,
     MultimodalProviderUnavailable,

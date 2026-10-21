@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import httpx
 
-from ares.application.providers import DiscoveryProvider, ProviderMetadata, ProviderCapabilities
+from ares.application.providers import DiscoveryProvider, ProviderCapabilities, ProviderMetadata
 from ares.domain.models import FetchedDocument, SearchHit
 from ares.ports.errors import ProviderRateLimitError, SearchProviderError
 
@@ -101,7 +101,7 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
             raise SearchProviderError("OpenAlex returned invalid JSON") from exc
 
         output: list[tuple[SearchHit, FetchedDocument]] = []
-        for rank, row in enumerate(rows[:limit], start=1):
+        for row in rows:
             title = (row.get("title") or "Untitled work").strip()
             abstract = _abstract_from_inverted(row.get("abstract_inverted_index"))
             if not abstract:
@@ -130,6 +130,7 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
                 if doi
                 else f"openalex:{openalex_id.rsplit('/', 1)[-1]}"
             )
+            rank = len(output) + 1
             hit = SearchHit(
                 title=title,
                 url=url,
@@ -163,6 +164,8 @@ class OpenAlexAcademicProvider(DiscoveryProvider):
                 published_at=published_at,
             )
             output.append((hit, document))
+            if len(output) >= limit:
+                break
         return output
 
     def close(self) -> None:

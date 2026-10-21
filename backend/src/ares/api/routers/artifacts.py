@@ -1,32 +1,42 @@
-# ruff: noqa: F403, F405, E501
-from uuid import UUID
-from fastapi import APIRouter, Request, Response, HTTPException
-from ares.api.dependencies import *
-from ares.domain.models import *
-from ares.domain.assets import *
-from ares.domain.visualizations import *
-from ares.application.repository import NotFoundError
+from __future__ import annotations
+
 import asyncio
 import logging
-logger = logging.getLogger("ares.api")
+from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import FileResponse
+
+from ares.adapters.filesystem_blob import FilesystemBlobStore
+from ares.api.dependencies import get_blobs, get_repository
+from ares.api.downloads import content_disposition
+from ares.application.repository import NotFoundError, Repository
+
+logger = logging.getLogger("ares.api")
 router = APIRouter()
 
-@router.get('/api/v1/artifacts/{artifact_id}')
-async def download_artifact(artifact_id: UUID, *, request: Request) -> Response:
-    repository = request.app.state.repository
-    getattr(request.app.state, 'auth_store', None)
-    getattr(request.app.state, 'oidc', None)
-    blobs = request.app.state.blobs
-    getattr(request.app.state, 'asset_admission', None)
-    getattr(request.app.state, 'documents', None)
-    getattr(request.app.state, 'exports', None)
-    getattr(request.app.state, 'visualizations', None)
-    getattr(request.app.state, 'db_engine', None)
-    getattr(request.app.state, 'local_media_runtime', None)
+
+@router.get("/api/v1/artifacts/{artifact_id}")
+async def download_artifact(
+    artifact_id: UUID,
+    *,
+    blobs: FilesystemBlobStore = Depends(get_blobs),
+    repository: Repository = Depends(get_repository),
+) -> Response:
     try:
         record = await asyncio.to_thread(repository.get_artifact_record, artifact_id)
-        content = await asyncio.to_thread(blobs.get_bytes, record.blob_key)
+        path = await asyncio.to_thread(blobs.file_path, record.blob_key)
     except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': str(exc)}) from exc
-    return Response(content=content, media_type=record.mime_type, headers={'Content-Disposition': f'attachment; filename="{record.name}"'})
+        raise HTTPException(
+            status_code=404, detail={"code": "NOT_FOUND", "message": str(exc)}
+        ) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=410,
+            detail={"code": "ARTIFACT_GONE", "message": "artifact bytes are unavailable"},
+        ) from exc
+    return FileResponse(
+        path=path,
+        media_type=record.content_type,
+        headers={"Content-Disposition": content_disposition(record.file_name)},
+    )

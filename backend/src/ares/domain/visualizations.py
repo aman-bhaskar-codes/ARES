@@ -54,7 +54,7 @@ class NumericChartDataset(BaseModel):
     points: list[ChartPoint] = Field(min_length=2, max_length=200)
 
     @model_validator(mode="after")
-    def validate_units(self) -> "NumericChartDataset":
+    def validate_units(self) -> NumericChartDataset:
         nonempty = {point.unit for point in self.points if point.unit}
         if len(nonempty) > 1:
             raise ValueError("numeric chart points must use one comparable unit")
@@ -97,7 +97,7 @@ class EvidenceGraphDataset(BaseModel):
     edges: list[EvidenceGraphEdge] = Field(default_factory=list, max_length=200)
 
     @model_validator(mode="after")
-    def validate_graph(self) -> "EvidenceGraphDataset":
+    def validate_graph(self) -> EvidenceGraphDataset:
         ids = {node.id for node in self.nodes}
         if len(ids) != len(self.nodes):
             raise ValueError("evidence graph node ids must be unique")
@@ -169,7 +169,7 @@ class VisualizationSpec(BaseModel):
     accessible_table: bool = True
 
     @model_validator(mode="after")
-    def validate_mapping(self) -> "VisualizationSpec":
+    def validate_mapping(self) -> VisualizationSpec:
         if self.kind in {VisualizationKind.BAR, VisualizationKind.LINE, VisualizationKind.SCATTER}:
             if self.x_field != "label" or self.y_field != "value":
                 raise ValueError("numeric chart fields are restricted to label/value")
@@ -201,7 +201,7 @@ class VisualizationDraft(BaseModel):
     export_metadata: dict[str, object] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def validate_contract(self) -> "VisualizationDraft":
+    def validate_contract(self) -> VisualizationDraft:
         if self.spec.kind != self.kind:
             raise ValueError("visualization kind must match approved spec kind")
 
