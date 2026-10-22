@@ -1,7 +1,7 @@
 <div align="center">
 
 # ARES
-### Autonomous AI Research & Engineering System
+### Autonomous Research & Evidence System
 
 [![Quality Gates](https://img.shields.io/badge/Quality%20Gates-10%2F10%20Passed-emerald.svg)](Makefile)
 [![Tests](https://img.shields.io/badge/Tests-290%20Passed-brightgreen.svg)](backend/tests/)
@@ -12,7 +12,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 <p align="center">
-  <img src="ares_banner.jpg" alt="ARES - Autonomous AI Research and Engineering System" width="800" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);" />
+  <img src="ares_banner.jpg" alt="ARES - Autonomous Research & Evidence System" width="800" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);" />
 </p>
 
 **ARES is a production-grade, evidence-grounded autonomous research engine. It orchestrates multi-source web and academic discovery, performs hybrid lexical and dense vector retrieval, maintains a 4-tier persistent cognitive memory hierarchy, and rigorously validates claims using deterministic and semantic verification.**

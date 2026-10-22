@@ -1,6 +1,6 @@
 # ARES System Architecture
 
-ARES (Autonomous AI Research & Engineering System) is structured around a staged, durable execution model designed for high-assurance, grounded scientific research and engineering synthesis.
+ARES (Autonomous Research & Evidence System) is structured around a staged, durable execution model designed for high-assurance, grounded scientific research and engineering synthesis.
 
 ---
 

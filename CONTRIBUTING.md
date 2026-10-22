@@ -1,6 +1,6 @@
 # Contributing to ARES
 
-Thank you for your interest in contributing to **ARES (Autonomous AI Research and Engineering System)**! ARES is built with an uncompromising commitment to grounded synthesis, verifiable citations, deterministic replay, and multi-tenant security.
+Thank you for your interest in contributing to **ARES (Autonomous Research & Evidence System)**! ARES is built with an uncompromising commitment to grounded synthesis, verifiable citations, deterministic replay, and multi-tenant security.
 
 ---
 

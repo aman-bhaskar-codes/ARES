@@ -2,7 +2,7 @@
 
 help:
 	@echo "================================================================================"
-	@echo "  ARES (Autonomous AI Research & Engineering System) - Command Guide"
+	@echo "  ARES (Autonomous Research & Evidence System) - Command Guide"
 	@echo "================================================================================"
 	@echo "Development:"
 	@echo "  make dev                     Start local infra and apply database migrations"
