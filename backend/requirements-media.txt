@@ -4,5 +4,5 @@
 # provisioned separately and are never downloaded from an ingestion request.
 docling[rapidocr]==2.133.0
 fastembed==0.8.1
-pillow==12.3.0
+pillow==13.0.0
 faster-whisper==1.2.1
