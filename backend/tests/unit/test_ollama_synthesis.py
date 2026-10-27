@@ -100,3 +100,25 @@ def test_local_writer_never_repairs_an_unknown_evidence_index():
         provider.synthesize('Color?', [packet], max_output_tokens=256, timeout_seconds=10)
     assert len(calls) == 2
     provider.close()
+
+
+@pytest.mark.parametrize(('query', 'depth', 'limit'), [
+    ('Explain neuroplasticity briefly', 'brief', 800),
+    ('Explain neuroplasticity in detail', 'detailed', 2800),
+])
+def test_local_writer_uses_requested_answer_depth(query, depth, limit):
+    import json
+    packet = EvidencePacket(evidence_id=uuid4(), source_id=uuid4(), title='Evidence',
+        url='https://example.com', domain='example.com', text='Neural connections can change with experience.',
+        locator='passage', captured_at=datetime.now(UTC), content_hash='a' * 64)
+    def respond(request):
+        body = json.loads(request.content)
+        prompt = json.loads(body['messages'][1]['content'])
+        assert prompt['ANSWER_STYLE']['depth'] == depth
+        assert body['options']['num_predict'] == limit
+        assert 'Write the answer in your own words' in body['messages'][0]['content']
+        return httpx.Response(200, json={'message': {'content': json.dumps({
+            'summary_markdown': '', 'claims': [{'text': 'Neural connections can change with experience.', 'evidence_indexes': [0]}]})}})
+    provider = OllamaLLMProvider(context_tokens=8192, client=httpx.Client(transport=httpx.MockTransport(respond)))
+    assert provider.synthesize(query, [packet], max_output_tokens=3000).claims
+    provider.close()

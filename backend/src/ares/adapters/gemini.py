@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from ares.adapters.grounded_synthesis import _SYSTEM_INSTRUCTION as _SYSTEM_INSTRUCTION
-from ares.adapters.grounded_synthesis import GroundedSynthesisBase
+from ares.adapters.grounded_synthesis import GroundedSynthesisBase, _answer_style
 from ares.adapters.grounded_synthesis import ProviderUnavailable as ProviderUnavailable
 from ares.adapters.grounded_synthesis import _build_synthesis_input as _build_synthesis_input
 from ares.adapters.grounded_synthesis import _ModelAnswer as _ModelAnswer
@@ -40,7 +40,7 @@ class GeminiLLMProvider(GroundedSynthesisBase):
 
     async def _async_synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int) -> SynthesisResult:
         model_input = _build_synthesis_input(query, evidence)
-        interaction = await self._client.aio.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': max_output_tokens, 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
+        interaction = await self._client.aio.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': min(max_output_tokens, int(_answer_style(query)['max_output_tokens'])), 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
         return self._parse_synthesis_interaction(interaction, evidence)
 
     def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None=None) -> SynthesisResult:
@@ -58,7 +58,7 @@ class GeminiLLMProvider(GroundedSynthesisBase):
                 raise _interaction_error(exc) from exc
         model_input = _build_synthesis_input(query, evidence)
         try:
-            interaction = self._client.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': max_output_tokens, 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
+            interaction = self._client.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': min(max_output_tokens, int(_answer_style(query)['max_output_tokens'])), 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
         except Exception as exc:
             logging.getLogger(__name__).warning("gemini: recovery boundary (%s)", type(exc).__name__)
             raise _interaction_error(exc) from exc

@@ -9,7 +9,7 @@
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.composer textarea { width: 100%; min-height: 82px; max-height: 240px; resize: vertical; border: 0; outline: 0; background: transparent; padding: 3px 5px; color: var(--ink); line-height: 1.6; font-size: 17px; }
+.composer textarea { width: 100%; min-height: 82px; max-height: 240px; border: 0; outline: 0; background: transparent; padding: 3px 5px; color: var(--ink); line-height: 1.6; font-size: 17px; }
 .composer textarea::placeholder { color: var(--muted); opacity: 1; }
 .composer textarea:focus-visible { outline: none; }
 .composer-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -39,12 +39,10 @@
 .tool-switch::after { content: ''; display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); }
 .tool-switch.on { background: var(--accent); }
 .tool-switch.on::after { margin-left: 12px; }
-.model-selector { margin-left: auto; min-width: 0; }
-.model-selector select { font: inherit; font-size: 12px; color: var(--ink); background: var(--surface); border: 0; border-radius: 9px; padding: 8px 4px; min-height: 44px; max-width: 145px; cursor: pointer; }
 .send-button { border: 0; background: var(--accent); color: var(--on-accent); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; cursor: pointer; }
 .send-button:disabled { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
 .send-button.stop { background: var(--accent-soft); color: var(--accent); }
-.composer button:disabled, .model-selector select:disabled { opacity: .55; cursor: not-allowed; }
+.composer button:disabled { opacity: .55; cursor: not-allowed; }
 .composer-context { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); padding: 10px 5px 0; margin-top: 10px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .starter-prompts { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .starter-prompts button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border: 1px solid var(--line); border-radius: 24px; padding: 0 16px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; }
@@ -60,9 +58,33 @@
   .composer textarea { font-size: 16px; }
   .composer-disclosure summary { padding: 0 7px; }
   .mode-toggle button { padding: 0 8px; }
-  .model-selector { margin-left: auto; }
-  .model-selector select { max-width: 125px; }
   .composer-context > span:last-child { display: none; }
   .starter-prompts { gap: 8px; margin-top: 20px; }
   .starter-prompts button { padding: 0 12px; font-size: 11px; }
 }
+
+.model-picker { margin-left: auto; min-width: 0; }
+.model-picker-trigger { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 11px 0 7px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); border-radius: 24px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.model-picker-trigger:hover, .model-picker-trigger[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.model-mark { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 auto; border-radius: 9px; color: var(--accent); background: var(--accent-soft); }
+.model-picker-trigger > svg { color: var(--muted); }
+.model-picker-trigger .turned { transform: rotate(180deg); }
+.model-picker-menu { position: absolute; right: 12px; bottom: 78px; width: min(292px, calc(100% - 24px)); max-height: min(360px, 60dvh); overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); padding: 7px; z-index: 25; }
+.model-picker-heading { padding: 9px 10px 12px; border-bottom: 1px solid var(--line); margin-bottom: 5px; }
+.model-picker-heading strong { display: block; color: var(--ink); font-size: 13px; }
+.model-picker-heading > span { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
+.model-picker-option { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 66px; padding: 10px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.model-picker-option:hover, .model-picker-option:focus-visible { background: var(--surface-2); }
+.model-picker-option[aria-checked="true"] { background: var(--accent-soft); }
+.model-picker-copy { flex: 1; min-width: 0; }
+.model-picker-copy > strong { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.model-picker-copy small { color: var(--muted); font-size: 9px; font-weight: 500; border: 1px solid var(--line); padding: 1px 5px; border-radius: 5px; }
+.model-picker-copy > span { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+.model-picker-check { color: var(--accent); flex: 0 0 auto; }
+@media (max-width: 650px) { .model-picker-menu { bottom: 61px; } }
+@media (max-width: 650px) {
+  .model-picker-trigger { gap: 5px; padding: 0 7px 0 5px; font-size: 11px; }
+  .model-picker-trigger .model-mark { width: 24px; height: 24px; }
+}
+
+.composer textarea.resize-none { resize: none; }

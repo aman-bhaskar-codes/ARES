@@ -113,7 +113,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
   const { events, connected, snapshotRequiredSeq } = useRunStream(run?.id, Math.max(0, (run?.last_seq ?? 0) - 200))
-  const [activePlugins, setActivePlugins] = useState<string[]>(['speed'])
+  const [activePlugins, setActivePlugins] = useState<string[]>([])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -174,7 +174,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
       // all cached data from the previous workspace before exposing the new principal.
       await queryClient.cancelQueries()
       queryClient.clear()
-      setConversationId(undefined); setRun(undefined); setEvidence(undefined); setWorkspace(undefined); setSelectedDocuments([]); setUiError(undefined)
+      setConversationId(undefined); setRun(undefined); setEvidence(undefined); setWorkspace(undefined); setSelectedDocuments([]); setSourceScope(['web']); setUiError(undefined)
       navigate('/', { replace: true })
       queryClient.setQueryData(['auth-me'], next)
       await queryClient.invalidateQueries()
@@ -468,7 +468,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
           <div><strong>ARES</strong><span>Follow your curiosity</span></div>
           <button className="icon-button mobile-close" onClick={() => setNavOpen(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>
-        <button className="new-research" disabled={!canWrite} onClick={() => { setConversationId(undefined); setRun(undefined); setUiError(undefined); setEvidence(undefined); setWorkspace(undefined); setDraftVersion((value) => value + 1); setNavOpen(false); navigate('/') }}>
+        <button className="new-research" disabled={!canWrite} onClick={() => { setConversationId(undefined); setRun(undefined); setUiError(undefined); setEvidence(undefined); setWorkspace(undefined); setSelectedDocuments([]); setSourceScope(['web']); setDraftVersion((value) => value + 1); setNavOpen(false); navigate('/') }}>
           <Plus size={19} /> New search
         </button>
         <nav className="primary-nav" aria-label="Workspace"><button className={workspace === 'documents' ? 'active' : ''} onClick={() => { setWorkspace('documents'); setNavOpen(false) }}><FileStack size={18} /> Library {selectedDocuments.length > 0 && <span className="nav-count">{selectedDocuments.length}</span>}</button></nav>

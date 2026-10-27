@@ -28,7 +28,7 @@ Use the keyless demo to explore the interface, or configure live research with G
 
 - **Research a question:** discover web and academic sources through SearXNG, OpenAlex, Crossref, and arXiv adapters.
 - **Work with documents:** upload files, extract supported content, and retrieve passages for research. Scanned PDFs and richer media require optional parsing capabilities.
-- **Choose a writer:** generate answers with Gemini or a configured local Ollama model.
+- **Choose a writer:** switch between Gemini and local Qwen in the model menu. Ask for a brief answer or a detailed explanation; ARES adapts its writing instructions while retaining source citations. Smaller local models may produce shorter answers after evidence checks.
 - **Inspect the evidence:** follow citations, review source passages, and inspect research activity and visualizations.
 - **Resume research:** persist conversations, run events, assets, and research memory.
 - **Connect other agents:** use the project's Model Context Protocol integration to access research capabilities.
@@ -200,7 +200,7 @@ pnpm --filter @ares/web build
 
 `make check` aggregates additional checks, migrations, schema generation, and release verification. Some targets generate or update files. Skipped browser checks are explicitly reported as preflight only. A successful aggregate command alone is not production qualification. Run `make verify-m11-release` with a running app and the required `ARES_E2E_*` fixture identifiers for the existing three-browser gate.
 
-The 27 October 2026 hardening pass recorded **295 passing backend tests, 8 skipped backend tests, and 28 passing frontend tests**, plus static checks and a successful frontend build. The seven PostgreSQL-specific tests were also run separately and passed. Real document-grounded queries completed with both Gemini and Qwen, and browser checks covered answer rendering, PDF upload, and direct chat deletion. These are a dated local baseline, not a live CI badge or public-hosting certification. Deterministic offline evaluations do not establish general real-provider answer quality.
+The 27 October 2026 hardening pass recorded **299 passing backend tests, 8 skipped backend tests, and 28 passing frontend tests**, plus static checks and a successful frontend build. The seven PostgreSQL-specific tests were also run separately and passed. Real document-grounded queries completed with both Gemini and Qwen, and browser checks covered answer rendering, PDF upload, and direct chat deletion. These are a dated local baseline, not a live CI badge or public-hosting certification. Deterministic offline evaluations do not establish general real-provider answer quality.
 
 ## Security and release status
 

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Improved
+
+- Replace the native model dropdown with a shared, keyboard-accessible model menu, provider icons, Cloud/Local labels, and disabled availability states.
+- Generate original explanations with a shared brief/balanced/detailed answer policy for Gemini and Qwen; keep factual grounding and citations.
+- Increase the default local writer context to 8192 tokens and reserve generation room for detailed responses.
+- Reset source scope and selected documents on New search, and make Fast retrieval opt-in.
+
 ### Security
 
 - Disable worker-side generated Python execution and remove the Code tool from run admission and the composer.
