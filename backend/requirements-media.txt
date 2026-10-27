@@ -2,7 +2,7 @@
 # Kept outside the core uv project so API/research workers retain the M07-tested
 # dependency graph. Build the media image explicitly; model artifacts are
 # provisioned separately and are never downloaded from an ingestion request.
-docling[rapidocr]==2.133.0
-fastembed==0.8.1
+docling[rapidocr]==2.142.0
+fastembed==0.9.1
 pillow==13.0.0
 faster-whisper==1.2.1

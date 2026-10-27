@@ -17,7 +17,7 @@ dependencies = [
   "pypdf==6.21.1",
   "python-multipart==0.0.32",
   "cryptography==50.0.2",
-  "fastembed==0.8.1",
+  "fastembed==0.9.1",
   "playwright==1.63.0",
 ]
 
