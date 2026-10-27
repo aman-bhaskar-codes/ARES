@@ -57,3 +57,7 @@ Composer owns question entry, source scope, tools, depth, model, and submit/stop
 
 ## Do's and Don'ts
 Keep actions close to their content. Preserve direct chat deletion and existing server authorization. Do not invent tools, voice controls, upgrade buttons, or destinations. Do not duplicate tool cards on home. Preserve typed questions on failed submission; separate pending from long-running research. Respect reduced motion, keyboard focus, and both themes.
+
+
+## Memory workspace
+Memory uses an app-owned centered modal (980px maximum), not the narrow settings drawer. A stable header, three section tabs, one scrollable content area, and a utility footer for history/facts create a clear hierarchy. Preferences use their own save bar without a second stacked footer. History entries use readable summaries and expandable bullet findings; facts distinguish statement, recorded confidence, status, and source context. Preferences group research style, source preferences, and personal guidance into separate sections with a persistent save bar. All colors use existing runtime tokens (`--ink`, `--muted`, `--accent`, `--surface`, `--line`); no separate Memory palette. Phones retain the same section order and stack fields without horizontal overflow.

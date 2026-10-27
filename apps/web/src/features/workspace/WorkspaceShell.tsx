@@ -74,6 +74,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
   const [navOpen, setNavOpen] = useState(false)
   const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 900px)').matches)
   const navigation = useRef<HTMLElement>(null)
+  const memoryButton = useRef<HTMLButtonElement>(null)
   const menuButton = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     const media = window.matchMedia('(max-width: 900px)')
@@ -502,7 +503,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
           {conversations.isSuccess && !conversations.data.length && <div className="empty-nav">Start a search.<br />Pick it up here anytime.</div>}
         </nav>
         <div className="nav-bottom">
-          <button onClick={() => { setWorkspace('memory'); setNavOpen(false) }}><Brain size={18} /> Memory</button>
+          <button ref={memoryButton} onClick={() => { setWorkspace('memory'); setNavOpen(false) }}><Brain size={18} /> Memory</button>
           <button onClick={() => { setWorkspace('system'); setNavOpen(false) }}><Settings2 size={18} /> Settings</button>
         </div>
       </aside>
@@ -606,7 +607,7 @@ export function WorkspaceShell({ authData }: { authData: import('../../lib/api/t
 
       {evidence && <EvidenceDrawer evidence={evidence} onClose={closeEvidence} />}
       {workspace === 'memory' ? (
-        <MemoryPanel readOnly={!canWrite} onClose={() => setWorkspace(undefined)} />
+        <MemoryPanel readOnly={!canWrite} onClose={() => { setWorkspace(undefined); requestAnimationFrame(() => (narrow ? menuButton.current : memoryButton.current)?.focus()) }} />
       ) : workspace ? (
         <WorkspacePanel
           view={workspace}
