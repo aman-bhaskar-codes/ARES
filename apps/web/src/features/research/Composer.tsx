@@ -6,7 +6,6 @@ import { SourceScopeControls } from './SourceScopeControls'
 const tools = [
   { id: 'speed', label: 'Fast retrieval', description: 'Use a smaller source and writing budget.', icon: Zap },
   { id: 'accuracy', label: 'Cross-check sources', description: 'Compare claims across retrieved sources.', icon: ShieldCheck },
-  { id: 'code', label: 'Code interpreter', description: 'Use Python for calculations when available.', icon: Code2 },
 ]
 const suggestions = [
   { icon: BookOpen, title: 'Understand a topic', question: 'Explain quantum superposition with a simple example and sources.' },

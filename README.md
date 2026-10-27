@@ -22,7 +22,7 @@ ARES brings source discovery, document retrieval, and cited answer generation in
 
 Use the keyless demo to explore the interface, or configure live research with Google Gemini or a local Qwen model through Ollama.
 
-> **Release status:** ARES is under active development. The current audit identified unresolved security, dependency, packaging, and production startup issues. Local evaluation is the recommended starting point; this checkout is not yet qualified for public hosting. See [Security and release status](#security-and-release-status).
+> **Release status:** ARES is an actively developed research application. Start with the local demo or a configured live provider. The release hardening pass disables generated-code execution and strengthens packaging and database provisioning. Local checks do not certify a public deployment; see [Security and release status](#security-and-release-status).
 
 ## What you can do
 
@@ -67,7 +67,7 @@ make migrate
 
 ### 3. Start the application
 
-Run each command in a separate terminal from the repository root:
+Run each command in a separate terminal from the repository root. `make worker` defaults to the combined profile so uploaded files and research runs are both processed:
 
 ```bash
 # Terminal 1 — API
@@ -75,7 +75,7 @@ make api
 ```
 
 ```bash
-# Terminal 2 — background worker
+# Terminal 2 — research and document-ingestion worker
 make worker
 ```
 
@@ -198,21 +198,21 @@ pnpm --filter @ares/web test
 pnpm --filter @ares/web build
 ```
 
-`make check` aggregates additional checks, migrations, schema generation, and release verification. Some targets generate or update files. The current release verifier has known gaps; a successful aggregate command alone is not production qualification.
+`make check` aggregates additional checks, migrations, schema generation, and release verification. Some targets generate or update files. Skipped browser checks are explicitly reported as preflight only. A successful aggregate command alone is not production qualification. Run `make verify-m11-release` with a running app and the required `ARES_E2E_*` fixture identifiers for the existing three-browser gate.
 
-The 23 October 2026 audit of commit `5212be3` recorded **290 passing backend tests, 8 skipped backend tests, and 28 passing frontend tests**, plus a successful frontend build and static checks. These are a dated baseline, not a live CI badge. Deterministic offline evaluations do not establish real-provider answer quality. Fresh Gemini/Qwen browser E2E and production deployment qualification remain required.
+The 27 October 2026 hardening pass recorded **295 passing backend tests, 8 skipped backend tests, and 28 passing frontend tests**, plus static checks and a successful frontend build. The seven PostgreSQL-specific tests were also run separately and passed. Real document-grounded queries completed with both Gemini and Qwen, and browser checks covered answer rendering, PDF upload, and direct chat deletion. These are a dated local baseline, not a live CI badge or public-hosting certification. Deterministic offline evaluations do not establish general real-provider answer quality.
 
 ## Security and release status
 
 ARES includes controls for authentication, request limits, outbound fetching, upload processing, and database tenant isolation. Their effectiveness depends on deployment configuration and enabled capabilities.
 
-The release audit identified issues that must be resolved before public hosting or distributing a release archive:
+The release hardening changes include:
 
-- **Code execution:** the Code tool runs generated Python without a dedicated security sandbox. Do not enable it in an untrusted environment.
-- **Archive contents:** the release archive builder can include ignored private files. Review packaging rules and the full archive inventory before distributing an archive.
-- **Production startup:** the documented database bootstrap passes a SQLAlchemy URL to `psql`; the connection scheme needs correction and a real startup test.
-- **Release metadata:** version and schema metadata are inconsistent, and verification can report success without mandatory E2E evidence.
-- **Dependencies:** the audited backend lockfile contains affected certifi, OpenTelemetry API, and Pillow versions. Upgrade and recheck security advisories before release.
+- **Code execution disabled:** generated Python is never executed on the worker. The Code tool is removed from run admission and the composer until an isolated runner exists.
+- **Tracked-file packaging:** source archives use Git's tracked-file inventory and exclude private environment files, keys, backups, runtime data, and symlinks.
+- **Database provisioning:** the bootstrap normalizes the SQLAlchemy URL for `psql` and grants runtime roles access to the newer schema tables.
+- **Accurate release metadata:** version and migration head are derived from source. Missing browser evidence fails the full gate; skipped checks are explicitly preflight only.
+- **Security dependency updates:** the lockfile updates certifi, OpenTelemetry API, Pillow, fastembed, pypdf, and filelock. Recheck advisories when preparing each release.
 
 Keep development services on loopback. Public hosting requires configured authentication, reviewed secrets and network exposure, tested migrations, and fresh end-to-end verification. See [SECURITY.md](SECURITY.md) for reporting guidance.
 

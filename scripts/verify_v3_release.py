@@ -2,90 +2,75 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
-import re
+import os
 import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
-try:
-    from generate_sbom import build_sbom  # noqa: F401
-    from release_archive import build as build_archive  # noqa: F401
-except ImportError:
-    pass
+from release_archive import build, release_metadata
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_VERSION = "0.12.0"
-EXPECTED_SCHEMA = "0016_v3_capabilities" # Placeholder for latest schema
-FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-def _read_json(path: Path) -> dict:
-    if not path.exists():
-        return {}
-    return json.loads(path.read_text(encoding="utf-8"))
-
-def _check_versions(failures: list[str]) -> None:
-    backend_path = (ROOT / "backend" / "pyproject.toml")
-    if not backend_path.exists():
-        failures.append("pyproject.toml is missing")
-        return
-    backend = backend_path.read_text(encoding="utf-8")
-    match = re.search(r'^version\s*=\s*"([^"]+)"', backend, re.MULTILINE)
-    web = _read_json(ROOT / "apps" / "web" / "package.json")
-    if not match or match.group(1) != EXPECTED_VERSION:
-        failures.append(f"backend version is not {EXPECTED_VERSION}")
-    if web.get("version") != EXPECTED_VERSION:
-        failures.append(f"frontend version is not {EXPECTED_VERSION}")
-
-def check_command(cmd, desc, failures):
-    try:
-        logging.info(f"Running {desc}: {' '.join(cmd)}")
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
-        logging.info(f"{desc} passed.")
-    except subprocess.CalledProcessError as e:
-        failures.append(f"{desc} failed with code {e.returncode}")
-    except FileNotFoundError:
-        failures.append(f"Command not found for {desc}: {cmd[0]}")
-
-def _check_openapi(failures: list[str]) -> None:
-    contract = _read_json(ROOT / "backend" / "openapi.json")
-    paths = contract.get("paths", {})
-    required = {
-        "/api/v1/runs",
-        "/api/v1/conversations",
-        "/api/v1/auth/me",
-        "/api/v1/system/status",
+def verify(*, skip_e2e: bool, skip_archive: bool) -> dict[str, object]:
+    failures: list[str] = []
+    metadata = release_metadata()
+    web = json.loads((ROOT / "apps/web/package.json").read_text())
+    if web.get("version") != metadata["version"]:
+        failures.append("Backend and frontend versions differ")
+    contract = json.loads((ROOT / "backend/openapi.json").read_text())
+    required = {"/api/v1/runs", "/api/v1/conversations", "/api/v1/auth/me", "/api/v1/system/status"}
+    if not required.issubset(contract.get("paths", {})):
+        failures.append("OpenAPI is missing required paths")
+    if not skip_archive:
+        with tempfile.TemporaryDirectory(prefix="ares-release-") as tmp:
+            first = build(Path(tmp) / "first.zip", "ARES")
+            second = build(Path(tmp) / "second.zip", "ARES")
+            if first != second:
+                failures.append("Release archives are not reproducible")
+    if not skip_e2e:
+        variables = ["ARES_E2E_CONVERSATION_ID", "ARES_E2E_RUN_ID", "ARES_E2E_EVIDENCE_ID"]
+        missing = [name for name in variables if not os.environ.get(name)]
+        if missing:
+            failures.append("Live browser E2E requires: " + ", ".join(missing))
+        else:
+            for browser in ["chromium", "firefox", "webkit"]:
+                result = subprocess.run(
+                    [sys.executable, str(ROOT / "scripts/e2e_m11.py"), "--browser", browser],
+                    cwd=ROOT,
+                    check=False,
+                )
+                if result.returncode:
+                    failures.append(f"{browser} browser E2E failed")
+    partial = skip_e2e or skip_archive
+    return {
+        **metadata,
+        "gate_passed": not failures,
+        "status": "failed"
+        if failures
+        else ("preflight_passed" if partial else "release_checks_passed"),
+        "skipped_checks": [
+            name
+            for name, skipped in [("browser_e2e", skip_e2e), ("archive", skip_archive)]
+            if skipped
+        ],
+        "failures": failures,
+        "scope": "Source, archive, and existing browser checks; not live-provider or hosting certification",
     }
-    missing = sorted(required - set(paths))
-    if missing:
-        failures.append(f"OpenAPI missing required paths: {', '.join(missing)}")
+
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Verify ARES V3 Release E2E and Quality Gates")
-    parser.add_argument("--skip-e2e", action="store_true", help="Skip browser E2E tests")
-    parser.add_argument("--skip-archive", action="store_true", help="skip the two-build reproducibility check")
+    parser = argparse.ArgumentParser(
+        description="Release checks; skipped gates are explicitly preflight only"
+    )
+    parser.add_argument("--skip-e2e", action="store_true")
+    parser.add_argument("--skip-archive", action="store_true")
     args = parser.parse_args()
-    failures: list[str] = []
-    
-    _check_versions(failures)
-    _check_openapi(failures)
-    
-    # 3. Browser E2E Tests (Stubbed Playwright command)
-    if not args.skip_e2e and (ROOT / "apps" / "web" / "e2e").is_dir():
-        check_command(["npx", "playwright", "test", "apps/web/e2e"], "Playwright E2E Tests", failures)
-    
-    payload = {"gate_passed": not failures, "failures": failures}
+    payload = verify(skip_e2e=args.skip_e2e, skip_archive=args.skip_archive)
     print(json.dumps(payload, indent=2))
-    
-    if not failures:
-        logging.info("V3 Release Verification Passed!")
-        with open("RELEASE_MANIFEST.json", "w") as f:
-            f.write('{"version": "3.0.0", "status": "verified"}\n')
-        return 0
-    else:
-        logging.error("V3 Release Verification Failed.")
-        return 2
+    return 0 if payload["gate_passed"] else 2
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

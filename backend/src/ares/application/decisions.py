@@ -131,6 +131,9 @@ def _quantities(text: str) -> set[tuple[str, str | None]]:
         "gram": "g",
         "grams": "g",
     }
+    # Spelled basis-state numbers are the same quantities as their digit forms.
+    # Keep units and other numeric conversions strict; this is not a math evaluator.
+    text = re.sub(r"\b(zero|one)\b", lambda match: {"zero": "0", "one": "1"}[match.group().casefold()], text, flags=re.IGNORECASE)
     result: set[tuple[str, str | None]] = set()
     for match in _QUANTITY.finditer(text):
         raw = match.group("number").replace(",", "")
@@ -156,6 +159,26 @@ def _polarity_conflict(claim_tokens: set[str], evidence_tokens: set[str]) -> boo
         if claim_tokens & positive and evidence_tokens & negative:
             return True
         if claim_tokens & negative and evidence_tokens & positive:
+            return True
+    return False
+
+
+def _passage_polarity_conflict(claim: str, evidence: str) -> bool:
+    """Compare polarity only within aligned sentences, not a whole mixed passage.
+
+    This remains a lexical screen. Unmatched paraphrases require semantic assessment;
+    unrelated negations must not be presented as exact contradictions.
+    """
+    evidence = re.sub(r"\brather than\b", "not", evidence, flags=re.IGNORECASE)
+    claim = re.sub(r"\brather than\b", "not", claim, flags=re.IGNORECASE)
+    evidence_sentences = [set(_content_tokens(part)) for part in re.split(r"(?<=[.!?])\s+|\n+", evidence)]
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", claim):
+        terms = set(_content_tokens(sentence))
+        if not terms:
+            continue
+        best = max(evidence_sentences, key=lambda row: len(terms & row) / max(1, len(terms | row)), default=set())
+        overlap = len(terms & best) / len(terms)
+        if overlap >= 0.5 and _polarity_conflict(terms, best):
             return True
     return False
 
@@ -337,7 +360,6 @@ class DeterministicDecisionProvider:
 
         compatible = []
         incompatible_quantity = False
-        claim_set = set(claim_terms)
         for packet in evidence:
             evidence_set = set(_content_tokens(packet.text))
             overlap = sum(1 for term in claim_terms if term in evidence_set) / max(
@@ -352,7 +374,7 @@ class DeterministicDecisionProvider:
                 if c_unit
             )
             incompatible_quantity = incompatible_quantity or (has_unit_conflict and overlap >= 0.35)
-            compatible.append((overlap, _polarity_conflict(claim_set, evidence_set), quantity_ok))
+            compatible.append((overlap, _passage_polarity_conflict(claim, packet.text), quantity_ok))
         usable = [(score, conflict) for score, conflict, ok in compatible if ok]
         if claim_values and not claim_values.issubset(all_evidence_quantities):
             missing = claim_values - all_evidence_quantities

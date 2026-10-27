@@ -36,6 +36,7 @@ Synthesize an accurate, well-grounded answer to the user's research query using 
 
 STRICT INSTRUCTIONS:
 - Grounding: Base all statements strictly on the provided EVIDENCE. Never fabricate facts, dates, numbers, or citations.
+- Quantities: Preserve source notation and units. Do not rewrite words as digits, fractions, percentages, or new mathematical formulas.
 - Attribution: For each claim, assign 0-based evidence_indexes matching the numbered EVIDENCE passages that support it.
 - Claims: Provide 3 to 5 clear, substantive explanatory paragraphs in 'claims'. Each paragraph: 2 to 3 informative sentences.
 - No Citation Markers: Do NOT include [1], [2], etc. inside claim text. All attribution is via the evidence_indexes array.

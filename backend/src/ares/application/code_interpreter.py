@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-import logging
-import os
 import re
-import subprocess
-import sys
-import time
 from dataclasses import dataclass
 
 
@@ -21,7 +16,7 @@ class CodeExecutionResult:
 
 
 class CodeInterpreter:
-    """Safe, isolated Python code execution engine for technical calculations and logic."""
+    """Disabled compatibility interface; never executes generated code on the worker."""
 
     DEFAULT_TIMEOUT_SECONDS: float = 5.0
     MAX_OUTPUT_BYTES: int = 8192
@@ -30,67 +25,18 @@ class CodeInterpreter:
         self.timeout_seconds = timeout_seconds or self.DEFAULT_TIMEOUT_SECONDS
 
     def is_available(self) -> bool:
-        return bool(sys.executable)
+        return False
 
     def execute(self, code: str, timeout_seconds: float | None = None) -> CodeExecutionResult:
-        """Execute a Python snippet in an isolated subprocess with strict timeouts."""
-        timeout = timeout_seconds or self.timeout_seconds
-        start_time = time.monotonic()
-
-        # Sanitize environment: do not pass sensitive API keys or credentials
-        safe_env = {
-            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-            "PYTHONHASHSEED": "0",
-            "PYTHONUNBUFFERED": "1",
-            "LC_ALL": "en_US.UTF-8",
-            "LANG": "en_US.UTF-8",
-        }
-
-        try:
-            process = subprocess.run(
-                [sys.executable, "-I", "-s", "-c", code],
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                env=safe_env,
-            )
-            duration = time.monotonic() - start_time
-            stdout = (process.stdout or "")[: self.MAX_OUTPUT_BYTES]
-            stderr = (process.stderr or "")[: self.MAX_OUTPUT_BYTES]
-            return CodeExecutionResult(
-                success=(process.returncode == 0),
-                stdout=stdout.strip(),
-                stderr=stderr.strip(),
-                exit_code=process.returncode,
-                execution_time_seconds=round(duration, 3),
-                code=code,
-                timed_out=False,
-            )
-        except subprocess.TimeoutExpired as exc:
-            duration = time.monotonic() - start_time
-            stdout = (exc.stdout.decode() if isinstance(exc.stdout, bytes) else str(exc.stdout or ""))[: self.MAX_OUTPUT_BYTES]
-            stderr = (exc.stderr.decode() if isinstance(exc.stderr, bytes) else str(exc.stderr or ""))[: self.MAX_OUTPUT_BYTES]
-            return CodeExecutionResult(
-                success=False,
-                stdout=stdout.strip(),
-                stderr=f"Execution timed out after {timeout} seconds. {stderr}".strip(),
-                exit_code=-1,
-                execution_time_seconds=round(duration, 3),
-                code=code,
-                timed_out=True,
-            )
-        except Exception as exc:
-            logging.getLogger(__name__).warning("code_interpreter: recovery boundary (%s)", type(exc).__name__)
-            duration = time.monotonic() - start_time
-            return CodeExecutionResult(
-                success=False,
-                stdout="",
-                stderr=f"Subprocess error: {type(exc).__name__}: {exc}",
-                exit_code=-2,
-                execution_time_seconds=round(duration, 3),
-                code=code,
-                timed_out=False,
-            )
+        """Fail closed until a separately isolated execution service is available."""
+        return CodeExecutionResult(
+            success=False,
+            stdout="",
+            stderr="Code execution is disabled: an isolated runner has not been configured.",
+            exit_code=-2,
+            execution_time_seconds=0.0,
+            code=code,
+        )
 
     @classmethod
     def detect_computational_intent(cls, text: str) -> bool:

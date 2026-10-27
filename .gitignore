@@ -46,3 +46,6 @@ scratch_*
 CLEANUP_LOG.md
 evals/reports/**
 !evals/reports/README.md
+
+# Release metadata is generated inside the source archive.
+/RELEASE_MANIFEST.json

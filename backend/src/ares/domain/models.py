@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, mod
 
 from ares.domain.research import AnswerOutline, RunAssessment
 
-KNOWN_PLUGINS: tuple[str, ...] = ("speed", "accuracy", "code")
+KNOWN_PLUGINS: tuple[str, ...] = ("speed", "accuracy")
 
 
 class RunMode(StrEnum):

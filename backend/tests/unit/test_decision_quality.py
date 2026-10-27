@@ -133,3 +133,37 @@ def test_numeric_guard_rejects_incompatible_date() -> None:
         [packet("The study was published in 2023.")],
     )
     assert decision.verdict is ClaimVerdict.INSUFFICIENT
+
+
+def test_unrelated_negative_sentence_does_not_invalidate_supported_claim() -> None:
+    decision = DeterministicDecisionProvider().evaluate_claim(
+        'Quantum superposition describes a quantum state as a linear combination of basis states.',
+        [packet('Quantum superposition describes a quantum state as a linear combination of basis states. '
+                'It does not mean that every computational result can be read out simultaneously.')],
+    )
+    assert decision.verdict is ClaimVerdict.SUPPORTED
+
+
+def test_matching_negative_sentence_still_blocks_positive_claim() -> None:
+    decision = DeterministicDecisionProvider().evaluate_claim(
+        'The system supports encrypted document uploads.',
+        [packet('The system does not support encrypted document uploads. '
+                'Research answers contain source citations.')],
+    )
+    assert decision.verdict is not ClaimVerdict.SUPPORTED
+
+
+def test_equivalent_rather_than_and_not_are_not_polarity_conflicts() -> None:
+    decision = DeterministicDecisionProvider().evaluate_claim(
+        'Measuring in the computational basis yields either zero or one, not both outcomes simultaneously.',
+        [packet('Measuring in the computational basis yields either zero or one, rather than both outcomes.')],
+    )
+    assert decision.verdict in {ClaimVerdict.SUPPORTED, ClaimVerdict.PARTIAL}
+
+
+def test_numeric_guard_accepts_spelled_basis_state_numbers() -> None:
+    decision = DeterministicDecisionProvider().evaluate_claim(
+        'A qubit state is alpha times |0⟩ plus beta times |1⟩.',
+        [packet('A qubit state is alpha times zero plus beta times one.')],
+    )
+    assert decision.verdict in {ClaimVerdict.SUPPORTED, ClaimVerdict.PARTIAL}

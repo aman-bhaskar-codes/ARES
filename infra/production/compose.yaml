@@ -57,7 +57,7 @@ services:
       MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?set MIGRATION_DATABASE_URL}
     volumes:
       - ../postgres/bootstrap_roles.sql:/bootstrap_roles.sql:ro
-    command: ["sh", "-ec", "psql \"$$MIGRATION_DATABASE_URL\" -v ON_ERROR_STOP=1 -f /bootstrap_roles.sql"]
+    command: ["sh", "-ec", "bootstrap_url=$$MIGRATION_DATABASE_URL; case $$bootstrap_url in postgresql+psycopg:*) bootstrap_url=postgresql:$${bootstrap_url#postgresql+psycopg:};; esac; psql \"$$bootstrap_url\" -v ON_ERROR_STOP=1 -f /bootstrap_roles.sql"]
     depends_on:
       migrate:
         condition: service_completed_successfully

@@ -7,7 +7,7 @@ help:
 	@echo "Development:"
 	@echo "  make dev                     Start local infra and apply database migrations"
 	@echo "  make api                     Run FastAPI backend (http://127.0.0.1:8000)"
-	@echo "  make worker                  Run durable research background worker"
+	@echo "  make worker                  Run research and document ingestion worker"
 	@echo "  make web                     Run Vite/React frontend (http://127.0.0.1:3000)"
 	@echo "  make infra                   Start Docker containers (postgres, searxng)"
 	@echo "  make migrate                 Apply Alembic database migrations"
@@ -135,13 +135,14 @@ test-e2e:
 	uv run --project backend python scripts/e2e_m11.py --browser firefox
 	uv run --project backend python scripts/e2e_m11.py --browser webkit
 
-check: doctor lock-check lint typecheck security-scan test eval-regression test-compile verify-migrations openapi verify-m11-release
+check: doctor lock-check lint typecheck security-scan test eval-regression test-compile verify-migrations openapi
+	PYTHONPATH=backend/src uv run --project backend python scripts/verify_v3_release.py --skip-e2e
 
 api:
 	PYTHONPATH=backend/src uv run --project backend uvicorn ares.api.app:app --reload
 
 worker:
-	PYTHONPATH=backend/src uv run --project backend python -m ares.worker.main
+	WORKER_PROFILE=$${WORKER_PROFILE:-combined} PYTHONPATH=backend/src uv run --project backend python -m ares.worker.main
 
 install-media:
 	uv pip install --python backend/.venv/bin/python --requirement backend/requirements-media.txt

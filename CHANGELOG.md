@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Security
+
+- Disable worker-side generated Python execution and remove the Code tool from run admission and the composer.
+- Restrict release archives to tracked files, excluding private environment files, keys, backups, runtime data, and symlinks.
+- Update certifi, OpenTelemetry API, Pillow, fastembed, pypdf, and filelock to address current dependency advisories.
+
+### Fixed
+
+- Normalize PostgreSQL bootstrap URLs for libpq and provision runtime grants for newer tables.
+- Derive archive and SBOM versions from package metadata and discover the actual migration head.
+- Fail release checks when browser evidence is missing; report skipped checks as preflight and stop writing a hardcoded verified manifest.
+- Scope polarity checks to aligned source sentences so unrelated negations do not discard grounded answers.
+- Persist research memory without referencing a nonexistent answer-outline summary field.
+- Default local workers to the combined profile so research runs and asynchronous file uploads are both processed.
+
 ## [0.12.0] - 2026-10-21
 
 ### Added
