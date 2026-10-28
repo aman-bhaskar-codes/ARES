@@ -12,7 +12,7 @@ A research workspace for exploring questions, working with documents, and tracin
 
 <img src="ares_banner.jpg" alt="ARES — Autonomous Research & Evidence System" width="800" />
 
-[Getting started](#getting-started) · [Model providers](#model-providers) · [Architecture](#architecture) · [Development](#development) · [Security](#security-and-release-status)
+[Watch the demo](#product-tour) · [Getting started](#getting-started) · [Model providers](#model-providers) · [Architecture](#architecture) · [Development](#development) · [Security](#security-and-release-status)
 
 </div>
 
@@ -34,6 +34,61 @@ Use the keyless demo to explore the interface, or configure live research with G
 - **Connect other agents:** use the project's Model Context Protocol integration to access research capabilities.
 
 Capabilities depend on the execution mode, enabled settings, provisioned models, and external service availability. Demo results use fixtures rather than live research.
+
+## Product tour
+
+Watch the **2-minute 58-second narrated tour**: ask a real question, explore its cited answer and suggested follow-ups, inspect sources and research activity, upload a PDF, and discover Library, Memory, model selection, and research preferences.
+
+[![Watch the narrated ARES product tour](docs/media/ares-tour-preview.jpg)](docs/media/ARES-Complete-Tour.mp4)
+
+**[Watch or download the video](docs/media/ARES-Complete-Tour.mp4)** · [Download subtitles](docs/media/ARES-Complete-Tour.srt)
+
+The tour uses synthetic narration and recorded application interactions. Retrieval waiting time is shortened for presentation; available tools depend on the configured runtime.
+
+<details>
+<summary>Read the narration transcript</summary>
+
+Meet Ares. A research workspace built for curiosity, and for answers you can explore.
+
+You can start with a suggested question, or simply ask what's on your mind.
+
+Choose how you'd like the answer generated: Gemini in the cloud, or Qwen running locally.
+
+Then set the depth of your research. Search for a quick exploration, or choose Research. You can look across the web, academic sources, software references, and your own documents.
+
+There are optional tools, too. Fast retrieval uses a smaller research budget. Cross-checking asks the system to compare claims across sources.
+
+Let's try a real question. How does retrieval augmented generation work, and what are its limitations?
+
+This is a real research run. We've shortened the waiting time for this tour.
+
+Here's the answer. An explanation built from retrieved evidence, with citations alongside the paragraphs. You can read how the process works, and where its limitations begin.
+
+When you want to look closer, open a citation. You'll find the supporting passage and details about its original source.
+
+The Sources workspace brings that evidence together. Search for a passage, or narrow the list with filters.
+
+And the conversation doesn't have to end there. Ares suggests questions to explore next. You can write your own follow-up, or export the answer to revisit later.
+
+Activity shows the steps behind the research, whenever you want that extra context.
+
+Compare is where evidence-linked visual artifacts appear, when the research provides suitable data.
+
+Diagnostics offers a closer look at the run's reported quality and checks.
+
+You can also bring your own material. Use the plus button beside Search to upload a document. Here, we're adding a real PDF.
+
+Once it's ready, you'll find it in Library, together with your other uploaded files.
+
+Memory gives your research its own space. Review previous research and saved facts in separate views, and manage what you'd like to keep.
+
+In Preferences, you can set research depth, tone, preferred domains, and personal instructions. Small choices that help shape how you work.
+
+Settings shows the current runtime and tool capabilities, including what's ready, and what's turned off.
+
+That's Ares. Ask a question. Explore the evidence. And follow your curiosity.
+
+</details>
 
 ## Getting started
 

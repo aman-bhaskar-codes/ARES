@@ -86,6 +86,14 @@ def _build_synthesis_input(query: str, evidence: list[EvidencePacket]) -> str:
 
 class GroundedSynthesisBase:
 
+    @staticmethod
+    def response_schema() -> dict:
+        """Require follow-ups during generation while accepting older stored responses."""
+        schema = _ModelAnswer.model_json_schema()
+        schema["required"] = [*schema["required"], "related_questions"]
+        schema["properties"]["related_questions"].update(minItems=2, maxItems=3)
+        return schema
+
     def parse_output(self, raw: str, evidence: list[EvidencePacket]) -> SynthesisResult:
         if not isinstance(raw, str) or not raw.strip():
             raise ProviderUnavailable('Model returned no structured output text')

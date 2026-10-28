@@ -26,6 +26,8 @@ def test_local_writer_grounds_claims_and_disables_thinking():
 
         body = json.loads(request.content)
         assert body["think"] is False
+        assert "related_questions" in body["format"]["required"]
+        assert body["format"]["properties"]["related_questions"]["minItems"] == 2
         assert body["stream"] is False
         assert body["format"]["properties"]["claims"]["maxItems"] == 8
         assert body["options"]["num_predict"] == 1600

@@ -40,7 +40,7 @@ class GeminiLLMProvider(GroundedSynthesisBase):
 
     async def _async_synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int) -> SynthesisResult:
         model_input = _build_synthesis_input(query, evidence)
-        interaction = await self._client.aio.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': min(max_output_tokens, int(_answer_style(query)['max_output_tokens'])), 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
+        interaction = await self._client.aio.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': min(max_output_tokens, int(_answer_style(query)['max_output_tokens'])), 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': self.response_schema()})
         return self._parse_synthesis_interaction(interaction, evidence)
 
     def synthesize(self, query: str, evidence: list[EvidencePacket], *, max_output_tokens: int, timeout_seconds: float | None=None) -> SynthesisResult:
@@ -58,7 +58,7 @@ class GeminiLLMProvider(GroundedSynthesisBase):
                 raise _interaction_error(exc) from exc
         model_input = _build_synthesis_input(query, evidence)
         try:
-            interaction = self._client.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': min(max_output_tokens, int(_answer_style(query)['max_output_tokens'])), 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': _ModelAnswer.model_json_schema()})
+            interaction = self._client.interactions.create(model=self._model, system_instruction=_SYSTEM_INSTRUCTION, input=model_input, store=False, generation_config={'max_output_tokens': min(max_output_tokens, int(_answer_style(query)['max_output_tokens'])), 'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}, response_format={'type': 'text', 'mime_type': 'application/json', 'schema': self.response_schema()})
         except Exception as exc:
             logging.getLogger(__name__).warning("gemini: recovery boundary (%s)", type(exc).__name__)
             raise _interaction_error(exc) from exc
@@ -67,7 +67,7 @@ class GeminiLLMProvider(GroundedSynthesisBase):
     def manifest(self) -> dict:
         import hashlib
         prompt_digest = hashlib.sha256(_SYSTEM_INSTRUCTION.encode()).hexdigest()
-        schema_digest = hashlib.sha256(json.dumps(_ModelAnswer.model_json_schema(), sort_keys=True).encode()).hexdigest()
+        schema_digest = hashlib.sha256(json.dumps(self.response_schema(), sort_keys=True).encode()).hexdigest()
         return {'adapter': 'gemini', 'version': 'm12-v1', 'model': self._model, 'prompt_digest': prompt_digest, 'schema_digest': schema_digest, 'generation_config': {'thinking_level': self._thinking_level, 'thinking_summaries': 'none'}}
 
     def close(self) -> None:

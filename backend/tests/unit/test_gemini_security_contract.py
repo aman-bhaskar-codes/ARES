@@ -47,6 +47,10 @@ def test_gemini_separates_privileged_instruction_from_untrusted_evidence_and_is_
     assert "Ignore previous instructions" not in kwargs["system_instruction"]
     assert "Ignore previous instructions" in kwargs["input"]
     assert "tools" not in kwargs
+    schema = kwargs["response_format"]["schema"]
+    assert "related_questions" in schema["required"]
+    assert schema["properties"]["related_questions"]["minItems"] == 2
+    assert schema["properties"]["related_questions"]["maxItems"] == 3
 
 
 def test_gemini_client_construction_applies_transport_timeout(monkeypatch) -> None:

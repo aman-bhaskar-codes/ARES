@@ -10,7 +10,6 @@ from ares.adapters.grounded_synthesis import (
     ProviderUnavailable,
     _answer_style,
     _build_synthesis_input,
-    _ModelAnswer,
 )
 
 
@@ -73,7 +72,7 @@ class OllamaLLMProvider(GroundedSynthesisBase):
         # Reserve generation room instead of filling a small context with passages.
         passage_chars = min(self._passage_chars, max(256, (self._context_tokens - output_limit - 900) * 3 // len(evidence)))
         compressed = [p.model_copy(update={"text": _compress_evidence_text(p.text, passage_chars)}) for p in evidence]
-        schema = _ModelAnswer.model_json_schema()
+        schema = self.response_schema()
         schema["properties"] = {k: v for k, v in schema["properties"].items()
                                  if k in {"summary_markdown", "claims", "related_questions", "gaps"}}
         schema["properties"]["claims"]["maxItems"] = 10 if style["depth"] == "detailed" else 8
@@ -113,7 +112,7 @@ class OllamaLLMProvider(GroundedSynthesisBase):
         import hashlib
         return {"adapter": "ollama", "version": "local-grounded-v5", "model": self._model,
                 "prompt_digest": hashlib.sha256(_LOCAL_SYSTEM_PROMPT.encode()).hexdigest(),
-                "schema_digest": hashlib.sha256(json.dumps(_ModelAnswer.model_json_schema(), sort_keys=True).encode()).hexdigest(),
+                "schema_digest": hashlib.sha256(json.dumps(self.response_schema(), sort_keys=True).encode()).hexdigest(),
                 "generation_config": {"thinking": False, "temperature": 0.1, "num_ctx": self._context_tokens,
                                       "passage_chars": self._passage_chars}}
 
