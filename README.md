@@ -39,9 +39,9 @@ Capabilities depend on the execution mode, enabled settings, provisioned models,
 
 Watch the **2-minute 58-second narrated tour**: ask a real question, explore its cited answer and suggested follow-ups, inspect sources and research activity, upload a PDF, and discover Library, Memory, model selection, and research preferences.
 
-[![Watch the narrated ARES product tour](docs/media/ares-tour-preview.jpg)](docs/media/ARES-Complete-Tour.mp4)
+https://github.com/user-attachments/assets/6bd8e1ba-4136-4ac9-8ec5-9f08817c91b3
 
-**[Watch or download the video](docs/media/ARES-Complete-Tour.mp4)** · [Download subtitles](docs/media/ARES-Complete-Tour.srt)
+[Download subtitles](docs/media/ARES-Complete-Tour.srt)
 
 The tour uses synthetic narration and recorded application interactions. Retrieval waiting time is shortened for presentation; available tools depend on the configured runtime.
 
