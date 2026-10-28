@@ -42,6 +42,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
 TO ares_worker;
 GRANT SELECT ON conversations TO ares_worker;
 
+-- These tables are introduced after the base schema. Provisioning runs after
+-- migrations, so it must grant them even when runtime roles did not exist yet.
+GRANT SELECT ON media_tracks, media_frames, research_cache, facet_coverage,
+  visualization_datasets, visualizations, retrieval_profiles, retrieval_traces TO ares_api;
+GRANT SELECT, INSERT, UPDATE, DELETE ON memory_episodes, memory_facts,
+  memory_preferences TO ares_api;
+GRANT SELECT ON memory_episodes_pg TO ares_api;
+GRANT SELECT, INSERT, UPDATE, DELETE ON media_tracks, media_frames, research_cache,
+  facet_coverage, visualization_datasets, visualizations, retrieval_profiles,
+  retrieval_traces, memory_episodes, memory_facts, memory_preferences,
+  memory_episodes_pg TO ares_worker;
+
 -- New schema objects receive no automatic runtime grants. Every migration must explicitly
 -- review whether the API, worker, both, or neither should receive access (deny by default).
 

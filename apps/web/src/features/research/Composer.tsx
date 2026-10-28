@@ -2,11 +2,11 @@ import { ArrowUp, BookOpen, ChevronDown, Code2, Globe2, LoaderCircle, Plus, Sear
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import type { RunMode, SourceScope, ModelProvider, ModelCatalog } from '../../lib/api/types'
 import { SourceScopeControls } from './SourceScopeControls'
+import { ModelPicker } from './ModelPicker'
 
 const tools = [
   { id: 'speed', label: 'Fast retrieval', description: 'Use a smaller source and writing budget.', icon: Zap },
   { id: 'accuracy', label: 'Cross-check sources', description: 'Compare claims across retrieved sources.', icon: ShieldCheck },
-  { id: 'code', label: 'Code interpreter', description: 'Use Python for calculations when available.', icon: Code2 },
 ]
 const suggestions = [
   { icon: BookOpen, title: 'Understand a topic', question: 'Explain quantum superposition with a simple example and sources.' },
@@ -44,6 +44,11 @@ export function Composer({
   const fileInput = useRef<HTMLInputElement>(null)
   const locked = busy || readOnly || submitting || uploading
   useEffect(() => {
+    if (!textarea.current) return
+    textarea.current.style.height = 'auto'
+    textarea.current.style.height = `${Math.min(textarea.current.scrollHeight, 240)}px`
+  }, [query])
+  useEffect(() => {
     const close = (event: PointerEvent | globalThis.KeyboardEvent) => {
       const escape = event instanceof globalThis.KeyboardEvent && event.key === 'Escape'
       if (!escape && form.current?.contains(event.target as Node)) return
@@ -71,10 +76,10 @@ export function Composer({
     }
   }
   return <>
-    <form className="composer" onSubmit={onForm} ref={form} aria-busy={submitting}>
+    <form noValidate className="composer" onSubmit={onForm} ref={form} aria-busy={submitting}>
       <label htmlFor="research-query" className="sr-only">Ask ARES a research question</label>
       <textarea ref={textarea} id="research-query" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={onKey}
-        rows={2} placeholder={placeholder ?? 'Ask anything. Explore the sources.'} disabled={locked} />
+        rows={2} className="resize-none" placeholder={placeholder ?? 'Ask anything. Explore the sources.'} disabled={locked} />
       <input ref={fileInput} hidden type="file" multiple accept={uploadAccept} aria-label="Upload files" disabled={locked} onChange={(event) => { const files = Array.from(event.target.files ?? []); event.target.value = ''; if (files.length && onUpload) void onUpload(files) }} />
       <div className="composer-actions">
         {onUpload && <button className="attach-button" type="button" aria-label="Upload files" title="Upload files" disabled={locked} onClick={() => fileInput.current?.click()}>{uploading ? <LoaderCircle size={19} className="spin"/> : <Plus size={21}/>}</button>}
@@ -93,11 +98,7 @@ export function Composer({
             <Icon size={18} /><span><b>{label}</b><small>{description}</small></span><span className={`tool-switch ${plugins.includes(id) ? 'on' : ''}`} aria-hidden="true" />
           </button>)}</div>
         </details>}
-        <label className="model-selector"><span className="sr-only">Answer model</span>
-          <select aria-label="Answer model" value={modelProvider} disabled={locked || !models} onChange={(event) => onModelProvider(event.target.value as ModelProvider)}>
-            {(models?.models ?? [{id: modelProvider, label: modelProvider === 'qwen' ? 'Qwen' : 'Gemini', model: '', available: true, location: modelProvider === 'qwen' ? 'local' : 'cloud'}]).map((item) => <option key={item.id} value={item.id} disabled={!item.available}>{item.label}{item.location === 'local' ? ' · Local' : ''}{!item.available ? ' · Unavailable' : ''}</option>)}
-          </select>
-        </label>
+        <ModelPicker value={modelProvider} models={models} disabled={locked} onChange={onModelProvider} onOpen={() => form.current?.querySelectorAll('details[open]').forEach(item => item.removeAttribute('open'))} />
         </div>
         {busy ? <button className="send-button stop" type="button" disabled={readOnly} onClick={onStop} aria-label="Stop research"><Square size={16} fill="currentColor" /></button>
           : <button className="send-button" type="submit" disabled={locked || !query.trim()} aria-label={readOnly ? 'Read only' : submitting ? 'Starting research' : 'Ask question'}>{submitting ? <LoaderCircle className="spin" size={19} /> : <ArrowUp size={20} />}</button>}

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Improved
+
+- Redesign Memory as a responsive modal workspace with clear history, saved-fact and preference sections; readable source context and findings; accessible focus, confirmations, search recovery and save states.
+
+- Replace the native model dropdown with a shared, keyboard-accessible model menu, provider icons, Cloud/Local labels, and disabled availability states.
+- Generate original explanations with a shared brief/balanced/detailed answer policy for Gemini and Qwen; keep factual grounding and citations.
+- Increase the default local writer context to 8192 tokens and reserve generation room for detailed responses.
+- Reset source scope and selected documents on New search, and make Fast retrieval opt-in.
+
+### Security
+
+- Disable worker-side generated Python execution and remove the Code tool from run admission and the composer.
+- Restrict release archives to tracked files, excluding private environment files, keys, backups, runtime data, and symlinks.
+- Update certifi, OpenTelemetry API, Pillow, fastembed, pypdf, and filelock to address current dependency advisories.
+
+### Fixed
+
+- Normalize PostgreSQL bootstrap URLs for libpq and provision runtime grants for newer tables.
+- Derive archive and SBOM versions from package metadata and discover the actual migration head.
+- Fail release checks when browser evidence is missing; report skipped checks as preflight and stop writing a hardcoded verified manifest.
+- Scope polarity checks to aligned source sentences so unrelated negations do not discard grounded answers.
+- Persist research memory without referencing a nonexistent answer-outline summary field.
+- Default local workers to the combined profile so research runs and asynchronous file uploads are both processed.
+
 ## [0.12.0] - 2026-10-21
 
 ### Added

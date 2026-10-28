@@ -16,7 +16,7 @@ from ares.domain.models import (
     SynthesisResult,
     SynthesizedClaim,
 )
-from ares.domain.research import EvidencePacket, SearchRequest
+from ares.domain.research import AnswerOutline, EvidencePacket, SearchRequest
 
 
 class FakeSearch:
@@ -47,6 +47,7 @@ class FakeLLM:
     ) -> SynthesisResult:
         return SynthesisResult(
             summary_markdown="Structured claims with technical computation.",
+            outline=AnswerOutline(sections=["Results"], facets=[], claims=[]),
             claims=[
                 SynthesizedClaim(
                     text="The fixture evidence supports 100 computational claims and 10 calculation proofs.\n```python\nprint(10 * 10)\n```",
@@ -72,7 +73,7 @@ def test_research_engine_executes_plugins_end_to_end(tmp_path: Path) -> None:
         ),
         idempotency_key="plugin-run-1",
     )
-    assert run.plugins == ["speed", "accuracy", "code"]
+    assert run.plugins == ["speed", "accuracy"]
 
     lease = repository.claim_next_job()
     assert lease is not None
@@ -91,7 +92,7 @@ def test_research_engine_executes_plugins_end_to_end(tmp_path: Path) -> None:
 
     snapshot = repository.get_run(run.id)
     assert snapshot.status is RunStatus.COMPLETED
-    assert snapshot.plugins == ["speed", "accuracy", "code"]
+    assert snapshot.plugins == ["speed", "accuracy"]
 
     events = repository.list_events(run.id)
     event_names = [e.event_type for e in events]
@@ -99,11 +100,9 @@ def test_research_engine_executes_plugins_end_to_end(tmp_path: Path) -> None:
     assert "plugins.activated" in event_names
     assert "plugin.speed.applied" in event_names
     assert "plugin.accuracy.applied" in event_names
-    assert "plugin.code.applied" in event_names
-    assert "code_interpreter.executed" in event_names
+    assert "plugin.code.applied" not in event_names
+    assert "code_interpreter.executed" not in event_names
 
-    # Check interpreter execution details
-    code_events = [e for e in events if e.event_type == "code_interpreter.executed"]
-    assert len(code_events) >= 1
-    # Check that at least one event produced stdout "100" (from 25 * 4 or 10 * 10)
-    assert any("100" in str(e.payload.get("stdout", "")) for e in code_events)
+    assert run.workspace_id is not None
+    episodes = repository.list_memory_episodes(run.workspace_id)
+    assert any(episode.run_id == run.id and episode.summary for episode in episodes)

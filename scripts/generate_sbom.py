@@ -107,7 +107,7 @@ def build_sbom() -> dict[str, object]:
             "component": {
                 "type": "application",
                 "name": "ARES",
-                "version": "0.11.0",
+                "version": tomllib.loads((ROOT / "backend" / "pyproject.toml").read_text())["project"]["version"],
                 "properties": [
                     {"name": "ares:schema-head", "value": "0012_visual_artifacts"},
                     {"name": "ares:source-fingerprint", "value": fingerprint},

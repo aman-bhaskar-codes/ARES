@@ -425,37 +425,6 @@ class ResearchEngine:
                     },
                     lease_token=lease.token,
                 )
-            if "code" in run.plugins:
-                self.repository.record_event(
-                    run_id,
-                    "plugin.code.applied",
-                    {"status": "interpreter_ready"},
-                    lease_token=lease.token,
-                )
-                from ares.application.code_interpreter import CodeInterpreter
-                interp = CodeInterpreter()
-                if interp.detect_computational_intent(run.query):
-                    math_match = re.search(
-                        r"(?:calculate|compute|solve|eval|evaluate|what is)?\s*([0-9\.\+\-\*\/\(\)\^\%\s]{3,})",
-                        run.query,
-                        re.IGNORECASE,
-                    )
-                    if math_match and any(op in math_match.group(1) for op in ("+", "-", "*", "/", "^", "%")):
-                        clean_expr = math_match.group(1).strip().replace("^", "**")
-                        script = f"import math\nres = {clean_expr}\nprint(res)"
-                        comp_res = interp.execute(script)
-                        self.repository.record_event(
-                            run_id,
-                            "code_interpreter.executed",
-                            {
-                                "code": script,
-                                "stdout": comp_res.stdout,
-                                "stderr": comp_res.stderr,
-                                "success": comp_res.success,
-                                "duration_seconds": comp_res.execution_time_seconds,
-                            },
-                            lease_token=lease.token,
-                        )
             context = RunContext.create(self.repository, lease, budget)
             checkpoints = CheckpointStore(self.repository, run_id, lease.token)
             telemetry = RunTelemetry(self.repository, lease)
@@ -1008,24 +977,6 @@ class ResearchEngine:
                 if result.provider_output_tokens is not None:
                     context.consume(model_output_tokens=result.provider_output_tokens)
                 checkpoints.complete(synthesis_key, {"result": result.model_dump(mode="json")})
-            if "code" in run.plugins:
-                from ares.application.code_interpreter import CodeInterpreter
-                interp = CodeInterpreter()
-                for claim in result.claims:
-                    for block in interp.extract_python_blocks(claim.text):
-                        block_res = interp.execute(block)
-                        self.repository.record_event(
-                            run_id,
-                            "code_interpreter.executed",
-                            {
-                                "code": block[:300],
-                                "stdout": block_res.stdout[:500],
-                                "stderr": block_res.stderr[:500],
-                                "success": block_res.success,
-                                "duration_seconds": block_res.execution_time_seconds,
-                            },
-                            lease_token=lease.token,
-                        )
             persisted_claims: list[FinalizedClaim] = []
             packet_by_id = {packet.evidence_id: packet for packet in evidence_packets}
             available = set(packet_by_id)
@@ -1183,10 +1134,7 @@ class ResearchEngine:
                     from ares.domain.memory import EpisodeCreate, FactCreate
                     supported = [c for c in persisted_claims if c.support_status is SupportStatus.SUPPORTED]
                     findings = [c.text for c in supported][:8]
-                    summary_text = (
-                        (result.outline.summary if result.outline and result.outline.summary else checked_markdown[:500])
-                        if checked_markdown else run.query
-                    )
+                    summary_text = checked_markdown[:500] if checked_markdown else run.query
                     self.repository.create_memory_episode(
                         run.workspace_id,
                         run.created_by_user_id,

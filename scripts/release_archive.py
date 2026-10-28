@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import stat
+import subprocess
+import tomllib
 import zipfile
 from pathlib import Path, PurePosixPath
 
@@ -22,12 +25,17 @@ EXCLUDED_PARTS = {
     "dist",
     "build",
     "coverage",
+    "backups",
+    ".kilo",
+    ".vscode",
     ".coverage",
 }
 EXCLUDED_NAMES = {
     ".env",
     ".env.production",
     ".DS_Store",
+    "id_rsa",
+    "id_ed25519",
     "SBOM.cdx.json",
     "RELEASE_MANIFEST.json",
 }
@@ -41,7 +49,48 @@ def include(path: Path) -> bool:
         return False
     if len(rel.parts) >= 2 and rel.parts[0:2] == ("evals", "reports") and path.suffix == ".json":
         return False
-    return path.is_file()
+    if path.name.startswith(".env") and not path.name.endswith(".example"):
+        return False
+    if path.suffix.lower() in {".pem", ".key", ".p12", ".pfx", ".dump", ".sqlite3", ".db"}:
+        return False
+    return not path.is_symlink() and path.is_file()
+
+
+def source_files() -> list[Path]:
+    """Only Git-tracked regular source files may enter a release archive."""
+    result = subprocess.run(  # noqa: S603 — fixed Git inventory command
+        ["git", "-C", str(ROOT), "ls-files", "-z"],  # noqa: S607
+        check=True,
+        capture_output=True,
+    )
+    return sorted(
+        [
+            ROOT / name.decode("utf-8")
+            for name in result.stdout.split(b"\0")
+            if name and include(ROOT / name.decode("utf-8"))
+        ],
+        key=lambda path: path.as_posix(),
+    )
+
+
+def release_metadata() -> dict[str, str]:
+    project = tomllib.loads((ROOT / "backend" / "pyproject.toml").read_text())
+    revisions: set[str] = set()
+    parents: set[str] = set()
+    for path in (ROOT / "backend" / "migrations" / "versions").glob("*.py"):
+        for node in ast.parse(path.read_text()).body:
+            if isinstance(node, ast.Assign):
+                names = [target.id for target in node.targets if isinstance(target, ast.Name)]
+                if "revision" in names:
+                    revisions.add(ast.literal_eval(node.value))
+                if "down_revision" in names:
+                    parent = ast.literal_eval(node.value)
+                    if parent:
+                        parents.update([parent] if isinstance(parent, str) else parent)
+    heads = revisions - parents
+    if len(heads) != 1:
+        raise ValueError(f"Expected one migration head, found {sorted(heads)}")
+    return {"version": project["project"]["version"], "schema_head": heads.pop()}
 
 
 def _write_bytes(
@@ -58,16 +107,14 @@ def build(output: Path, prefix: str) -> str:
     output = output.resolve()
     checksum = output.with_suffix(output.suffix + ".sha256")
     files = sorted(
-        (p for p in ROOT.rglob("*") if include(p) and p.resolve() not in {output, checksum}),
+        (p for p in source_files() if p.resolve() not in {output, checksum}),
         key=lambda p: p.as_posix(),
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     sbom = render_sbom()
     manifest = {
         "product": "ARES",
-        "version": "0.12.0",
-        "schema_head": "0013_provider_budgets",
-        "baseline_archive_sha256": "02321335a16c3fa6ea6713cad5ee6bb964d76d899d54eadc8c400e01ec9079f7",
+        **release_metadata(),
         "source_file_count": len(files),
         "sbom_sha256": hashlib.sha256(sbom).hexdigest(),
     }
@@ -80,13 +127,13 @@ def build(output: Path, prefix: str) -> str:
             written_paths.add(str(rel))
             mode = path.stat().st_mode
             _write_bytes(archive, rel, path.read_bytes(), executable=bool(mode & stat.S_IXUSR))
-        
+
         sbom_path = PurePosixPath(prefix) / "SBOM.cdx.json"
         if str(sbom_path) in written_paths:
             raise ValueError(f"Duplicate ZIP path detected: {sbom_path}")
         written_paths.add(str(sbom_path))
         _write_bytes(archive, sbom_path, sbom)
-        
+
         manifest_path = PurePosixPath(prefix) / "RELEASE_MANIFEST.json"
         if str(manifest_path) in written_paths:
             raise ValueError(f"Duplicate ZIP path detected: {manifest_path}")
